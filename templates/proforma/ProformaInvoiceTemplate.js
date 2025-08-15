@@ -1134,6 +1134,16 @@ SWIFT: TEBUTRIS 032`
       color: rgb(0, 0, 0),
     });
   }
+
+  /**
+   * Generate metodu - PDF oluşturmak için ana metod
+   * @param {Object} formData - Form verileri
+   * @returns {Promise}
+   */
+  async generate(formData) {
+    await this.initialize();
+    await this.createProformaInvoice(formData, this.language);
+  }
 }
 
 module.exports = ProformaInvoiceTemplate;

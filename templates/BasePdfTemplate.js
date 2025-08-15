@@ -213,6 +213,15 @@ class BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
   }
+
+  /**
+   * Generate metodu - her template bu metodu override etmeli
+   * @param {Object} formData - Form verileri
+   * @returns {Promise}
+   */
+  async generate(formData) {
+    throw new Error('generate method must be implemented by subclass');
+  }
 }
 
 module.exports = BasePdfTemplate;
