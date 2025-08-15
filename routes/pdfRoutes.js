@@ -7,21 +7,63 @@ router.get('/', (req, res) => {
   res.json({ 
     message: 'PDF API is working',
     endpoints: [
-      { path: '/api/pdf/generate', method: 'POST', description: 'Generate PDF' },
-      { path: '/api/pdf/generate-proforma', method: 'POST', description: 'Generate Proforma Invoice PDF' },
-      { path: '/api/pdf/generate-invoice', method: 'POST', description: 'Generate Invoice PDF' },
-      { path: '/api/pdf/generate-packing-list', method: 'POST', description: 'Generate Packing List PDF' },
-      { path: '/api/pdf/generate-technical', method: 'POST', description: 'Generate Technical Sheet PDF' },
-      { path: '/api/pdf/generate-credit-note', method: 'POST', description: 'Generate Credit Note PDF' },
-      { path: '/api/pdf/generate-debit-note', method: 'POST', description: 'Generate Debit Note PDF' },
-      { path: '/api/pdf/generate-order-confirmation', method: 'POST', description: 'Generate Order Confirmation PDF' },
-      { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF' },
+      // New Queue-based endpoints
+      { path: '/api/pdf/start', method: 'POST', description: 'Start PDF generation (returns jobId)' },
+      { path: '/api/pdf/status/:id', method: 'GET', description: 'Check PDF generation status' },
+      { path: '/api/pdf/download/:id', method: 'GET', description: 'Download generated PDF' },
+      
+      // Legacy endpoints (for backward compatibility)
+      { path: '/api/pdf/generate', method: 'POST', description: 'Generate PDF (legacy)' },
+      { path: '/api/pdf/generate-proforma', method: 'POST', description: 'Generate Proforma Invoice PDF (legacy)' },
+      { path: '/api/pdf/generate-invoice', method: 'POST', description: 'Generate Invoice PDF (legacy)' },
+      { path: '/api/pdf/generate-packing-list', method: 'POST', description: 'Generate Packing List PDF (legacy)' },
+      { path: '/api/pdf/generate-technical', method: 'POST', description: 'Generate Technical Sheet PDF (legacy)' },
+      { path: '/api/pdf/generate-credit-note', method: 'POST', description: 'Generate Credit Note PDF (legacy)' },
+      { path: '/api/pdf/generate-debit-note', method: 'POST', description: 'Generate Debit Note PDF (legacy)' },
+      { path: '/api/pdf/generate-order-confirmation', method: 'POST', description: 'Generate Order Confirmation PDF (legacy)' },
+      { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF (legacy)' },
+      
+      // Utility endpoints
       { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
-      { path: '/api/pdf/fonts', method: 'GET', description: 'Check font status' },
-      { path: '/api/pdf/generate', method: 'GET', description: 'Test endpoint' }
+      { path: '/api/pdf/fonts', method: 'GET', description: 'Check font status' }
     ]
   });
 });
+
+// ============================================================================
+// NEW QUEUE-BASED ENDPOINTS
+// ============================================================================
+
+// Start PDF generation
+router.post('/start', pdfController.startPdfGeneration);
+
+// Check job status
+router.get('/status/:id', pdfController.checkJobStatus);
+
+// Download PDF
+router.get('/download/:id', pdfController.downloadPdf);
+
+// Debug endpoint - List all jobs
+router.get('/jobs', (req, res) => {
+  const jobManager = require('../services/jobManager');
+  const jobs = jobManager.getAllJobs();
+  res.json({
+    totalJobs: jobs.length,
+    jobs: jobs.map(job => ({
+      id: job.id,
+      status: job.status,
+      docType: job.docType,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      downloadUrl: job.downloadUrl,
+      error: job.error
+    }))
+  });
+});
+
+// ============================================================================
+// LEGACY ENDPOINTS (for backward compatibility)
+// ============================================================================
 
 // PDF generate endpoints
 // router.get('/generate', (req, res) => {

@@ -1,5 +1,12 @@
 const { PDFDocument } = require('pdf-lib');
 const fontkit = require('fontkit');
+const path = require('path');
+
+// Job system imports
+const jobManager = require('../services/jobManager');
+const PdfGeneratorService = require('../services/pdfGeneratorService');
+
+// Template imports
 const TechnicalSheetTemplate = require('../templates/technical-sheet/TechnicalSheetTemplate');
 const ProformaInvoiceTemplate = require('../templates/proforma/ProformaInvoiceTemplate');
 const InvoiceTemplate = require('../templates/invoice/InvoiceTemplate');
@@ -9,10 +16,208 @@ const DebitNoteTemplate = require('../templates/debit-note/DebitNoteTemplate');
 const OrderConfirmationTemplate = require('../templates/order-confirmation/OrderConfirmationTemplate');
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
+
+// Service imports
 const LogoService = require('../services/logoService');
 const WashingIconsService = require('../services/washingIconsService');
 const FontService = require('../services/fontService');
 const LanguageService = require('../services/languageService');
+
+// PDF Generator Service instance
+const pdfGeneratorService = new PdfGeneratorService();
+
+// ============================================================================
+// NEW QUEUE-BASED API ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/pdf/start
+ * PDF üretim işlemini başlatır ve job ID döndürür
+ */
+exports.startPdfGeneration = async (req, res) => {
+  try {
+    const { docType, formType, formData, language } = req.body;
+    const documentType = docType || formType;
+
+    console.log('PDF generation job start request:', { documentType, language });
+
+    if (!documentType) {
+      return res.status(400).json({ 
+        error: 'docType or formType is required',
+        received: req.body 
+      });
+    }
+
+    if (!formData) {
+      return res.status(400).json({ 
+        error: 'formData is required',
+        received: req.body 
+      });
+    }
+
+    // Invoice için INVOICE NUMBER kontrolü
+    if (documentType === 'invoice' && !formData['INVOICE NUMBER']) {
+      return res.status(400).json({ 
+        error: 'INVOICE NUMBER is required for invoice document type',
+        received: formData 
+      });
+    }
+
+    // Job oluştur
+    const jobId = jobManager.createJob(documentType, formData, language);
+    
+    // Arka planda PDF üretimi başlat
+    setImmediate(async () => {
+      try {
+        // Job durumunu processing olarak güncelle
+        jobManager.updateJobStatus(jobId, 'processing');
+        
+        // PDF üret
+        const filePath = await pdfGeneratorService.generatePDF(jobId, documentType, formData, language);
+        
+        // Job'ı tamamlandı olarak işaretle
+        jobManager.updateJobStatus(jobId, 'completed', filePath);
+        
+        console.log(`PDF generation completed for job ${jobId}`);
+        
+      } catch (error) {
+        console.error(`PDF generation failed for job ${jobId}:`, error);
+        jobManager.updateJobStatus(jobId, 'failed', null, error.message);
+      }
+    });
+
+    // Hemen response döndür
+    res.json({
+      success: true,
+      jobId: jobId,
+      status: 'pending',
+      message: 'PDF generation started. Use /status endpoint to check progress.',
+      statusUrl: `/api/pdf/status/${jobId}`,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Error starting PDF generation:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+/**
+ * GET /api/pdf/status/:id
+ * Job durumunu kontrol eder
+ */
+exports.checkJobStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = jobManager.getJob(id);
+    
+    if (!job) {
+      return res.status(404).json({
+        error: 'Job not found',
+        jobId: id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    const response = {
+      jobId: id,
+      status: job.status,
+      createdAt: job.createdAt,
+      updatedAt: job.updatedAt,
+      timestamp: new Date().toISOString()
+    };
+
+    // Eğer tamamlandıysa download URL'i ekle
+    if (job.status === 'completed' && job.downloadUrl) {
+      response.downloadUrl = job.downloadUrl;
+      response.ready = true;
+    }
+
+    // Eğer hata varsa hata mesajını ekle
+    if (job.status === 'failed' && job.error) {
+      response.error = job.error;
+    }
+
+    res.json(response);
+
+  } catch (error) {
+    console.error('Error checking job status:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+/**
+ * GET /api/pdf/download/:id
+ * PDF dosyasını indirir
+ */
+exports.downloadPdf = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const job = jobManager.getJob(id);
+    
+    if (!job) {
+      return res.status(404).json({
+        error: 'Job not found',
+        jobId: id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (job.status !== 'completed') {
+      return res.status(400).json({
+        error: 'PDF is not ready yet',
+        status: job.status,
+        jobId: id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    if (!job.filePath) {
+      return res.status(500).json({
+        error: 'PDF file path not found',
+        jobId: id,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Dosyayı oku ve gönder
+    const pdfBuffer = await pdfGeneratorService.getFileBuffer(job.filePath);
+    const fileName = path.basename(job.filePath);
+
+    // PDF header'larını ayarla
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+    res.setHeader('Cache-Control', 'no-cache');
+
+    // PDF'i gönder
+    res.send(pdfBuffer);
+
+    console.log(`PDF downloaded for job ${id}: ${fileName}`);
+
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// ============================================================================
+// LEGACY ENDPOINTS (Backward compatibility)
+// ============================================================================
 
 exports.generatePDF = async (req, res) => {
   try {
