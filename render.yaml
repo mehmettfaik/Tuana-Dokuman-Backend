@@ -1,0 +1,12 @@
+version: 2
+
+services:
+  - type: web
+    name: tuana-dokuman-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+    healthCheckPath: /api/pdf/health

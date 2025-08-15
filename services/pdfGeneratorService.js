@@ -2,6 +2,7 @@ const { PDFDocument } = require('pdf-lib');
 const fontkit = require('fontkit');
 const fs = require('fs-extra');
 const path = require('path');
+const os = require('os');
 
 // Template imports
 const TechnicalSheetTemplate = require('../templates/technical-sheet/TechnicalSheetTemplate');
@@ -22,16 +23,28 @@ const LanguageService = require('./languageService');
 
 class PdfGeneratorService {
   constructor() {
-    this.outputDir = path.join(__dirname, '../temp/pdfs');
+    // Production ortamında yazma izni olan klasör kullan
+    this.outputDir = process.env.NODE_ENV === 'production' 
+      ? path.join(os.tmpdir(), 'pdfs')
+      : path.join(__dirname, '../temp/pdfs');
     this.ensureOutputDirectory();
   }
 
   async ensureOutputDirectory() {
     try {
       await fs.ensureDir(this.outputDir);
+      console.log(`PDF output directory created/verified: ${this.outputDir}`);
     } catch (error) {
-      console.error('Error creating output directory:', error);
-      throw error;
+      console.error('Error creating PDF output directory:', error);
+      // Fallback to system temp directory
+      this.outputDir = path.join(os.tmpdir(), 'pdfs');
+      try {
+        await fs.ensureDir(this.outputDir);
+        console.log(`PDF fallback output directory created: ${this.outputDir}`);
+      } catch (fallbackError) {
+        console.error('Error creating PDF fallback output directory:', fallbackError);
+        throw fallbackError;
+      }
     }
   }
 

@@ -61,6 +61,27 @@ router.get('/jobs', (req, res) => {
   });
 });
 
+// Health check endpoint
+router.get('/health', (req, res) => {
+  try {
+    const jobManager = require('../services/jobManager');
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      memory: process.memoryUsage(),
+      totalJobs: jobManager.getAllJobs().length,
+      environment: process.env.NODE_ENV || 'development'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // ============================================================================
 // LEGACY ENDPOINTS (for backward compatibility)
 // ============================================================================
@@ -74,6 +95,9 @@ router.get('/jobs', (req, res) => {
 // });
 
 router.post('/generate', pdfController.generatePDF);
+
+// Legacy endpoint for old frontend compatibility
+router.post('/generatePDF', pdfController.generatePDF);
 
 // Proforma Invoice specific endpoint
 router.post('/generate-proforma', pdfController.generateProformaInvoice);
