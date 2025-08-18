@@ -1082,12 +1082,12 @@ SWIFT: TEBUTRIS 032`
     const leadTimeLabel = this.languageService.getText('leadTime', this.language);
     
     // Payment terms value translation
-    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '90 Days';
+    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
     const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
     
     const footerInfo = [
       `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || 'CIF, FOB, EXW, DAP'}`,
+      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
       `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`,
       `${grossWeightLabel}: ${formData['Gross Weight'] || formData.grossWeight || ''}`,
       `${netWeightLabel}: ${formData['Net Weight'] || formData.netWeight || ''}`,

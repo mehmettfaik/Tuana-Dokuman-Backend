@@ -948,7 +948,7 @@ class SiparisTemplate extends BasePdfTemplate {
     
     const footerInfo = [
       `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || 'CIF, FOB, EXW, DAP'}`
+      `${transportTypeLabel}: ${formData['Transport Type'] || ''}`
     ];
 
     let footerY = y;

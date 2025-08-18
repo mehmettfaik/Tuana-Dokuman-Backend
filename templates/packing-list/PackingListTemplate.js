@@ -807,12 +807,12 @@ class PackingListTemplate extends BasePdfTemplate {
     const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
     
     // Payment terms value translation
-    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '90 Days';
+    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
     const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
     
     const footerInfo = [
       `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || 'CIF, FOB, EXW, DAP'}`,
+      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
       `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`
     ];
 

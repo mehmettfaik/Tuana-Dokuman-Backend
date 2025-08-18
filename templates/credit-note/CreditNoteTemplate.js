@@ -1109,13 +1109,13 @@ SWIFT: TEBUTRIS 032`
     const rollsLabel = this.languageService.getText('rolls', this.language);
     
     // Payment Terms değerini çevir
-    const originalPaymentTerms = formData['Payment Terms'] || formData.paymentTerms || '90 Days';
+    const originalPaymentTerms = formData['Payment Terms'] || formData.paymentTerms || '';
     const paymentTermsValues = this.languageService.getText('paymentTermsValues', this.language);
     const translatedPaymentTerms = paymentTermsValues[originalPaymentTerms] || originalPaymentTerms;
     
     const footerInfo = [
       `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || 'CIF, FOB, EXW, DAP'}`,
+      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
       `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`,
       `${grossWeightLabel}: ${formData['Gross Weight'] || formData.grossWeight || ''}`,
       `${netWeightLabel}: ${formData['Net Weight'] || formData.netWeight || ''}`,
