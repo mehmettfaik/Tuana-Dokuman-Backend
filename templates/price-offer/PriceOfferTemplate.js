@@ -162,6 +162,12 @@ class PriceOfferTemplate extends BasePdfTemplate {
     const fromCompanyName = formData['FROM'] || 'CENK YELMEN, TUANA TEKSTIL';
     const toCompanyName = formData['TO'] || 'HELENA BENAC, HOLY FASHION GROUP';
     
+    // Debug için log ekle
+    console.log('DEBUG - fromCompanyName:', fromCompanyName);
+    console.log('DEBUG - toCompanyName:', toCompanyName);
+    console.log('DEBUG - formData FROM:', formData['FROM']);
+    console.log('DEBUG - formData TO:', formData['TO']);
+    
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
@@ -174,11 +180,12 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    this.drawSafeText(page, fromCompanyName, {
+    // FROM Company değeri - normal page.drawText kullan (test için)
+    page.drawText(fromCompanyName, {
       x: 115,
       y: y + 20,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.font, // Normal font kullan
       color: rgb(0, 0, 0),
     });
 
@@ -191,11 +198,12 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    this.drawSafeText(page, toCompanyName, {
+    // TO Company değeri - normal page.drawText kullan (test için)
+    page.drawText(toCompanyName, {
       x: 115,
       y: y + 10,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.font, // Normal font kullan
       color: rgb(0, 0, 0),
     });
 
