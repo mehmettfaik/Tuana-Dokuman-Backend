@@ -268,14 +268,6 @@ exports.generatePDF = async (req, res) => {
       });
     }
 
-    // Price Offer için PRICE OFFER NUMBER kontrolü
-    if (documentType === 'price-offer' && (!formData || !formData['PRICE OFFER NUMBER'])) {
-      return res.status(400).json({ 
-        error: 'PRICE OFFER NUMBER is required for price-offer document type',
-        received: formData 
-      });
-    }
-
     //console.log('Document type validation passed, creating PDF...');
 
     // PDF oluşturma
@@ -308,15 +300,6 @@ exports.generatePDF = async (req, res) => {
     } else if (documentType === 'debit-note') {
       template = new DebitNoteTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = 'TUANA_DEBIT_NOTE';
-    } else if (documentType === 'order-confirmation') {
-      template = new OrderConfirmationTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_ORDER_CONFIRMATION';
-    } else if (documentType === 'siparis') {
-      template = new SiparisTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_SIPARIS';
-    } else if (documentType === 'price-offer') {
-      template = new PriceOfferTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_PRICE_OFFER';
     } else {
       // Default: technical sheet
       template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
@@ -337,12 +320,6 @@ exports.generatePDF = async (req, res) => {
       await template.createCreditNote(formData, validatedLanguage);
     } else if (documentType === 'debit-note') {
       await template.createDebitNote(formData, validatedLanguage);
-    } else if (documentType === 'order-confirmation') {
-      await template.createOrderConfirmation(formData, validatedLanguage);
-    } else if (documentType === 'siparis') {
-      await template.createSiparis(formData, validatedLanguage);
-    } else if (documentType === 'price-offer') {
-      await template.createPriceOffer(formData, validatedLanguage);
     } else {
       await template.createFabricTechnicalSheet(formData, validatedLanguage);
     }
