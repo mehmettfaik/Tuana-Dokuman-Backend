@@ -23,24 +23,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
     }
   }
 
-  /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
-   * @param {number} number - Formatlanacak sayı
-   * @returns {string} - Türkçe formatlanmış sayı
-   */
-  formatTurkishNumber(number) {
-    if (!number && number !== 0) return '';
-    
-    const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
-    if (isNaN(numericValue)) return '';
-    
-    // Türkçe locale ile formatla (binlik ayraçları ile)
-    return numericValue.toLocaleString('tr-TR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
   async createPriceOffer(formData = {}, language = null) {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
@@ -162,12 +144,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
     const fromCompanyName = formData['FROM'] || 'CENK YELMEN, TUANA TEKSTIL';
     const toCompanyName = formData['TO'] || 'HELENA BENAC, HOLY FASHION GROUP';
     
-    // Debug için log ekle
-    console.log('DEBUG - fromCompanyName:', fromCompanyName);
-    console.log('DEBUG - toCompanyName:', toCompanyName);
-    console.log('DEBUG - formData FROM:', formData['FROM']);
-    console.log('DEBUG - formData TO:', formData['TO']);
-    
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
@@ -180,12 +156,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // FROM Company değeri - normal page.drawText kullan (test için)
-    page.drawText(fromCompanyName, {
+    this.drawSafeText(page, fromCompanyName, {
       x: 115,
       y: y + 20,
       size: 9,
-      font: this.font, // Normal font kullan
+      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
       color: rgb(0, 0, 0),
     });
 
@@ -198,12 +173,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // TO Company değeri - normal page.drawText kullan (test için)
-    page.drawText(toCompanyName, {
+    this.drawSafeText(page, toCompanyName, {
       x: 115,
       y: y + 10,
       size: 9,
-      font: this.font, // Normal font kullan
+      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
       color: rgb(0, 0, 0),
     });
 
