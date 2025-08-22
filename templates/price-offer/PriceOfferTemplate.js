@@ -183,43 +183,75 @@ class PriceOfferTemplate extends BasePdfTemplate {
     console.log('Final values to render:');
     console.log('fromCompanyName:', fromCompanyName);
     console.log('toCompanyName:', toCompanyName);
+    console.log('fromCompanyName type:', typeof fromCompanyName);
+    console.log('toCompanyName type:', typeof toCompanyName);
+    console.log('fromCompanyName length:', fromCompanyName.length);
+    console.log('toCompanyName length:', toCompanyName.length);
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
-    // FROM Company - page.drawText kullan
-    page.drawText(`${fromLabel}:`, {
-      x: 55,
-      y: y + 20,
-      size: 9,
-      font: this.fontBold,
-      color: rgb(0, 0, 0),
-    });
+    // FROM Company - güvenli metin çizme
+    try {
+      page.drawText(`${fromLabel}:`, {
+        x: 55,
+        y: y + 20,
+        size: 9,
+        font: this.fontBold,
+        color: rgb(0, 0, 0),
+      });
 
-    page.drawText(fromCompanyName, {
-      x: 115,
-      y: y + 20,
-      size: 9,
-      font: this.font,
-      color: rgb(0, 0, 0),
-    });
+      page.drawText(fromCompanyName, {
+        x: 115,
+        y: y + 20,
+        size: 9,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      console.log('✅ FROM text rendered successfully');
+    } catch (error) {
+      console.log('❌ Error rendering FROM text:', error.message);
+      // Fallback: Türkçe karakterleri çevir
+      const safeName = this.replaceTurkishChars(fromCompanyName);
+      page.drawText(safeName, {
+        x: 115,
+        y: y + 20,
+        size: 9,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+    }
 
-    // TO Company - page.drawText kullan
-    page.drawText(`${toLabel}:`, {
-      x: 55,
-      y: y + 10,
-      size: 9,
-      font: this.fontBold,
-      color: rgb(0, 0, 0),
-    });
+    // TO Company - güvenli metin çizme
+    try {
+      page.drawText(`${toLabel}:`, {
+        x: 55,
+        y: y + 10,
+        size: 9,
+        font: this.fontBold,
+        color: rgb(0, 0, 0),
+      });
 
-    page.drawText(toCompanyName, {
-      x: 115,
-      y: y + 10,
-      size: 9,
-      font: this.font,
-      color: rgb(0, 0, 0),
-    });
+      page.drawText(toCompanyName, {
+        x: 115,
+        y: y + 10,
+        size: 9,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      console.log('✅ TO text rendered successfully');
+    } catch (error) {
+      console.log('❌ Error rendering TO text:', error.message);
+      // Fallback: Türkçe karakterleri çevir
+      const safeName = this.replaceTurkishChars(toCompanyName);
+      page.drawText(safeName, {
+        x: 115,
+        y: y + 10,
+        size: 9,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+    }
 
     return y - 20;
   }
@@ -734,6 +766,20 @@ class PriceOfferTemplate extends BasePdfTemplate {
   async generate(formData) {
     await this.initialize();
     await this.createPriceOffer(formData, this.language);
+  }
+
+  /**
+   * Türkçe karakterleri basit karakterlere çevir (miras alınan metod)
+   */
+  replaceTurkishChars(text) {
+    if (!text) return '';
+    return text.toString()
+      .replace(/ı/g, 'i').replace(/I/g, 'I')
+      .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+      .replace(/ş/g, 's').replace(/Ş/g, 'S')
+      .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+      .replace(/ç/g, 'c').replace(/Ç/g, 'C');
   }
 }
 
