@@ -141,8 +141,8 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     // FROM ve TO tek satırda, görüntüdeki gibi - dil desteği ile
-    const fromCompanyName = formData['FROM'] || 'CENK YELMEN, TUANA TEKSTIL';
-    const toCompanyName = formData['TO'] || 'HELENA BENAC, HOLY FASHION GROUP';
+    const fromCompanyName = formData['FROM'] || '';
+    const toCompanyName = formData['TO'] || '';
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
