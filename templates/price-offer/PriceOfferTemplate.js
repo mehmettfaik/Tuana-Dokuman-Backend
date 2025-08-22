@@ -23,24 +23,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
     }
   }
 
-  /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
-   * @param {number} number - Formatlanacak sayı
-   * @returns {string} - Türkçe formatlanmış sayı
-   */
-  formatTurkishNumber(number) {
-    if (!number && number !== 0) return '';
-    
-    const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
-    if (isNaN(numericValue)) return '';
-    
-    // Türkçe locale ile formatla (binlik ayraçları ile)
-    return numericValue.toLocaleString('tr-TR', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    });
-  }
-
   async createPriceOffer(formData = {}, language = null) {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
