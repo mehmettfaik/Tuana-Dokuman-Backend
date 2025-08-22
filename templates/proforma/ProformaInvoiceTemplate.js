@@ -23,6 +23,24 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     }
   }
 
+  /**
+   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
+   * @param {number} number - Formatlanacak sayı
+   * @returns {string} - Türkçe formatlanmış sayı
+   */
+  formatTurkishNumber(number) {
+    if (!number && number !== 0) return '';
+    
+    const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
+    if (isNaN(numericValue)) return '';
+    
+    // Türkçe locale ile formatla (binlik ayraçları ile)
+    return numericValue.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
   async createProformaInvoice(formData = {}, language = null) {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
@@ -596,7 +614,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    currentPage.drawText(`${totalQuantity.toFixed(2).replace('.', ',')} ${"MT"}`, {
+    currentPage.drawText(`${this.formatTurkishNumber(totalQuantity)} ${"MT"}`, {
       x: 355,
       y: currentY - 10,
       size: 7,
@@ -604,7 +622,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    currentPage.drawText(`${totalAmount.toFixed(2).replace('.', ',')} ${totalCurrency}`, {
+    currentPage.drawText(`${this.formatTurkishNumber(totalAmount)} ${totalCurrency}`, {
       x: 480,
       y: currentY - 10,
       size: 7,
@@ -650,7 +668,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
 
       // KDV tutarı - AMOUNT sütununda
       const kdvTutari = (totalAmount * kdvOrani) / 100;
-      currentPage.drawText(kdvTutari.toFixed(2).replace('.', ','), {
+      currentPage.drawText(this.formatTurkishNumber(kdvTutari), {
         x: 480,
         y: currentY - 10,
         size: 8,
@@ -691,7 +709,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       });
 
       const genelToplam = totalAmount + kdvTutari;
-      currentPage.drawText(genelToplam.toFixed(2).replace('.', ','), {
+      currentPage.drawText(this.formatTurkishNumber(genelToplam), {
         x: 480,
         y: currentY - 10,
         size: 8,
