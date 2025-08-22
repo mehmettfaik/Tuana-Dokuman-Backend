@@ -141,13 +141,26 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     // FROM ve TO tek satırda, görüntüdeki gibi - dil desteği ile
-    const fromCompanyName = formData['FROM'] || 'CENK YELMEN, TUANA TEKSTIL';
-    const toCompanyName = formData['TO'] || 'HELENA BENAC, HOLY FASHION GROUP';
+    console.log('=== DEBUG PriceOfferTemplate ===');
+    console.log('formData keys:', Object.keys(formData));
+    console.log('formData FROM value:', formData['FROM']);
+    console.log('formData TO value:', formData['TO']);
+    console.log('formData FROM type:', typeof formData['FROM']);
+    console.log('formData TO type:', typeof formData['TO']);
+    console.log('formData FROM length:', formData['FROM'] ? formData['FROM'].length : 'undefined');
+    console.log('formData TO length:', formData['TO'] ? formData['TO'].length : 'undefined');
+    console.log('================================');
+    
+    const fromCompanyName = formData['FROM'] || formData['from'] || formData.FROM || formData.from || 'CENK YELMEN, TUANA TEKSTIL';
+    const toCompanyName = formData['TO'] || formData['to'] || formData.TO || formData.to || 'HELENA BENAC, HOLY FASHION GROUP';
+    
+    console.log('Final fromCompanyName:', fromCompanyName);
+    console.log('Final toCompanyName:', toCompanyName);
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
-    // FROM Company - HelveticaNeueLightItalic font kullan
+    // FROM Company - normal page.drawText kullan (test için)
     page.drawText(`${fromLabel}:`, {
       x: 55,
       y: y + 20,
@@ -156,15 +169,15 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    this.drawSafeText(page, fromCompanyName, {
+    page.drawText(fromCompanyName, {
       x: 115,
       y: y + 20,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.font, // Normal font kullan
       color: rgb(0, 0, 0),
     });
 
-    // TO Company - HelveticaNeueLightItalic font kullan
+    // TO Company - normal page.drawText kullan (test için)
     page.drawText(`${toLabel}:`, {
       x: 55,
       y: y + 10,
@@ -173,11 +186,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    this.drawSafeText(page, toCompanyName, {
+    page.drawText(toCompanyName, {
       x: 115,
       y: y + 10,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.font, // Normal font kullan
       color: rgb(0, 0, 0),
     });
 
