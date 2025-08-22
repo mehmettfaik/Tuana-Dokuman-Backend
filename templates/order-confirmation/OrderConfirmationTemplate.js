@@ -607,7 +607,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    currentPage.drawText(`${totalQuantity.toFixed(2).replace('.', ',')} ${"Mt"}`, {
+    currentPage.drawText(`${totalQuantity.toFixed(2).replace('.', ',')} ${"MT"}`, {
       x: 355,
       y: currentY - 10,
       size: 7,
