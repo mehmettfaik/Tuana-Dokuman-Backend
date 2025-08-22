@@ -23,6 +23,23 @@ class PriceOfferTemplate extends BasePdfTemplate {
     }
   }
 
+  /**
+   * Türkçe sayı formatı için metod
+   * @param {number} number - Formatlanacak sayı
+   * @returns {string} - Türkçe formatta sayı (1.250,23)
+   */
+  formatTurkishNumber(number) {
+    if (!number && number !== 0) return '';
+    
+    const numericValue = typeof number === 'string' ? parseFloat(number) : number;
+    if (isNaN(numericValue)) return '';
+    
+    return numericValue.toLocaleString('tr-TR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
   async createPriceOffer(formData = {}, language = null) {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
@@ -142,25 +159,35 @@ class PriceOfferTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     // FROM ve TO tek satırda, görüntüdeki gibi - dil desteği ile
     console.log('=== DEBUG PriceOfferTemplate ===');
-    console.log('formData keys:', Object.keys(formData));
-    console.log('formData FROM value:', formData['FROM']);
-    console.log('formData TO value:', formData['TO']);
-    console.log('formData FROM type:', typeof formData['FROM']);
-    console.log('formData TO type:', typeof formData['TO']);
-    console.log('formData FROM length:', formData['FROM'] ? formData['FROM'].length : 'undefined');
-    console.log('formData TO length:', formData['TO'] ? formData['TO'].length : 'undefined');
+    console.log('Received formData:', JSON.stringify(formData, null, 2));
+    console.log('FROM field variations check:');
+    console.log('formData.FROM:', formData.FROM);
+    console.log('formData["FROM"]:', formData["FROM"]);
+    console.log('formData.from:', formData.from);
+    console.log('formData["from"]:', formData["from"]);
+    console.log('TO field variations check:');
+    console.log('formData.TO:', formData.TO);
+    console.log('formData["TO"]:', formData["TO"]);
+    console.log('formData.to:', formData.to);
+    console.log('formData["to"]:', formData["to"]);
     console.log('================================');
     
-    const fromCompanyName = formData['FROM'] || formData['from'] || formData.FROM || formData.from || 'CENK YELMEN, TUANA TEKSTIL';
-    const toCompanyName = formData['TO'] || formData['to'] || formData.TO || formData.to || 'HELENA BENAC, HOLY FASHION GROUP';
+    // Direkt formData'dan al, fallback kullanma
+    let fromCompanyName = formData.FROM || formData['FROM'] || formData.from || formData['from'];
+    let toCompanyName = formData.TO || formData['TO'] || formData.to || formData['to'];
     
-    console.log('Final fromCompanyName:', fromCompanyName);
-    console.log('Final toCompanyName:', toCompanyName);
+    // Eğer hiç değer yoksa boş string kullan
+    if (!fromCompanyName) fromCompanyName = '';
+    if (!toCompanyName) toCompanyName = '';
+    
+    console.log('Final values to render:');
+    console.log('fromCompanyName:', fromCompanyName);
+    console.log('toCompanyName:', toCompanyName);
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
-    // FROM Company - normal page.drawText kullan (test için)
+    // FROM Company - page.drawText kullan
     page.drawText(`${fromLabel}:`, {
       x: 55,
       y: y + 20,
@@ -173,11 +200,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
       x: 115,
       y: y + 20,
       size: 9,
-      font: this.font, // Normal font kullan
+      font: this.font,
       color: rgb(0, 0, 0),
     });
 
-    // TO Company - normal page.drawText kullan (test için)
+    // TO Company - page.drawText kullan
     page.drawText(`${toLabel}:`, {
       x: 55,
       y: y + 10,
@@ -190,7 +217,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       x: 115,
       y: y + 10,
       size: 9,
-      font: this.font, // Normal font kullan
+      font: this.font,
       color: rgb(0, 0, 0),
     });
 
