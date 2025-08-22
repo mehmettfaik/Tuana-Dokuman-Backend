@@ -91,7 +91,7 @@ module.exports = {
   totalQuantity: 'TOTAL QUANTITY',
   packingDetails: 'PACKING DETAILS',
   articleNumberCompositionCustomsCode: 'ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE',
-  fabricWeightWidth: 'FABRIC WEIGHT / WIDTH',
+  fabricWeightWidth: 'WEIGHT / WIDTH',
   quantityMeters: 'QUANTITY (METERS)',
   rollNumberRollDimensions: 'ROLL NUMBER ROLL DIMENSIONS',
   lot: 'LOT',

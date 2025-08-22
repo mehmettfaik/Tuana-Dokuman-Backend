@@ -325,9 +325,9 @@ class PackingListTemplate extends BasePdfTemplate {
     const tableHeaders = [
       { text: this.languageService.getText('articleNumberCompositionCustomsCode', this.language), x: 55, width: 140 },
       { text: this.languageService.getText('fabricWeightWidth', this.language), x: 200, width: 70 },
-      { text: this.languageService.getText('quantityMeters', this.language), x: 270, width: 55 },
-      { text: this.languageService.getText('rollNumberRollDimensions', this.language), x: 335, width: 70 },
-      { text: this.languageService.getText('lot', this.language), x: 410, width: 30 },
+      { text: this.languageService.getText('quantityMeters', this.language), x: 260, width: 55 },
+      { text: this.languageService.getText('rollNumberRollDimensions', this.language), x: 300, width: 70 },
+      { text: this.languageService.getText('lot', this.language), x: 375, width: 30 },
       { text: this.languageService.getText('grossWeightKg', this.language), x: 445, width: 50 },
       { text: this.languageService.getText('netWeightKg', this.language), x: 495, width: 50 }
     ];
@@ -357,7 +357,7 @@ class PackingListTemplate extends BasePdfTemplate {
     });
 
     // Dikey çizgiler başlık satırında
-    const verticalLines = [195, 265, 330, 405, 440, 490];
+    const verticalLines = [195, 255, 295, 370, 440, 490];
     verticalLines.forEach(x => {
       page.drawLine({
         start: { x: x, y: y + 5 },
@@ -392,12 +392,22 @@ class PackingListTemplate extends BasePdfTemplate {
     let currentY = y;
     let pageNumber = 1;
 
-    // Items per page
-    const itemsPerPage = 11;
-    for (let pageIndex = 0; pageIndex < Math.ceil(packingItems.length / itemsPerPage); pageIndex++) {
-      const startIndex = pageIndex * itemsPerPage;
-      const endIndex = Math.min(startIndex + itemsPerPage, packingItems.length);
-      const pageItems = packingItems.slice(startIndex, endIndex);
+    // Items per page - ilk sayfa 11, sonraki sayfalar 22
+    const firstPageItems = 11;
+    const otherPagesItems = 22;
+    
+    // Toplam sayfa sayısını hesapla
+    let totalPages = 1;
+    if (packingItems.length > firstPageItems) {
+      totalPages = 1 + Math.ceil((packingItems.length - firstPageItems) / otherPagesItems);
+    }
+
+    let itemIndex = 0;
+    for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+      const itemsThisPage = pageIndex === 0 ? firstPageItems : otherPagesItems;
+      const endIndex = Math.min(itemIndex + itemsThisPage, packingItems.length);
+      const pageItems = packingItems.slice(itemIndex, endIndex);
+      itemIndex = endIndex;
       
       // Yeni sayfa gerekiyorsa oluştur (ilk sayfa hariç)
       if (pageIndex > 0) {
@@ -462,7 +472,7 @@ class PackingListTemplate extends BasePdfTemplate {
 
       // Bu sayfadaki items'ları çiz
       pageItems.forEach((item, index) => {
-        const rowHeight = 25; // Sabit satır yüksekliği
+        const rowHeight = 30; // Artırılmış satır yüksekliği - 4 satır metin için
         
         // Satır arka planı
         currentPage.drawRectangle({
@@ -482,57 +492,74 @@ class PackingListTemplate extends BasePdfTemplate {
           font: this.font,
           color: rgb(0, 0, 0),
           maxWidth: 135,
-          lineHeight: 7
+          lineHeight: 6,
+          maxLines: 4
         });
 
-        this.drawSafeText(currentPage, item['FABRIC WEIGHT / WIDHT'] || '', {
+        this.drawWrappedText(currentPage, item['FABRIC WEIGHT / WIDHT'] || '', {
           x: 200,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: 50,
+          lineHeight: 6,
+          maxLines: 4
         });
 
-        this.drawSafeText(currentPage, item['QUANTITY (METERS)'] || '', {
-          x: 270,
+        this.drawWrappedText(currentPage, item['QUANTITY (METERS)'] || '', {
+          x: 260,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: 30,
+          lineHeight: 6,
+          maxLines: 4
         });
 
         this.drawWrappedText(currentPage, item['ROLL NUMBER ROLL DIMENSIONS'] || '', {
-          x: 335,
+          x: 300,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
           maxWidth: 65,
-          lineHeight: 7
+          lineHeight: 6,
+          maxLines: 4
         });
 
-        this.drawSafeText(currentPage, item['LOT'] || '', {
-          x: 410,
+        this.drawWrappedText(currentPage, item['LOT'] || '', {
+          x: 375,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: 65,
+          lineHeight: 6,
+          maxLines: 4
         });
 
-        this.drawSafeText(currentPage, item['GROSS WEIGHT(KG)'] || '', {
+        this.drawWrappedText(currentPage, item['GROSS WEIGHT(KG)'] || '', {
           x: 445,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: 40,
+          lineHeight: 6,
+          maxLines: 4
         });
 
-        this.drawSafeText(currentPage, item['NET WEIGHT (KG)'] || '', {
-          x: 500,
+        this.drawWrappedText(currentPage, item['NET WEIGHT (KG)'] || '', {
+          x: 495,
           y: currentY - 5,
           size: 6,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: 40,
+          lineHeight: 6,
+          maxLines: 4
         });
 
         // Dikey çizgiler
@@ -566,6 +593,11 @@ class PackingListTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
       });
+      
+      // Eğer son sayfa değilse ve daha fazla item varsa devam et
+      if (itemIndex >= packingItems.length) {
+        break;
+      }
     }
 
     // TOTAL AMOUNTS - sadece son sayfada
@@ -590,7 +622,7 @@ class PackingListTemplate extends BasePdfTemplate {
     // ROLL NUMBER ROLL DIMENSIONS sütununda toplam satır sayısı
     const rollsText = this.languageService.getText('rolls', this.language);
     currentPage.drawText(`${packingItems.length} ${rollsText}`, {
-      x: 335,
+      x: 300,
       y: currentY - 10,
       size: 6,
       font: this.fontBold,
@@ -599,7 +631,7 @@ class PackingListTemplate extends BasePdfTemplate {
 
     const metersText = this.languageService.getText('meters', this.language);
     currentPage.drawText(totalQuantity.toFixed(2).replace('.', ',') + ' ' + metersText, {
-      x: 269,
+      x: 258,
       y: currentY - 10,
       size: 6,
       font: this.fontBold,
@@ -643,7 +675,7 @@ class PackingListTemplate extends BasePdfTemplate {
   drawWrappedText(page, text, options) {
     if (!text) return;
     
-    const { x, y, size, font, color, maxWidth, lineHeight = 8, maxLines = 2 } = options;
+    const { x, y, size, font, color, maxWidth, lineHeight = 8, maxLines = 4 } = options;
     const words = text.split(' ');
     let currentLine = '';
     let currentY = y;

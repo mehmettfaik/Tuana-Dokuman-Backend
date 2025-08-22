@@ -91,7 +91,7 @@ module.exports = {
   totalQuantity: 'TOPLAM MİKTAR',
   packingDetails: 'PAKETLEME DETAYLARI',
   articleNumberCompositionCustomsCode: 'ÜRÜN NUMARASI / KOMPOZİSYON / GÜMRÜK KODU',
-  fabricWeightWidth: 'KUMAŞ AĞIRLIĞI / GENİŞLİĞİ',
+  fabricWeightWidth: 'AĞIRLIK / EN',
   quantityMeters: 'MİKTAR (METRE)',
   rollNumberRollDimensions: 'TOP NUMARASI TOP BOYUTLARI',
   lot: 'LOT',
