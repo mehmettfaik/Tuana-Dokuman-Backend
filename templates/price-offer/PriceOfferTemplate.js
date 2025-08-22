@@ -24,16 +24,17 @@ class PriceOfferTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Türkçe sayı formatı için metod
+   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
    * @param {number} number - Formatlanacak sayı
-   * @returns {string} - Türkçe formatta sayı (1.250,23)
+   * @returns {string} - Türkçe formatlanmış sayı
    */
   formatTurkishNumber(number) {
     if (!number && number !== 0) return '';
     
-    const numericValue = typeof number === 'string' ? parseFloat(number) : number;
+    const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
+    // Türkçe locale ile formatla (binlik ayraçları ile)
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -158,100 +159,45 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     // FROM ve TO tek satırda, görüntüdeki gibi - dil desteği ile
-    console.log('=== DEBUG PriceOfferTemplate ===');
-    console.log('Received formData:', JSON.stringify(formData, null, 2));
-    console.log('FROM field variations check:');
-    console.log('formData.FROM:', formData.FROM);
-    console.log('formData["FROM"]:', formData["FROM"]);
-    console.log('formData.from:', formData.from);
-    console.log('formData["from"]:', formData["from"]);
-    console.log('TO field variations check:');
-    console.log('formData.TO:', formData.TO);
-    console.log('formData["TO"]:', formData["TO"]);
-    console.log('formData.to:', formData.to);
-    console.log('formData["to"]:', formData["to"]);
-    console.log('================================');
-    
-    // Direkt formData'dan al, fallback kullanma
-    let fromCompanyName = formData.FROM || formData['FROM'] || formData.from || formData['from'];
-    let toCompanyName = formData.TO || formData['TO'] || formData.to || formData['to'];
-    
-    // Eğer hiç değer yoksa boş string kullan
-    if (!fromCompanyName) fromCompanyName = '';
-    if (!toCompanyName) toCompanyName = '';
-    
-    console.log('Final values to render:');
-    console.log('fromCompanyName:', fromCompanyName);
-    console.log('toCompanyName:', toCompanyName);
-    console.log('fromCompanyName type:', typeof fromCompanyName);
-    console.log('toCompanyName type:', typeof toCompanyName);
-    console.log('fromCompanyName length:', fromCompanyName.length);
-    console.log('toCompanyName length:', toCompanyName.length);
+    const fromCompanyName = formData['FROM'] || 'CENK YELMEN, TUANA TEKSTIL';
+    const toCompanyName = formData['TO'] || 'HELENA BENAC, HOLY FASHION GROUP';
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
-    // FROM Company - güvenli metin çizme
-    try {
-      page.drawText(`${fromLabel}:`, {
-        x: 55,
-        y: y + 20,
-        size: 9,
-        font: this.fontBold,
-        color: rgb(0, 0, 0),
-      });
+    // FROM Company - HelveticaNeueLightItalic font kullan
+    page.drawText(`${fromLabel}:`, {
+      x: 55,
+      y: y + 20,
+      size: 9,
+      font: this.fontBold,
+      color: rgb(0, 0, 0),
+    });
 
-      page.drawText(fromCompanyName, {
-        x: 115,
-        y: y + 20,
-        size: 9,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      console.log('✅ FROM text rendered successfully');
-    } catch (error) {
-      console.log('❌ Error rendering FROM text:', error.message);
-      // Fallback: Türkçe karakterleri çevir
-      const safeName = this.replaceTurkishChars(fromCompanyName);
-      page.drawText(safeName, {
-        x: 115,
-        y: y + 20,
-        size: 9,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-    }
+    this.drawSafeText(page, fromCompanyName, {
+      x: 115,
+      y: y + 20,
+      size: 9,
+      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      color: rgb(0, 0, 0),
+    });
 
-    // TO Company - güvenli metin çizme
-    try {
-      page.drawText(`${toLabel}:`, {
-        x: 55,
-        y: y + 10,
-        size: 9,
-        font: this.fontBold,
-        color: rgb(0, 0, 0),
-      });
+    // TO Company - HelveticaNeueLightItalic font kullan
+    page.drawText(`${toLabel}:`, {
+      x: 55,
+      y: y + 10,
+      size: 9,
+      font: this.fontBold,
+      color: rgb(0, 0, 0),
+    });
 
-      page.drawText(toCompanyName, {
-        x: 115,
-        y: y + 10,
-        size: 9,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      console.log('✅ TO text rendered successfully');
-    } catch (error) {
-      console.log('❌ Error rendering TO text:', error.message);
-      // Fallback: Türkçe karakterleri çevir
-      const safeName = this.replaceTurkishChars(toCompanyName);
-      page.drawText(safeName, {
-        x: 115,
-        y: y + 10,
-        size: 9,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-    }
+    this.drawSafeText(page, toCompanyName, {
+      x: 115,
+      y: y + 10,
+      size: 9,
+      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      color: rgb(0, 0, 0),
+    });
 
     return y - 20;
   }
@@ -766,20 +712,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
   async generate(formData) {
     await this.initialize();
     await this.createPriceOffer(formData, this.language);
-  }
-
-  /**
-   * Türkçe karakterleri basit karakterlere çevir (miras alınan metod)
-   */
-  replaceTurkishChars(text) {
-    if (!text) return '';
-    return text.toString()
-      .replace(/ı/g, 'i').replace(/I/g, 'I')
-      .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
-      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
-      .replace(/ş/g, 's').replace(/Ş/g, 'S')
-      .replace(/ö/g, 'o').replace(/Ö/g, 'O')
-      .replace(/ç/g, 'c').replace(/Ç/g, 'C');
   }
 }
 

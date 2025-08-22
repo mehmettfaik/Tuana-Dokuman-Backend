@@ -71,6 +71,11 @@ class PdfGeneratorService {
         throw new Error('INVOICE NUMBER is required for invoice document type');
       }
 
+      // Price Offer için PRICE OFFER NUMBER kontrolü
+      if (docType === 'price-offer' && (!formData || !formData['PRICE OFFER NUMBER'])) {
+        throw new Error('PRICE OFFER NUMBER is required for price-offer document type');
+      }
+
       // PDF oluşturma
       const pdfDoc = await PDFDocument.create();
       pdfDoc.registerFontkit(fontkit);
