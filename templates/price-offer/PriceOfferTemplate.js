@@ -269,12 +269,18 @@ class PriceOfferTemplate extends BasePdfTemplate {
     let currentY = y;
     let pageNumber = 1;
 
-    // Price items'ları çiz
-    const itemsPerPage = 13;
-    for (let pageIndex = 0; pageIndex < Math.ceil(priceItems.length / itemsPerPage); pageIndex++) {
-      const startIndex = pageIndex * itemsPerPage;
+    // İlk sayfada 13 ürün, diğer sayfalarda 27 ürün
+    let processedItems = 0;
+    let pageIndex = 0;
+    
+    while (processedItems < priceItems.length) {
+      // İlk sayfa için 13 ürün, diğer sayfalar için 27 ürün
+      const itemsPerPage = pageIndex === 0 ? 13 : 27;
+      const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, priceItems.length);
       const pageItems = priceItems.slice(startIndex, endIndex);
+      
+      processedItems = endIndex;
       
       // Yeni sayfa gerekiyorsa oluştur (ilk sayfa hariç)
       if (pageIndex > 0) {
@@ -290,7 +296,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        currentPage.drawText('PRICE OFFER (Continued)', {
+        currentPage.drawText('PRICE OFFER', {
           x: 55,
           y: currentY + 35,
           size: 8,
@@ -430,6 +436,8 @@ class PriceOfferTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
       });
+      
+      pageIndex++;
     }
 
     return currentY + 10;

@@ -36,7 +36,7 @@ module.exports = {
   invoiceNumber: 'FATURA NUMARASI',
   invoiceDate: 'FATURA TARİHİ',
   descriptionOfGoods: 'ÜRÜN AÇIKLAMASI',
-  descriptionOfGoodsContinued: 'ÜRÜN AÇIKLAMASI (Devamı)',
+  descriptionOfGoodsContinued: 'ÜRÜN AÇIKLAMASI',
 
   // Proforma specific
   proformaInvoice: 'PROFORMA FATURA',

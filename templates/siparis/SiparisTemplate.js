@@ -423,12 +423,18 @@ class SiparisTemplate extends BasePdfTemplate {
     let currentY = y;
     let pageNumber = 1;
 
-    // İlk 6 ürünü işle
-    const itemsPerPage = 6;
-    for (let pageIndex = 0; pageIndex < Math.ceil(goods.length / itemsPerPage); pageIndex++) {
-      const startIndex = pageIndex * itemsPerPage;
+    // İlk sayfada 6 ürün, diğer sayfalarda 27 ürün
+    let processedItems = 0;
+    let pageIndex = 0;
+    
+    while (processedItems < goods.length) {
+      // İlk sayfa için 6 ürün, diğer sayfalar için 27 ürün
+      const itemsPerPage = pageIndex === 0 ? 6 : 27;
+      const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);
+      
+      processedItems = endIndex;
       
       // Yeni sayfa gerekiyorsa oluştur (ilk sayfa hariç)
       if (pageIndex > 0) {
@@ -658,6 +664,8 @@ class SiparisTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
       });
+      
+      pageIndex++;
     }
 
     // TOTAL AMOUNT - sadece son sayfada

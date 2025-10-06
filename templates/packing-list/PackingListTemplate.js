@@ -423,7 +423,7 @@ class PackingListTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        const packingDetailsContinued = this.languageService.getText('packingDetails', this.language) + ' (Devamı)';
+        const packingDetailsContinued = this.languageService.getText('packingDetails', this.language) + '';
         currentPage.drawText(packingDetailsContinued, {
           x: 55,
           y: currentY + 35,

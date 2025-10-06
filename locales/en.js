@@ -36,7 +36,7 @@ module.exports = {
   invoiceNumber: 'INVOICE NUMBER',
   invoiceDate: 'INVOICE DATE',
   descriptionOfGoods: 'DESCRIPTION OF GOODS',
-  descriptionOfGoodsContinued: 'DESCRIPTION OF GOODS (Continued)',
+  descriptionOfGoodsContinued: 'DESCRIPTION OF GOODS',
   
   // Proforma specific
   proformaInvoice: 'PROFORMA INVOICE',
@@ -99,7 +99,7 @@ module.exports = {
   netWeightKg: 'NET WEIGHT (KG)',
   invoiceDate: 'INVOICE DATE',
   total: 'TOTAL',
-  meters: 'METERS',
+  meters: 'MT',
   rolls: 'ROLLS',
   kg: 'KG',
   kgs: 'KG',
