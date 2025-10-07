@@ -61,6 +61,23 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working' });
 });
 
+// Recipients test endpoint
+app.get('/api/recipients/test', (req, res) => {
+  res.json({ 
+    message: 'Recipients API is working',
+    timestamp: new Date().toISOString(),
+    routes: [
+      'GET /api/recipients',
+      'GET /api/recipients/search?q=term',
+      'GET /api/recipients/stats',
+      'GET /api/recipients/:id',
+      'POST /api/recipients',
+      'PUT /api/recipients/:id',
+      'DELETE /api/recipients/:id'
+    ]
+  });
+});
+
 // Global health endpoint (for render.com and general monitoring)
 app.get('/api/health', (req, res) => {
   try {

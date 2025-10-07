@@ -10,15 +10,27 @@ class RecipientCacheService {
 
   // Cache dosyasının var olduğundan emin ol
   ensureCacheFileExists() {
-    if (!fs.existsSync(this.cacheFilePath)) {
-      console.log('Creating new recipient cache file...');
-      // Varsayılan cache yapısı
-      const defaultCache = {
-        recipients: [],
-        lastUpdated: new Date().toISOString()
-      };
-      fs.writeFileSync(this.cacheFilePath, JSON.stringify(defaultCache, null, 2));
-      console.log('✅ Recipient cache file created');
+    try {
+      // Temp klasörünün var olduğundan emin ol
+      const tempDir = path.dirname(this.cacheFilePath);
+      if (!fs.existsSync(tempDir)) {
+        console.log('Creating temp directory:', tempDir);
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+
+      if (!fs.existsSync(this.cacheFilePath)) {
+        console.log('Creating new recipient cache file...');
+        // Varsayılan cache yapısı
+        const defaultCache = {
+          recipients: [],
+          lastUpdated: new Date().toISOString()
+        };
+        fs.writeFileSync(this.cacheFilePath, JSON.stringify(defaultCache, null, 2));
+        console.log('✅ Recipient cache file created');
+      }
+    } catch (error) {
+      console.error('❌ Error creating cache file:', error);
+      throw error;
     }
   }
 
