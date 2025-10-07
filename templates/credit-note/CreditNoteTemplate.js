@@ -443,8 +443,8 @@ class CreditNoteTemplate extends BasePdfTemplate {
     let pageIndex = 0;
     
     while (processedItems < goods.length) {
-      // İlk sayfa için 8 ürün, diğer sayfalar için 32 ürün
-      const itemsPerPage = pageIndex === 0 ? 8 : 32;
+      // İlk sayfa için 8 ürün, diğer sayfalar için 30 ürün
+      const itemsPerPage = pageIndex === 0 ? 8 : 32
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);

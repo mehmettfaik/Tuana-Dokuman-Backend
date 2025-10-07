@@ -600,18 +600,16 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         }
         
         currentY -= rowHeight;
-      });
 
-      // Sayfa numarası ekle (her sayfaya)
-      currentPage.drawText(pageNumber.toString(), {
-        x: pageWidth / 2,
-        y: 30,
-        size: 12,
-        font: this.font,
-        color: rgb(0, 0, 0),
+        // Sayfa numarası ekle (her sayfaya)
+        currentPage.drawText(pageNumber.toString(), {
+          x: pageWidth / 2,
+          y: 30,
+          size: 12,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
       });
-      
-      pageIndex++;
     }
 
     // TOTAL AMOUNT - sadece son sayfada

@@ -33,16 +33,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging
 app.use((req, res, next) => {
-  //console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
-  //console.log('Headers:', req.headers);
-  if (req.body && Object.keys(req.body).length > 0) {
-    //console.log('Body:', req.body);
+  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
+  if (req.url.includes('/recipients')) {
+    console.log('Recipients API Call - Headers:', req.headers);
+    if (req.body && Object.keys(req.body).length > 0) {
+      console.log('Recipients API Call - Body:', req.body);
+    }
   }
   next();
 });
 
 // Routes
 const pdfRoutes = require('./routes/pdfRoutes');
+const recipientRoutes = require('./routes/recipientRoutes');
 
 // Test endpoints
 app.get('/', (req, res) => {
@@ -80,6 +83,7 @@ app.get('/api/health', (req, res) => {
 
 // API routes
 app.use('/api/pdf', pdfRoutes);
+app.use('/api/recipients', recipientRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {
