@@ -12,8 +12,10 @@ yarn-error.log*
 .env.production.local
 
 # Temporary files
-temp/
+temp/pdfs/
 tmp/
+# Keep recipient cache in git but ignore PDF files
+!temp/recipientCache.json
 
 # Logs
 logs
