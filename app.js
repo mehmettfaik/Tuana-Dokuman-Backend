@@ -100,28 +100,38 @@ app.get('/api/firebase/test', async (req, res) => {
 
 // Recipients test endpoint
 app.get('/api/recipients/test', (req, res) => {
+  // Firebase yapılandırma durumunu kontrol et
+  const firebaseConfig = {
+    projectId: !!process.env.FIREBASE_PROJECT_ID,
+    clientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: !!process.env.FIREBASE_PRIVATE_KEY
+  };
+  
+  const isFirebaseConfigured = firebaseConfig.projectId && firebaseConfig.clientEmail && firebaseConfig.privateKey;
+  
   res.json({ 
-    message: 'Recipients API is working',
+    message: 'Recipients API status',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
+    firebaseStatus: {
+      configured: isFirebaseConfigured,
+      config: firebaseConfig,
+      initialized: firebaseInitialized !== null
+    },
     features: [
       'CRUD Operations',
       'Advanced Search with Filters',
-      'Bulk Operations',
       'Data Validation',
-      'Duplicate Prevention',
       'Statistics & Analytics'
     ],
     routes: [
       'GET /api/recipients - List all recipients',
-      'GET /api/recipients/search?q=term&country=TR&city=Istanbul&hasEmail=true - Advanced search',
+      'GET /api/recipients/search?q=term - Search recipients',
       'GET /api/recipients/stats - Get statistics',
       'GET /api/recipients/:id - Get specific recipient',
       'POST /api/recipients - Create new recipient',
       'PUT /api/recipients/:id - Update recipient',
-      'DELETE /api/recipients/:id - Delete recipient',
-      'POST /api/recipients/bulk-delete - Bulk delete recipients',
-      'POST /api/recipients/bulk-update - Bulk update recipients'
+      'DELETE /api/recipients/:id - Delete recipient'
     ]
   });
 });

@@ -18,6 +18,17 @@ class RecipientController {
       });
     } catch (error) {
       console.error('❌ Error getting all recipients:', error);
+      
+      // Firebase yapılandırma hatası için özel mesaj
+      if (error.message.includes('Firebase is not initialized')) {
+        return res.status(503).json({
+          success: false,
+          error: 'Service Unavailable',
+          message: 'Firebase is not configured. Recipients API is temporarily unavailable.',
+          details: 'Please check Firebase environment variables: FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY'
+        });
+      }
+      
       res.status(500).json({
         success: false,
         error: 'Internal server error',

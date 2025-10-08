@@ -38,6 +38,9 @@ class RecipientService {
   async getRecipientById(id) {
     try {
       const db = getFirestore();
+      if (!db) {
+        throw new Error('Firebase is not initialized. Please check your Firebase configuration.');
+      }
       const doc = await db.collection(this.collection).doc(id).get();
       
       if (!doc.exists) {
@@ -57,6 +60,9 @@ class RecipientService {
   async createRecipient(recipientData) {
     try {
       const db = getFirestore();
+      if (!db) {
+        throw new Error('Firebase is not initialized. Please check your Firebase configuration.');
+      }
       const now = new Date().toISOString();
       
       const newRecipient = {
@@ -80,6 +86,9 @@ class RecipientService {
   async updateRecipient(id, updateData) {
     try {
       const db = getFirestore();
+      if (!db) {
+        throw new Error('Firebase is not initialized. Please check your Firebase configuration.');
+      }
       const now = new Date().toISOString();
       
       // Önce document'ın var olup olmadığını kontrol et
@@ -108,6 +117,9 @@ class RecipientService {
   async deleteRecipient(id) {
     try {
       const db = getFirestore();
+      if (!db) {
+        throw new Error('Firebase is not initialized. Please check your Firebase configuration.');
+      }
       
       // Önce document'ın var olup olmadığını kontrol et
       const docRef = db.collection(this.collection).doc(id);
