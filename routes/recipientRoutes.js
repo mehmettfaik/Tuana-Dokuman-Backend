@@ -16,10 +16,22 @@ router.get('/search', (req, res) => {
   recipientController.searchRecipients(req, res);
 });
 
-// Cache istatistikleri
+// Database istatistikleri
 // GET /api/recipients/stats
 router.get('/stats', (req, res) => {
-  recipientController.getCacheStats(req, res);
+  recipientController.getStats(req, res);
+});
+
+// Toplu silme
+// POST /api/recipients/bulk-delete
+router.post('/bulk-delete', (req, res) => {
+  recipientController.bulkDelete(req, res);
+});
+
+// Toplu güncelleme
+// POST /api/recipients/bulk-update
+router.post('/bulk-update', (req, res) => {
+  recipientController.bulkUpdate(req, res);
 });
 
 // ID'ye göre recipient getir
@@ -44,12 +56,6 @@ router.put('/:id', (req, res) => {
 // DELETE /api/recipients/:id
 router.delete('/:id', (req, res) => {
   recipientController.deleteRecipient(req, res);
-});
-
-// Cache'i temizle (tüm recipients'ları sil)
-// DELETE /api/recipients/cache/clear
-router.delete('/cache/clear', (req, res) => {
-  recipientController.clearCache(req, res);
 });
 
 module.exports = router;

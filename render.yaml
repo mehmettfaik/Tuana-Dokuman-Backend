@@ -6,7 +6,11 @@ services:
     env: node
     buildCommand: npm install
     startCommand: npm start
+    plan: free
+    region: oregon
     envVars:
       - key: NODE_ENV
         value: production
-    healthCheckPath: /api/pdf/health
+      - key: PORT
+        value: 10000
+    healthCheckPath: /api/health

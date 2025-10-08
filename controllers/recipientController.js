@@ -1,15 +1,16 @@
-const RecipientCacheService = require('../services/recipientCacheService');
+const recipientService = require('../services/recipientService');
+const { validateRecipient, sanitizeRecipient } = require('../services/validationService');
 
 class RecipientController {
   constructor() {
-    this.recipientService = new RecipientCacheService();
+    this.recipientService = recipientService;
   }
 
   // Tüm recipients'ları getir
   async getAllRecipients(req, res) {
     try {
       console.log('🎯 API Call: GET /api/recipients');
-      const recipients = this.recipientService.getAllRecipients();
+      const recipients = await this.recipientService.getAllRecipients();
       res.json({
         success: true,
         data: recipients,
@@ -29,7 +30,7 @@ class RecipientController {
   async getRecipientById(req, res) {
     try {
       const { id } = req.params;
-      const recipient = this.recipientService.getRecipientById(id);
+      const recipient = await this.recipientService.getRecipientById(id);
       
       if (!recipient) {
         return res.status(404).json({
@@ -55,15 +56,23 @@ class RecipientController {
   // Şirket adına göre arama (autocomplete)
   async searchRecipients(req, res) {
     try {
-      const { q } = req.query; // search query
-      console.log('🔍 API Call: GET /api/recipients/search?q=' + (q || 'empty'));
-      const recipients = this.recipientService.searchRecipientsByCompanyName(q);
+      const { q, country, city, hasEmail, hasPhone } = req.query;
+      console.log('🔍 API Call: GET /api/recipients/search - Query:', req.query);
+      
+      const filters = {};
+      if (country) filters.country = country;
+      if (city) filters.city = city;
+      if (hasEmail !== undefined) filters.hasEmail = hasEmail === 'true';
+      if (hasPhone !== undefined) filters.hasPhone = hasPhone === 'true';
+      
+      const recipients = await this.recipientService.searchRecipients(q, filters);
       
       res.json({
         success: true,
         data: recipients,
         count: recipients.length,
-        searchTerm: q || ''
+        searchTerm: q || '',
+        filters: filters
       });
     } catch (error) {
       console.error('❌ Error searching recipients:', error);
@@ -81,30 +90,45 @@ class RecipientController {
       const recipientData = req.body;
       console.log('➕ API Call: POST /api/recipients - Data:', recipientData);
 
-      // Zorunlu alanları kontrol et
-      if (!recipientData.companyName || recipientData.companyName.trim() === '') {
-        console.log('❌ Company name validation failed');
+      // Veri doğrulama
+      const validation = validateRecipient(recipientData, false);
+      if (!validation.isValid) {
+        console.log('❌ Validation failed:', validation.errors);
         return res.status(400).json({
           success: false,
-          error: 'Company name is required'
+          error: 'Validation failed',
+          details: validation.errors
         });
       }
 
-      const result = this.recipientService.addRecipient(recipientData);
-      console.log('📝 Add recipient result:', result);
+      // Veri temizleme
+      const cleanData = sanitizeRecipient(recipientData);
+
+      // Aynı şirket adı var mı kontrol et
+      const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
+      const duplicateCheck = existingRecipients.find(r => 
+        r.companyName.toLowerCase() === cleanData.companyName.toLowerCase()
+      );
       
-      if (result.success) {
-        res.status(201).json({
-          success: true,
-          data: result.recipient,
-          message: 'Recipient added successfully'
-        });
-      } else {
-        res.status(400).json({
+      if (duplicateCheck) {
+        return res.status(409).json({
           success: false,
-          error: result.error
+          error: 'Company with this name already exists',
+          existingRecipient: {
+            id: duplicateCheck.id,
+            companyName: duplicateCheck.companyName
+          }
         });
       }
+
+      const recipient = await this.recipientService.createRecipient(cleanData);
+      console.log('📝 Add recipient result:', recipient);
+      
+      res.status(201).json({
+        success: true,
+        data: recipient,
+        message: 'Recipient added successfully'
+      });
     } catch (error) {
       console.error('❌ Error adding recipient:', error);
       res.status(500).json({
@@ -120,24 +144,60 @@ class RecipientController {
     try {
       const { id } = req.params;
       const recipientData = req.body;
+      console.log('✏️ API Call: PUT /api/recipients/' + id + ' - Data:', recipientData);
 
-      const result = this.recipientService.updateRecipient(id, recipientData);
-      
-      if (result.success) {
-        res.json({
-          success: true,
-          data: result.recipient,
-          message: 'Recipient updated successfully'
-        });
-      } else {
-        const statusCode = result.error === 'Recipient not found' ? 404 : 400;
-        res.status(statusCode).json({
+      // Önce recipient'ın var olup olmadığını kontrol et
+      const existingRecipient = await this.recipientService.getRecipientById(id);
+      if (!existingRecipient) {
+        return res.status(404).json({
           success: false,
-          error: result.error
+          error: 'Recipient not found'
         });
       }
+
+      // Veri doğrulama (güncelleme için)
+      const validation = validateRecipient(recipientData, true);
+      if (!validation.isValid) {
+        console.log('❌ Validation failed:', validation.errors);
+        return res.status(400).json({
+          success: false,
+          error: 'Validation failed',
+          details: validation.errors
+        });
+      }
+
+      // Veri temizleme
+      const cleanData = sanitizeRecipient(recipientData);
+
+      // Eğer şirket adı değiştiriliyorsa, aynı isimde başka şirket var mı kontrol et
+      if (cleanData.companyName && cleanData.companyName !== existingRecipient.companyName) {
+        const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
+        const duplicateCheck = existingRecipients.find(r => 
+          r.companyName.toLowerCase() === cleanData.companyName.toLowerCase() && r.id !== id
+        );
+        
+        if (duplicateCheck) {
+          return res.status(409).json({
+            success: false,
+            error: 'Another company with this name already exists',
+            existingRecipient: {
+              id: duplicateCheck.id,
+              companyName: duplicateCheck.companyName
+            }
+          });
+        }
+      }
+
+      const recipient = await this.recipientService.updateRecipient(id, cleanData);
+      console.log('✅ Update recipient result:', recipient);
+      
+      res.json({
+        success: true,
+        data: recipient,
+        message: 'Recipient updated successfully'
+      });
     } catch (error) {
-      console.error('Error updating recipient:', error);
+      console.error('❌ Error updating recipient:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -150,24 +210,37 @@ class RecipientController {
   async deleteRecipient(req, res) {
     try {
       const { id } = req.params;
+      console.log('🗑️ API Call: DELETE /api/recipients/' + id);
 
-      const result = this.recipientService.deleteRecipient(id);
+      // Önce recipient'ın var olup olmadığını kontrol et
+      const existingRecipient = await this.recipientService.getRecipientById(id);
+      if (!existingRecipient) {
+        return res.status(404).json({
+          success: false,
+          error: 'Recipient not found'
+        });
+      }
+
+      const success = await this.recipientService.deleteRecipient(id);
       
-      if (result.success) {
+      if (success) {
+        console.log('✅ Recipient deleted successfully:', existingRecipient.companyName);
         res.json({
           success: true,
-          data: result.deletedRecipient,
-          message: 'Recipient deleted successfully'
+          message: 'Recipient deleted successfully',
+          deletedRecipient: {
+            id: existingRecipient.id,
+            companyName: existingRecipient.companyName
+          }
         });
       } else {
-        const statusCode = result.error === 'Recipient not found' ? 404 : 400;
-        res.status(statusCode).json({
+        res.status(500).json({
           success: false,
-          error: result.error
+          error: 'Failed to delete recipient'
         });
       }
     } catch (error) {
-      console.error('Error deleting recipient:', error);
+      console.error('❌ Error deleting recipient:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -176,16 +249,16 @@ class RecipientController {
     }
   }
 
-  // Cache istatistikleri
-  async getCacheStats(req, res) {
+  // Database istatistikleri
+  async getStats(req, res) {
     try {
-      const stats = this.recipientService.getCacheStats();
+      const stats = await this.recipientService.getStats();
       res.json({
         success: true,
         data: stats
       });
     } catch (error) {
-      console.error('Error getting cache stats:', error);
+      console.error('Error getting stats:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -194,24 +267,98 @@ class RecipientController {
     }
   }
 
-  // Cache'i temizle
-  async clearCache(req, res) {
+  // Toplu silme
+  async bulkDelete(req, res) {
     try {
-      const result = this.recipientService.clearCache();
-      
-      if (result.success) {
-        res.json({
-          success: true,
-          message: result.message
-        });
-      } else {
-        res.status(400).json({
+      const { ids } = req.body;
+      console.log('🗑️ API Call: POST /api/recipients/bulk-delete - IDs:', ids);
+
+      if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({
           success: false,
-          error: result.error
+          error: 'IDs array is required'
         });
       }
+
+      const results = await this.recipientService.bulkDelete(ids);
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      console.log(`✅ Bulk delete completed: ${successCount} success, ${failCount} failed`);
+
+      res.json({
+        success: true,
+        message: `Bulk delete completed: ${successCount} deleted, ${failCount} failed`,
+        results,
+        summary: {
+          total: ids.length,
+          deleted: successCount,
+          failed: failCount
+        }
+      });
     } catch (error) {
-      console.error('Error clearing cache:', error);
+      console.error('❌ Error in bulk delete:', error);
+      res.status(500).json({
+        success: false,
+        error: 'Internal server error',
+        message: error.message
+      });
+    }
+  }
+
+  // Toplu güncelleme
+  async bulkUpdate(req, res) {
+    try {
+      const { updates } = req.body;
+      console.log('✏️ API Call: POST /api/recipients/bulk-update - Updates count:', updates?.length);
+
+      if (!updates || !Array.isArray(updates) || updates.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Updates array is required'
+        });
+      }
+
+      // Her bir güncelleme için validation
+      for (const update of updates) {
+        if (!update.id || !update.data) {
+          return res.status(400).json({
+            success: false,
+            error: 'Each update must have id and data properties'
+          });
+        }
+
+        const validation = validateRecipient(update.data, true);
+        if (!validation.isValid) {
+          return res.status(400).json({
+            success: false,
+            error: `Validation failed for ID ${update.id}`,
+            details: validation.errors
+          });
+        }
+
+        // Veri temizleme
+        update.data = sanitizeRecipient(update.data);
+      }
+
+      const results = await this.recipientService.bulkUpdate(updates);
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      console.log(`✅ Bulk update completed: ${successCount} success, ${failCount} failed`);
+
+      res.json({
+        success: true,
+        message: `Bulk update completed: ${successCount} updated, ${failCount} failed`,
+        results,
+        summary: {
+          total: updates.length,
+          updated: successCount,
+          failed: failCount
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error in bulk update:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',

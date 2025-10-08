@@ -1,7 +1,17 @@
+// Load environment variables
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const { initializeFirebase } = require('./config/firebase');
 
 const app = express();
+
+// Firebase'i başlat
+const firebaseInitialized = initializeFirebase();
+if (!firebaseInitialized) {
+  console.warn('⚠️ Firebase is not initialized. Recipients API will return errors.');
+}
 
 // CORS middleware - EN ÜSTTE OLMALI
 app.use(cors({
@@ -61,19 +71,57 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working' });
 });
 
+// Firebase test endpoint
+app.get('/api/firebase/test', async (req, res) => {
+  try {
+    const { getFirestore } = require('./config/firebase');
+    const db = getFirestore();
+    
+    // Test Firestore connection
+    const testDoc = await db.collection('test').doc('connection').set({
+      message: 'Firebase connection successful',
+      timestamp: new Date().toISOString()
+    });
+    
+    res.json({
+      status: 'success',
+      message: 'Firebase Firestore connection is working',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Firebase connection failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Recipients test endpoint
 app.get('/api/recipients/test', (req, res) => {
   res.json({ 
     message: 'Recipients API is working',
     timestamp: new Date().toISOString(),
+    version: '2.0.0',
+    features: [
+      'CRUD Operations',
+      'Advanced Search with Filters',
+      'Bulk Operations',
+      'Data Validation',
+      'Duplicate Prevention',
+      'Statistics & Analytics'
+    ],
     routes: [
-      'GET /api/recipients',
-      'GET /api/recipients/search?q=term',
-      'GET /api/recipients/stats',
-      'GET /api/recipients/:id',
-      'POST /api/recipients',
-      'PUT /api/recipients/:id',
-      'DELETE /api/recipients/:id'
+      'GET /api/recipients - List all recipients',
+      'GET /api/recipients/search?q=term&country=TR&city=Istanbul&hasEmail=true - Advanced search',
+      'GET /api/recipients/stats - Get statistics',
+      'GET /api/recipients/:id - Get specific recipient',
+      'POST /api/recipients - Create new recipient',
+      'PUT /api/recipients/:id - Update recipient',
+      'DELETE /api/recipients/:id - Delete recipient',
+      'POST /api/recipients/bulk-delete - Bulk delete recipients',
+      'POST /api/recipients/bulk-update - Bulk update recipients'
     ]
   });
 });

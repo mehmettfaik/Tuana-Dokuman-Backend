@@ -11,11 +11,13 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Firebase
+firebase-service-account.json
+serviceAccountKey.json
+
 # Temporary files
-temp/pdfs/
+temp/
 tmp/
-# Keep recipient cache in git but ignore PDF files
-!temp/recipientCache.json
 
 # Logs
 logs
