@@ -600,16 +600,18 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         }
         
         currentY -= rowHeight;
-
-        // Sayfa numarası ekle (her sayfaya)
-        currentPage.drawText(pageNumber.toString(), {
-          x: pageWidth / 2,
-          y: 30,
-          size: 12,
-          font: this.font,
-          color: rgb(0, 0, 0),
-        });
       });
+
+      // Sayfa numarası ekle (her sayfaya)
+      currentPage.drawText(pageNumber.toString(), {
+        x: pageWidth / 2,
+        y: 30,
+        size: 12,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      
+      pageIndex++;
     }
 
     // TOTAL AMOUNT - sadece son sayfada
@@ -970,8 +972,8 @@ SWIFT: TEBUTRIS 032`
     const bankaBilgileri = formData['Banka Bilgileri'];
     
     // BANKA BİLGİLERİ varsa normal pozisyon, yoksa daha aşağı
-    const notesLineY = bankaBilgileri ? 265 : 300;
-    const notesTitleY = bankaBilgileri ? 255 : 290;
+    const notesLineY = bankaBilgileri ? 265 : 320;
+    const notesTitleY = bankaBilgileri ? 255 : 310;
     
     // NOTES üstünde çizgi - dinamik pozisyon
     page.drawLine({
@@ -1016,14 +1018,14 @@ SWIFT: TEBUTRIS 032`
       // Eğer satır rakamla başlıyorsa (yeni madde), ekstra boşluk ekle
       if (line.match(/^\d+\./)) {
         if (index > 0) { // İlk madde için ekstra boşluk ekleme
-          noteY -= 5; // Maddeler arası ekstra boşluk
+          noteY -= 3; // Maddeler arası ekstra boşluk
         }
       }
       
       this.drawSafeText(page, line, {
         x: 55,
         y: noteY,
-        size: 9,
+        size: 7,
         font: this.font,
         color: rgb(0, 0, 0),
       });
