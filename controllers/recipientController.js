@@ -1,5 +1,5 @@
 const recipientService = require('../services/recipientService');
-const { validateRecipient, sanitizeRecipient } = require('../services/validationService');
+const { validateRecipient, sanitizeRecipient, sanitizeSearchQuery } = require('../utils/recipientValidation');
 
 class RecipientController {
   constructor() {
@@ -70,19 +70,22 @@ class RecipientController {
       const { q, country, city, hasEmail, hasPhone } = req.query;
       console.log('🔍 API Call: GET /api/recipients/search - Query:', req.query);
       
+      // Query'yi temizle
+      const cleanQuery = sanitizeSearchQuery(q);
+      
       const filters = {};
       if (country) filters.country = country;
       if (city) filters.city = city;
       if (hasEmail !== undefined) filters.hasEmail = hasEmail === 'true';
       if (hasPhone !== undefined) filters.hasPhone = hasPhone === 'true';
       
-      const recipients = await this.recipientService.searchRecipients(q, filters);
+      const recipients = await this.recipientService.searchRecipients(cleanQuery, filters);
       
       res.json({
         success: true,
         data: recipients,
         count: recipients.length,
-        searchTerm: q || '',
+        searchTerm: cleanQuery || '',
         filters: filters
       });
     } catch (error) {
@@ -100,6 +103,9 @@ class RecipientController {
     try {
       const recipientData = req.body;
       console.log('➕ API Call: POST /api/recipients - Data:', recipientData);
+      console.log('🔍 Field names received:', Object.keys(recipientData));
+      console.log('🔍 contactPerson field value:', recipientData.contactPerson);
+      console.log('🔍 cityStateCountry field value:', recipientData.cityStateCountry);
 
       // Veri doğrulama
       const validation = validateRecipient(recipientData, false);
@@ -117,11 +123,15 @@ class RecipientController {
 
       // Aynı şirket adı var mı kontrol et
       const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
+      console.log('🔍 Duplicate check - Searching for:', cleanData.companyName);
+      console.log('🔍 Found existing recipients:', existingRecipients.length);
+      
       const duplicateCheck = existingRecipients.find(r => 
         r.companyName.toLowerCase() === cleanData.companyName.toLowerCase()
       );
       
       if (duplicateCheck) {
+        console.log('❌ Duplicate found:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
         return res.status(409).json({
           success: false,
           error: 'Company with this name already exists',
@@ -131,6 +141,8 @@ class RecipientController {
           }
         });
       }
+      
+      console.log('✅ No duplicates found, proceeding with creation');
 
       const recipient = await this.recipientService.createRecipient(cleanData);
       console.log('📝 Add recipient result:', recipient);
@@ -182,12 +194,16 @@ class RecipientController {
 
       // Eğer şirket adı değiştiriliyorsa, aynı isimde başka şirket var mı kontrol et
       if (cleanData.companyName && cleanData.companyName !== existingRecipient.companyName) {
+        console.log('🔍 Company name changed from:', existingRecipient.companyName, 'to:', cleanData.companyName);
         const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
+        console.log('🔍 Found existing recipients with similar name:', existingRecipients.length);
+        
         const duplicateCheck = existingRecipients.find(r => 
           r.companyName.toLowerCase() === cleanData.companyName.toLowerCase() && r.id !== id
         );
         
         if (duplicateCheck) {
+          console.log('❌ Duplicate found during update:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
           return res.status(409).json({
             success: false,
             error: 'Another company with this name already exists',
@@ -197,6 +213,8 @@ class RecipientController {
             }
           });
         }
+        
+        console.log('✅ No duplicates found during update, proceeding');
       }
 
       const recipient = await this.recipientService.updateRecipient(id, cleanData);

@@ -150,12 +150,12 @@ class RecipientService {
         filteredRecipients = recipients.filter(recipient => {
           return (
             (recipient.companyName && recipient.companyName.toLowerCase().includes(searchTerm)) ||
-            (recipient.responsiblePerson && recipient.responsiblePerson.toLowerCase().includes(searchTerm)) ||
+            (recipient.contactPerson && recipient.contactPerson.toLowerCase().includes(searchTerm)) ||
             (recipient.email && recipient.email.toLowerCase().includes(searchTerm)) ||
             (recipient.phone && recipient.phone.toLowerCase().includes(searchTerm)) ||
             (recipient.vat && recipient.vat.toLowerCase().includes(searchTerm)) ||
-            (recipient.city && recipient.city.toLowerCase().includes(searchTerm)) ||
-            (recipient.country && recipient.country.toLowerCase().includes(searchTerm))
+            (recipient.cityStateCountry && recipient.cityStateCountry.toLowerCase().includes(searchTerm)) ||
+            (recipient.address && recipient.address.toLowerCase().includes(searchTerm))
           );
         });
       }
