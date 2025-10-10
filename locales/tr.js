@@ -99,7 +99,7 @@ module.exports = {
   netWeightKg: 'NET AĞIRLIK (KG)',
   invoiceDate: 'FATURA TARİHİ',
   total: 'TOPLAM',
-  meters: 'METRE',
+  meters: 'MT',
   rolls: 'TOP',
   kg: 'KG',
   kgs: 'KG',
@@ -143,7 +143,7 @@ module.exports = {
   season: 'SEZON',
   termin: 'TERMİN',
   process: 'İŞLEM',
-  meter: 'METRE',
+  meter: 'MT',
   price: 'FİYAT',
   total: 'TOPLAM',
   
