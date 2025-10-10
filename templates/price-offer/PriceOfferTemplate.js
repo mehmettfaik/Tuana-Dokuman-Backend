@@ -626,16 +626,8 @@ class PriceOfferTemplate extends BasePdfTemplate {
     const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
     const transportTypeLabel = this.languageService.getText('transportType', this.language);
     
-    // Payment terms değerini çevir
-    const paymentTermsValue = formData['PAYMENT TERMS'] || '---';
-    const translatedPaymentTerms = paymentTermsValue !== '---' ? 
-      this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue : 
-      paymentTermsValue;
-    
-    const footerInfo = [
-      `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['TRANSPORT TYPE'] || formData['transportType'] || '---'}`
-    ];
+    // Dinamik payment & shipping details
+    const footerInfo = this.buildPaymentShippingDetails(formData);
 
     let footerY = y;
     footerInfo.forEach(info => {
@@ -702,6 +694,31 @@ class PriceOfferTemplate extends BasePdfTemplate {
   async generate(formData) {
     await this.initialize();
     await this.createPriceOffer(formData, this.language);
+  }
+  /**
+   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
+   * @param {Object} formData - Form verileri
+   * @returns {Array} Dolu olan alanlar
+   */
+  buildPaymentShippingDetails(formData) {
+    const fields = [];
+
+    // PAYMENT TERMS - Price offer uses different field names
+    const paymentTermsValue = formData['PAYMENT TERMS'] || formData.paymentTerms || '';
+    if (paymentTermsValue.trim() && paymentTermsValue !== '---') {
+      const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
+    }
+
+    // TRANSPORT TYPE - Price offer uses different field names
+    const transportTypeValue = formData['TRANSPORT TYPE'] || formData.transportType || '';
+    if (transportTypeValue.trim() && transportTypeValue !== '---') {
+      const transportTypeLabel = this.languageService.getText('transportType', this.language);
+      fields.push(`${transportTypeLabel}: ${transportTypeValue}`);
+    }
+
+    return fields;
   }
 }
 

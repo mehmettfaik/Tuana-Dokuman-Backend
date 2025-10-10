@@ -1107,19 +1107,8 @@ SWIFT: TEBUTRIS 032`
     const rollsLabel = this.languageService.getText('rolls', this.language);
     const leadTimeLabel = this.languageService.getText('leadTime', this.language);
     
-    // Payment terms value translation
-    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
-    const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
-    
-    const footerInfo = [
-      `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
-      `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`,
-      `${grossWeightLabel}: ${formData['Gross Weight'] || formData.grossWeight || ''}`,
-      `${netWeightLabel}: ${formData['Net Weight'] || formData.netWeight || ''}`,
-      `${rollsLabel}: ${formData['Rolls'] || formData.rolls || ''}`,
-      `${leadTimeLabel}: ${formData['Lead Time'] || formData.leadTime || ''}`,
-    ];
+    // Dinamik payment & shipping details
+    const footerInfo = this.buildPaymentShippingDetails(formData);
 
     let footerY = y;
     footerInfo.forEach(info => {
@@ -1185,6 +1174,66 @@ SWIFT: TEBUTRIS 032`
   async generate(formData) {
     await this.initialize();
     await this.createOrderConfirmation(formData, this.language);
+  }
+  /**
+   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
+   * @param {Object} formData - Form verileri
+   * @returns {Array} Dolu olan alanlar
+   */
+  buildPaymentShippingDetails(formData) {
+    const fields = [];
+
+    // PAYMENT TERMS
+    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
+    if (paymentTermsValue.trim()) {
+      const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
+    }
+
+    // TRANSPORT TYPE
+    const transportTypeValue = formData['Transport Type'] || formData.transportType || '';
+    if (transportTypeValue.trim()) {
+      const transportTypeLabel = this.languageService.getText('transportType', this.language);
+      fields.push(`${transportTypeLabel}: ${transportTypeValue}`);
+    }
+
+    // COUNTRY OF ORIGIN
+    const countryOfOriginValue = formData['Country of Origin'] || formData.countryOfOrigin || '';
+    if (countryOfOriginValue.trim()) {
+      const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
+      fields.push(`${countryOfOriginLabel}: ${countryOfOriginValue}`);
+    }
+
+    // GROSS WEIGHT
+    const grossWeightValue = formData['Gross Weight'] || formData.grossWeight || '';
+    if (grossWeightValue.trim()) {
+      const grossWeightLabel = this.languageService.getText('grossWeight', this.language);
+      fields.push(`${grossWeightLabel}: ${grossWeightValue}`);
+    }
+
+    // NET WEIGHT
+    const netWeightValue = formData['Net Weight'] || formData.netWeight || '';
+    if (netWeightValue.trim()) {
+      const netWeightLabel = this.languageService.getText('netWeight', this.language);
+      fields.push(`${netWeightLabel}: ${netWeightValue}`);
+    }
+
+    // ROLLS
+    const rollsValue = formData['Rolls'] || formData.rolls || '';
+    if (rollsValue.trim()) {
+      const rollsLabel = this.languageService.getText('rolls', this.language);
+      fields.push(`${rollsLabel}: ${rollsValue}`);
+    }
+
+    // LEAD TIME
+    const leadTimeValue = formData['Lead Time'] || formData.leadTime || '';
+    if (leadTimeValue.trim()) {
+      const leadTimeLabel = this.languageService.getText('leadTime', this.language);
+      fields.push(`${leadTimeLabel}: ${leadTimeValue}`);
+    }
+
+    return fields;
   }
 }
 

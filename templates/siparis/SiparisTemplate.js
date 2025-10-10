@@ -950,14 +950,8 @@ class SiparisTemplate extends BasePdfTemplate {
     const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
     const transportTypeLabel = this.languageService.getText('transportType', this.language);
     
-    // Payment terms değerini çevir
-    const paymentTermsValue = formData['Payment Terms'] || '-';
-    const translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue, this.language);
-    
-    const footerInfo = [
-      `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || ''}`
-    ];
+    // Dinamik payment & shipping details
+    const footerInfo = this.buildPaymentShippingDetails(formData);
 
     let footerY = y;
     footerInfo.forEach(info => {
@@ -1024,6 +1018,31 @@ class SiparisTemplate extends BasePdfTemplate {
   async generate(formData) {
     await this.initialize();
     await this.createSiparis(formData, this.language);
+  }
+  /**
+   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
+   * @param {Object} formData - Form verileri
+   * @returns {Array} Dolu olan alanlar
+   */
+  buildPaymentShippingDetails(formData) {
+    const fields = [];
+
+    // PAYMENT TERMS
+    const paymentTermsValue = formData['Payment Terms'] || '';
+    if (paymentTermsValue.trim() && paymentTermsValue !== '-') {
+      const translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue, this.language);
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
+    }
+
+    // TRANSPORT TYPE
+    const transportTypeValue = formData['Transport Type'] || '';
+    if (transportTypeValue.trim()) {
+      const transportTypeLabel = this.languageService.getText('transportType', this.language);
+      fields.push(`${transportTypeLabel}: ${transportTypeValue}`);
+    }
+
+    return fields;
   }
 }
 

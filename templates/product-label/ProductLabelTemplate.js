@@ -6,7 +6,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     super(pdfDoc, logoImage, language);
     this.pageWidth = 289.13; // 102mm in points
     this.pageHeight = 198.43; // 70mm in points
-    this.margin = 8;
+    this.margin = 13; 
   }
 
   async generateDocument(formData, language = 'tr') {
@@ -65,7 +65,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
         
         page.drawImage(this.logoImage, {
           x: this.margin,
-          y: this.pageHeight - this.margin - logoSize,
+          y: this.pageHeight - this.margin + 5 - logoSize,
           width: logoSize,
           height: logoSize,
         });
@@ -164,7 +164,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
                   productData.netWeight || '';
     
     if (weight) {
-      page.drawText(`WEIGHT: ${weight}`, {
+      page.drawText(`ROLL WEIGHT: ${weight}`, {
         x: this.margin,
         y: currentY,
         size: fontSize,
@@ -232,7 +232,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
                        productData.fabricWidth || '';
     
     if (fabricWeight || fabricWidth) {
-      const fabricInfo = `FABRIC WEIGHT / WIDTH: ${fabricWeight || 'N/A'}`;
+      const fabricInfo = `WEIGHT / WIDTH: ${fabricWeight || 'N/A'}`;
       page.drawText(fabricInfo, {
         x: this.margin,
         y: currentY,
@@ -324,7 +324,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     if (client) {
       page.drawText(`CLIENT:${client}`, {
         x: this.margin,
-        y: currentY,
+        y: currentY - 2,
         size: fontSize,
         font: this.font,
         color: rgb(0, 0, 0),
@@ -340,7 +340,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     if (clientArticleCode) {
       page.drawText(`CLIENT ARTICLE CODE: ${clientArticleCode}`, {
         x: this.margin,
-        y: currentY,
+        y: currentY - 2,
         size: fontSize,
         font: this.font,
         color: rgb(0, 0, 0),

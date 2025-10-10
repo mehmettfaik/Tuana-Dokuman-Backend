@@ -1096,29 +1096,11 @@ SWIFT: TEBUTRIS 032`
 
     y -= 20;
 
-    // Payment terms ve diğer bilgiler
-    const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
-    const transportTypeLabel = this.languageService.getText('transportType', this.language);
-    const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
-    const grossWeightLabel = this.languageService.getText('grossWeight', this.language);
-    const netWeightLabel = this.languageService.getText('netWeight', this.language);
-    const rollsLabel = this.languageService.getText('rolls', this.language);
+    // Payment & Shipping Details - Dinamik yapı
+    const paymentShippingDetails = this.buildPaymentShippingDetails(formData);
     
-    // Payment terms value translation
-    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
-    const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
-    
-    const footerInfo = [
-      `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
-      `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`,
-      `${grossWeightLabel}: ${formData['Gross Weight'] || formData.grossWeight || ''}`,
-      `${netWeightLabel}: ${formData['Net Weight'] || formData.netWeight || ''}`,
-      `${rollsLabel}: ${formData['Rolls'] || formData.rolls || ''}`
-    ];
-
     let footerY = y;
-    footerInfo.forEach(info => {
+    paymentShippingDetails.forEach(info => {
       page.drawText(info, {
         x: 55,
         y: footerY,
@@ -1181,6 +1163,76 @@ SWIFT: TEBUTRIS 032`
   async generate(formData) {
     await this.initialize();
     await this.createInvoice(formData, this.language);
+  }
+  /**
+   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
+   * @param {Object} formData - Form verileri
+   * @returns {Array} Dolu olan alanlar
+   */
+  buildPaymentShippingDetails(formData) {
+    const fields = [];
+    
+    // Debug: formData içeriğini kontrol et
+    console.log('Invoice buildPaymentShippingDetails - formData keys:', Object.keys(formData));
+    console.log('Payment related fields:', {
+      paymentTerms: formData.paymentTerms,
+      'Payment Terms': formData['Payment Terms'],
+      transportType: formData.transportType,
+      'Transport Type': formData['Transport Type'],
+      countryOfOrigin: formData.countryOfOrigin,
+      'Country of Origin': formData['Country of Origin']
+    });
+
+    // PAYMENT TERMS - Multiple field name support
+    const paymentTermsValue = formData.paymentTerms || formData['Payment Terms'] || '';
+    if (paymentTermsValue.trim()) {
+      const label = this.language === 'tr' ? 'ÖDEME KOŞULLARI:' : 'PAYMENT TERMS:';
+      fields.push(`${label} ${paymentTermsValue.trim()}`);
+    }
+
+    // TRANSPORT TYPE - Multiple field name support
+    const transportTypeValue = formData.transportType || formData['Transport Type'] || '';
+    if (transportTypeValue.trim()) {
+      const label = this.language === 'tr' ? 'TAŞIMA TİPİ:' : 'TRANSPORT TYPE:';
+      fields.push(`${label} ${transportTypeValue.trim()}`);
+    }
+
+    // COUNTRY OF ORIGIN - Multiple field name support
+    const countryOfOriginValue = formData.countryOfOrigin || formData['Country of Origin'] || '';
+    if (countryOfOriginValue.trim()) {
+      const label = this.language === 'tr' ? 'MENŞE ÜLKESİ:' : 'COUNTRY OF ORIGIN:';
+      fields.push(`${label} ${countryOfOriginValue.trim()}`);
+    }
+
+    // GROSS WEIGHT - Multiple field name support
+    const grossWeightValue = formData.grossWeight || formData['Gross Weight'] || '';
+    if (grossWeightValue.trim()) {
+      const label = this.language === 'tr' ? 'BRÜT AĞIRLIK:' : 'GROSS WEIGHT:';
+      fields.push(`${label} ${grossWeightValue.trim()}`);
+    }
+
+    // NET WEIGHT - Multiple field name support
+    const netWeightValue = formData.netWeight || formData['Net Weight'] || '';
+    if (netWeightValue.trim()) {
+      const label = this.language === 'tr' ? 'NET AĞIRLIK:' : 'NET WEIGHT:';
+      fields.push(`${label} ${netWeightValue.trim()}`);
+    }
+
+    // ROLLS - Multiple field name support
+    const rollsValue = formData.rolls || formData['Rolls'] || '';
+    if (rollsValue.trim()) {
+      const label = this.language === 'tr' ? 'TOP SAYISI:' : 'ROLLS:';
+      fields.push(`${label} ${rollsValue.trim()}`);
+    }
+
+    // LEAD TIME - Multiple field name support
+    const leadTimeValue = formData.leadTime || formData['Lead Time'] || '';
+    if (leadTimeValue.trim()) {
+      const label = this.language === 'tr' ? 'TESLİM SÜRESİ:' : 'LEAD TIME:';
+      fields.push(`${label} ${leadTimeValue.trim()}`);
+    }
+
+    return fields;
   }
 }
 

@@ -838,15 +838,8 @@ class PackingListTemplate extends BasePdfTemplate {
     const transportTypeLabel = this.languageService.getText('transportType', this.language);
     const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
     
-    // Payment terms value translation
-    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
-    const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
-    
-    const footerInfo = [
-      `${paymentTermsLabel}: ${translatedPaymentTerms}`,
-      `${transportTypeLabel}: ${formData['Transport Type'] || formData.transportType || ''}`,
-      `${countryOfOriginLabel}: ${formData['Country of Origin'] || formData.countryOfOrigin || 'TURKEY'}`
-    ];
+    // Dinamik payment & shipping details
+    const footerInfo = this.buildPaymentShippingDetails(formData);
 
     let footerY = y;
     footerInfo.forEach(info => {
@@ -953,6 +946,38 @@ class PackingListTemplate extends BasePdfTemplate {
   async generate(formData) {
     await this.initialize();
     await this.createPackingList(formData, this.language);
+  }
+  /**
+   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
+   * @param {Object} formData - Form verileri
+   * @returns {Array} Dolu olan alanlar
+   */
+  buildPaymentShippingDetails(formData) {
+    const fields = [];
+
+    // PAYMENT TERMS
+    const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
+    if (paymentTermsValue.trim()) {
+      const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
+    }
+
+    // TRANSPORT TYPE
+    const transportTypeValue = formData['Transport Type'] || formData.transportType || '';
+    if (transportTypeValue.trim()) {
+      const transportTypeLabel = this.languageService.getText('transportType', this.language);
+      fields.push(`${transportTypeLabel}: ${transportTypeValue}`);
+    }
+
+    // COUNTRY OF ORIGIN
+    const countryOfOriginValue = formData['Country of Origin'] || formData.countryOfOrigin || '';
+    if (countryOfOriginValue.trim()) {
+      const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
+      fields.push(`${countryOfOriginLabel}: ${countryOfOriginValue}`);
+    }
+
+    return fields;
   }
 }
 
