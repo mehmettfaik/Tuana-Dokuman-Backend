@@ -16,6 +16,7 @@ const DebitNoteTemplate = require('../templates/debit-note/DebitNoteTemplate');
 const OrderConfirmationTemplate = require('../templates/order-confirmation/OrderConfirmationTemplate');
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
+const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 
 // Service imports
 const LogoService = require('../services/logoService');
@@ -287,23 +288,23 @@ exports.generatePDF = async (req, res) => {
     
     if (documentType === 'proforma-invoice') {
       template = new ProformaInvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_PROFORMA_INVOICE';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_PROFORMA_FATURA' : 'TUANA_PROFORMA_INVOICE';
     } else if (documentType === 'invoice') {
       template = new InvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_INVOICE';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_FATURA' : 'TUANA_INVOICE';
     } else if (documentType === 'packing-list') {
       template = new PackingListTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_PACKING_LIST';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_PAKETLEME_LISTESI' : 'TUANA_PACKING_LIST';
     } else if (documentType === 'credit-note') {
       template = new CreditNoteTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_CREDIT_NOTE';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_ALACAK_DEKONTU' : 'TUANA_CREDIT_NOTE';
     } else if (documentType === 'debit-note') {
       template = new DebitNoteTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_DEBIT_NOTE';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_BORC_DEKONTU' : 'TUANA_DEBIT_NOTE';
     } else {
       // Default: technical sheet
       template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
-      pdfFileName = 'TUANA_TECHNICAL_SHEET';
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_TEKNIK_SHEET' : 'TUANA_TECHNICAL_SHEET';
     }
     
     await template.initialize();
@@ -460,9 +461,17 @@ exports.generateProformaInvoice = async (req, res) => {
     //console.log('Saving Proforma Invoice PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_PROFORMA_FATURA_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_PROFORMA_INVOICE_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_PROFORMA_INVOICE_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -535,9 +544,17 @@ exports.generateTechnicalSheet = async (req, res) => {
     //console.log('Saving Technical Sheet PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_TEKNIK_SHEET_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_TECHNICAL_SHEET_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_TECHNICAL_SHEET_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -618,9 +635,17 @@ exports.generateInvoice = async (req, res) => {
     //console.log('Saving Invoice PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_FATURA_${formData['INVOICE NUMBER']}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_INVOICE_${formData['INVOICE NUMBER']}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_INVOICE_${formData['INVOICE NUMBER']}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -701,9 +726,17 @@ exports.generatePackingList = async (req, res) => {
     //console.log('Saving Packing List PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_PAKETLEME_LISTESI_${formData['INVOICE NUMBER']}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_PACKING_LIST_${formData['INVOICE NUMBER']}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_PACKING_LIST_${formData['INVOICE NUMBER']}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -792,9 +825,17 @@ exports.generateCreditNote = async (req, res) => {
     //console.log('Saving Credit Note PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_ALACAK_DEKONTU_${formData['CREDIT NOTE NUMBER']}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_CREDIT_NOTE_${formData['CREDIT NOTE NUMBER']}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_CREDIT_NOTE_${formData['CREDIT NOTE NUMBER']}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -881,9 +922,17 @@ exports.generateDebitNote = async (req, res) => {
     //console.log('Saving Debit Note PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_BORC_DEKONTU_${formData['DEBIT NOTE NUMBER']}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_DEBIT_NOTE_${formData['DEBIT NOTE NUMBER']}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_DEBIT_NOTE_${formData['DEBIT NOTE NUMBER']}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -967,9 +1016,17 @@ exports.generateOrderConfirmation = async (req, res) => {
     //console.log('Saving Order Confirmation PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_SIPARIS_ONAY_${formData['ORDER CONFIRMATION NUMBER']}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_ORDER_CONFIRMATION_${formData['ORDER CONFIRMATION NUMBER']}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_ORDER_CONFIRMATION_${formData['ORDER CONFIRMATION NUMBER']}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -1080,9 +1137,17 @@ exports.generateSiparis = async (req, res) => {
     //console.log('Saving Sipariş PDF...');
     const pdfBytes = await pdfDoc.save();
     
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_SIPARIS_${orderNumber}_${Date.now()}.pdf`;
+    } else {
+      fileName = `TUANA_ORDER_${orderNumber}_${Date.now()}.pdf`;
+    }
+
     // Doğru headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="TUANA_SIPARIS_${orderNumber}_${Date.now()}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -1182,9 +1247,17 @@ const generatePriceOffer = async (req, res) => {
     
     //console.log('Price Offer PDF generated successfully');
 
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (language === 'tr') {
+      fileName = `fiyat-teklifi-${priceOfferNumber}.pdf`;
+    } else {
+      fileName = `price-offer-${priceOfferNumber}.pdf`;
+    }
+
     // Response headers ayarla
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="price-offer-${priceOfferNumber}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
@@ -1205,3 +1278,68 @@ const generatePriceOffer = async (req, res) => {
 };
 
 exports.generatePriceOffer = generatePriceOffer;
+
+// ============================================================================
+// PRODUCT LABEL PDF GENERATION
+// ============================================================================
+
+/**
+ * Ürün etiketleri PDF'i oluştur
+ */
+const generateProductLabel = async (req, res) => {
+  try {
+    console.log('Product Label PDF generation started');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+
+    const formData = req.body;
+    const language = req.body.language || 'tr';
+
+    // Validation
+    if (!formData) {
+      console.error('No form data provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Form data is required' 
+      });
+    }
+
+    // ProductLabelTemplate kullanarak PDF oluştur
+    const template = new ProductLabelTemplate();
+    const pdfDoc = await template.generateDocument(formData, language);
+    
+    // PDF'i byte array'e çevir
+    const pdfBytes = await pdfDoc.save();
+    
+    console.log('Product Label PDF generated successfully');
+
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (language === 'tr') {
+      fileName = `urun-etiketleri-${Date.now()}.pdf`;
+    } else {
+      fileName = `product-labels-${Date.now()}.pdf`;
+    }
+
+    // Response headers ayarla
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // PDF'i gönder
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    console.error('Product Label PDF generation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Product Label PDF generation failed', 
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generateProductLabel = generateProductLabel;

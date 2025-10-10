@@ -22,6 +22,7 @@ router.get('/', (req, res) => {
       { path: '/api/pdf/generate-debit-note', method: 'POST', description: 'Generate Debit Note PDF (legacy)' },
       { path: '/api/pdf/generate-order-confirmation', method: 'POST', description: 'Generate Order Confirmation PDF (legacy)' },
       { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF (legacy)' },
+      { path: '/api/pdf/generate-product-label', method: 'POST', description: 'Generate Product Label PDF (legacy)' },
       
       // Utility endpoints
       { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
@@ -125,6 +126,9 @@ router.post('/generate-siparis', pdfController.generateSiparis);
 
 // Price Offer PDF oluşturma
 router.post('/generate-price-offer', pdfController.generatePriceOffer);
+
+// Product Label PDF oluşturma
+router.post('/generate-product-label', pdfController.generateProductLabel);
 
 // Washing icons endpoint
 router.get('/washing-icons', pdfController.getWashingIcons);

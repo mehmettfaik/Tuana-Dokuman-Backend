@@ -14,6 +14,7 @@ const DebitNoteTemplate = require('../templates/debit-note/DebitNoteTemplate');
 const OrderConfirmationTemplate = require('../templates/order-confirmation/OrderConfirmationTemplate');
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
+const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 
 // Service imports
 const LogoService = require('./logoService');
@@ -85,27 +86,51 @@ class PdfGeneratorService {
       switch (docType) {
         case 'proforma-invoice':
           template = new ProformaInvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_PROFORMA_INVOICE';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_PROFORMA_FATURA';
+          } else {
+            pdfFileName = 'TUANA_PROFORMA_INVOICE';
+          }
           break;
         case 'invoice':
           template = new InvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_INVOICE';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_FATURA';
+          } else {
+            pdfFileName = 'TUANA_INVOICE';
+          }
           break;
         case 'packing-list':
           template = new PackingListTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_PACKING_LIST';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_PAKETLEME_LISTESI';
+          } else {
+            pdfFileName = 'TUANA_PACKING_LIST';
+          }
           break;
         case 'credit-note':
           template = new CreditNoteTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_CREDIT_NOTE';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_ALACAK_DEKONTU';
+          } else {
+            pdfFileName = 'TUANA_CREDIT_NOTE';
+          }
           break;
         case 'debit-note':
           template = new DebitNoteTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_DEBIT_NOTE';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_BORC_DEKONTU';
+          } else {
+            pdfFileName = 'TUANA_DEBIT_NOTE';
+          }
           break;
         case 'order-confirmation':
           template = new OrderConfirmationTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_ORDER_CONFIRMATION';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_SIPARIS_ONAY';
+          } else {
+            pdfFileName = 'TUANA_ORDER_CONFIRMATION';
+          }
           break;
         case 'siparis':
           template = new SiparisTemplate(pdfDoc, logoImage, validatedLanguage);
@@ -113,12 +138,40 @@ class PdfGeneratorService {
           break;
         case 'price-offer':
           template = new PriceOfferTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_PRICE_OFFER';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_FIYAT_TEKLIFI';
+          } else {
+            pdfFileName = 'TUANA_PRICE_OFFER';
+          }
           break;
+        case 'product-label':
+          // Product label için özel işlem
+          template = new ProductLabelTemplate();
+          const labelPdfDoc = await template.generateDocument(formData, validatedLanguage);
+          const labelPdfBytes = await labelPdfDoc.save();
+          
+          // Dil seçimine göre dosya adı
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_URUN_ETiKETLERi';
+          } else {
+            pdfFileName = 'TUANA_PRODUCT_LABELS';
+          }
+          
+          // Dosyayı kaydet
+          const labelFileName = `${pdfFileName}_${jobId}.pdf`;
+          const labelFilePath = path.join(this.outputDir, labelFileName);
+          await fs.writeFile(labelFilePath, labelPdfBytes);
+          
+          console.log(`Product Label PDF generated successfully for job ${jobId}: ${labelFilePath}`);
+          return labelFilePath;
         default:
           // Default: technical sheet
           template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
-          pdfFileName = 'TUANA_TECHNICAL_SHEET';
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_TEKNIK_SHEET';
+          } else {
+            pdfFileName = 'TUANA_TECHNICAL_SHEET';
+          }
       }
 
       // PDF içeriğini oluştur
