@@ -161,9 +161,9 @@ module.exports = {
 
   // Certifiable Values translations
   certifiableValues: {
-    'Yes': 'Evet',
-    'No': 'Hayır',
-    'Upon Request': 'Talep Üzerine'
+    'Yes': 'EVET',
+    'No': 'HAYIR',
+    'Upon Request': 'TALEP ÜZERİNE'
   },
 
   // Notes content for Price Offer

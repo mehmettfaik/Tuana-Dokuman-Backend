@@ -162,9 +162,9 @@ module.exports = {
 
   // Certifiable Values translations
   certifiableValues: {
-    'Yes': 'Yes',
-    'No': 'No',
-    'Upon Request': 'Upon Request'
+    'Yes': 'YES',
+    'No': 'NO',
+    'Upon Request': 'UPON REQUEST'
   },
 
   // Notes content for Price Offer

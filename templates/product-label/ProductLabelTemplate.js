@@ -6,7 +6,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     super(pdfDoc, logoImage, language);
     this.pageWidth = 289.13; // 102mm in points
     this.pageHeight = 198.43; // 70mm in points
-    this.margin = 13; 
+    this.margin = 15; 
   }
 
   async generateDocument(formData, language = 'tr') {
@@ -65,7 +65,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
         
         page.drawImage(this.logoImage, {
           x: this.margin,
-          y: this.pageHeight - this.margin + 5 - logoSize,
+          y: this.pageHeight - this.margin + 7 - logoSize,
           width: logoSize,
           height: logoSize,
         });
@@ -147,7 +147,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
                              productData.fabricWeight || '';
     
     if (finalComposition) {
-      page.drawText(`COMPOSITION:${finalComposition}`, {
+      page.drawText(`COMPOSITION: ${finalComposition}`, {
         x: this.margin,
         y: currentY,
         size: fontSize,
@@ -296,6 +296,8 @@ class ProductLabelTemplate extends BasePdfTemplate {
     let currentY = bottomY;
     const lineHeight = 9;
     
+
+    
     // Article Number parse et
     const fullArticleNumber = productData.articleCode || 
                              productData['TUANA ARTICLE CODE'] || 
@@ -315,14 +317,16 @@ class ProductLabelTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
     
-    // CLIENT
-    const client = productData.client || 
+    // CLIENT - client objesi içindeki companyName'i kontrol et
+    const client = formData.client?.companyName || 
+                  formData['RECIPIENT Şirket Adı'] || 
+                  formData.recipientCompany || 
+                  productData.client || 
                   productData['CLIENT'] || 
-                  formData.companyInfo?.responsiblePerson ||
-                  'RECIPIENT SIRKET ADI';
+                  'CLIENT COMPANY NAME';
     
     if (client) {
-      page.drawText(`CLIENT:${client}`, {
+      page.drawText(`CLIENT: ${client}`, {
         x: this.margin,
         y: currentY - 2,
         size: fontSize,
