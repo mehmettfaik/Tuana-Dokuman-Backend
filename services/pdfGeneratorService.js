@@ -15,6 +15,7 @@ const OrderConfirmationTemplate = require('../templates/order-confirmation/Order
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
+const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 
 // Service imports
 const LogoService = require('./logoService');
@@ -52,6 +53,7 @@ class PdfGeneratorService {
   async generatePDF(jobId, docType, formData, language = 'en') {
     try {
       console.log(`Starting PDF generation for job ${jobId}, docType: ${docType}`);
+
 
       // Language validation
       const languageService = new LanguageService();
@@ -164,7 +166,17 @@ class PdfGeneratorService {
           
           console.log(`Product Label PDF generated successfully for job ${jobId}: ${labelFilePath}`);
           return labelFilePath;
+        case 'hangers-shipment':
+
+          template = new HangersShipmentTemplate(pdfDoc, logoImage, validatedLanguage);
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_ASKILI_SEVKIYAT';
+          } else {
+            pdfFileName = 'TUANA_HANGERS_SHIPMENT';
+          }
+          break;
         default:
+
           // Default: technical sheet
           template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
           if (validatedLanguage === 'tr') {
@@ -174,6 +186,7 @@ class PdfGeneratorService {
           }
       }
 
+      // PDF içeriğini oluştur
       // PDF içeriğini oluştur
       await template.generate(formData);
       

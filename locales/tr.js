@@ -202,6 +202,16 @@ priceOfferNotes: [
   '    KAYDIYLA UĞRANILAN ZARAR TALEP EDİLEBİLİR.',
   '8. BU SÖZLEŞMEDEN DOĞABİLECEK İHTİLAFLARDA İSTANBUL MAHKEMELERİ VE İCRA DAİRELERİ YETKİLİDİR.',
   '9. KAŞE VE İMZA İLE TEYİT EDİLMEMİŞ SİPARİŞLER İŞLEME ALINMAYACAKTIR.'
-]
+],
+
+  // Hangers Shipment specific
+  hangersShipment: 'ASKILI SEVKİYAT',
+  hangersShipmentNumber: 'SEVKİYAT NUMARASI',
+  hangersItems: 'ASKI ÜRÜNLERİ',
+  hangerDimension: 'ASKI ÖLÇÜSİ',
+  pieces: 'ADET',
+  hsCustomsCode: 'GTİP KODU',
+  trackingCode: 'TAKİP KODU',
+  courier: 'KARGO'
 
 };

@@ -23,6 +23,7 @@ router.get('/', (req, res) => {
       { path: '/api/pdf/generate-order-confirmation', method: 'POST', description: 'Generate Order Confirmation PDF (legacy)' },
       { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF (legacy)' },
       { path: '/api/pdf/generate-product-label', method: 'POST', description: 'Generate Product Label PDF (legacy)' },
+      { path: '/api/pdf/hangers-shipment', method: 'POST', description: 'Generate Hangers Shipment PDF' },
       
       // Utility endpoints
       { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
@@ -129,6 +130,9 @@ router.post('/generate-price-offer', pdfController.generatePriceOffer);
 
 // Product Label PDF oluşturma
 router.post('/generate-product-label', pdfController.generateProductLabel);
+
+// Hangers Shipment PDF oluşturma
+router.post('/hangers-shipment', pdfController.generateHangersShipment);
 
 // Washing icons endpoint
 router.get('/washing-icons', pdfController.getWashingIcons);

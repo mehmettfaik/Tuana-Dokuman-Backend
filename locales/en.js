@@ -4,6 +4,7 @@ module.exports = {
   to: 'TO',
   issueDate: 'ISSUE DATE',
   notes: 'NOTES AND GENERAL CONDITIONS',
+  note: 'NOTE',
   paymentTerms: 'PAYMENT TERMS',
   transportType: 'TRANSPORT TYPE',
   signature: 'SIGNATURE OF THE SALESPERSON',
@@ -199,5 +200,15 @@ module.exports = {
     '5. ANY QUALITY CLAIMS MUST BE SUBMITTED VIA EMAIL WITHIN 14 CALENDAR DAYS OF RECEIPT OF GOODS, ACCOMPANIED BY',
     '    SUPPORTING PHOTOS AND A DETAILED DESCRIPTION. NO CLAIMS WILL BE ACCEPTED AFTER THE FABRIC HAS BEEN',
     '    CUT OR PROCESSED.'
-  ]
+  ],
+
+  // Hangers Shipment specific
+  hangersShipment: 'HANGERS SHIPMENT',
+  hangersShipmentNumber: 'SHIPMENT NUMBER',
+  hangersItems: 'HANGER ITEMS',
+  hangerDimension: 'HANGER DIMENSION',
+  pieces: 'PIECES',
+  hsCustomsCode: 'HS (CUSTOMS) CODE',
+  trackingCode: 'TRACKING CODE',
+  courier: 'COURIER'
 };

@@ -17,6 +17,7 @@ const OrderConfirmationTemplate = require('../templates/order-confirmation/Order
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
+const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 
 // Service imports
 const LogoService = require('../services/logoService');
@@ -66,6 +67,7 @@ exports.startPdfGeneration = async (req, res) => {
 
     // Job oluştur
     const jobId = jobManager.createJob(documentType, formData, language);
+
     
     // Arka planda PDF üretimi başlat
     setImmediate(async () => {
@@ -1343,3 +1345,73 @@ const generateProductLabel = async (req, res) => {
 };
 
 exports.generateProductLabel = generateProductLabel;
+
+// Generate Hangers Shipment
+const generateHangersShipment = async (req, res) => {
+  try {
+    console.log('Hangers Shipment PDF generation started');
+
+    const formData = req.body;
+    const language = req.body.language || 'tr';
+
+    // Validation
+    if (!formData) {
+      console.error('No form data provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Form data is required' 
+      });
+    }
+
+    // Language validation
+    const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'tr';
+
+    // PDF document oluştur
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    
+    // Logo yükleme
+    const LogoService = require('../services/logoService');
+    const logoImage = await LogoService.loadLogo(pdfDoc);
+    
+    // Hangers Shipment template
+    const template = new HangersShipmentTemplate(pdfDoc, logoImage, validatedLanguage);
+    await template.initialize();
+    
+    // PDF üretme
+    await template.createHangersShipment(formData, validatedLanguage);
+    
+    // PDF'i byte array olarak al
+    const pdfBytes = await pdfDoc.save();
+    
+    console.log('Hangers Shipment PDF generated successfully');
+
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `askili-sevkiyat-${Date.now()}.pdf`;
+    } else {
+      fileName = `hangers-shipment-${Date.now()}.pdf`;
+    }
+
+    // Response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+
+    // PDF'i gönder
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    console.error('Hangers Shipment PDF generation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Hangers Shipment PDF generation failed',
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generateHangersShipment = generateHangersShipment;
