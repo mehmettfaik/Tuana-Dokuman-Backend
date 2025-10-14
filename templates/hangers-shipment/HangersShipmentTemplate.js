@@ -692,12 +692,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
     // NOTES altında çizgi (Invoice stilinde)
     const lineY = noteY - 8;
-    page.drawLine({
-      start: { x: 50, y: lineY },
-      end: { x: pageWidth - 50, y: lineY },
-      thickness: 1,
-      color: rgb(0, 0, 0),
-    });
+
 
     return lineY - 10; // Return pozisyonu
   }

@@ -73,8 +73,8 @@ class ProductLabelTemplate extends BasePdfTemplate {
         // Logo yanına "TUANA" yazısı ekle
         page.drawText('TUANA', {
           x: this.margin + logoSize + 8, // Logo'dan 8 point boşluk
-          y: this.pageHeight - this.margin - logoSize + 8, // Logo ortasında hizala
-          size: 19,
+          y: this.pageHeight - this.margin - logoSize + 12, // Logo ortasında hizala
+          size: 27,
           font: this.font,
           color: rgb(0, 0, 0),
         });
