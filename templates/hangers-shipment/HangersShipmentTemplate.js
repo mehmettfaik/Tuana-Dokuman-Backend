@@ -621,7 +621,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     currentPage.drawText(totalPieces.toString(), {
       x: 420,
       y: currentY - 10,
-      size: 8,
+      size: 6,
       font: this.fontBold,
       color: rgb(0, 0, 0),
     });

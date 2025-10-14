@@ -429,7 +429,7 @@ class InvoiceTemplate extends BasePdfTemplate {
     
     while (processedItems < goods.length) {
       // İlk sayfa için 7 ürün, diğer sayfalar için 27 ürün
-      const itemsPerPage = pageIndex === 0 ? 7 : 27;
+      const itemsPerPage = pageIndex === 0 ? 6 : 27;
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);
@@ -662,7 +662,58 @@ class InvoiceTemplate extends BasePdfTemplate {
 
     currentY -= 20;
 
-    // KDV hesaplama (sadece son sayfada)
+    // Discount hesaplama (KDV'den önce)
+    let discountedAmount = totalAmount; // İndirimli tutar
+    const discountEnabled = formData['Discount Enabled'];
+    const discountOrani = parseFloat(formData['Discount'] || 0);
+    
+    if (discountEnabled && discountOrani > 0) {
+      // Discount satırı - tablo formatında
+      currentPage.drawRectangle({
+        x: 50,
+        y: currentY - 15,
+        width: pageWidth - 105,
+        height: 20,
+        borderColor: rgb(0, 0, 0),
+        borderWidth: 1,
+      });
+
+      // Discount yazısı ve oranı - QUANTITY sütununda
+      const discountLabel = this.language === 'tr' ? 'İNDİRİM' : 'DISCOUNT';
+      currentPage.drawText(`% ${discountOrani} ${discountLabel}`, {
+        x: 355,
+        y: currentY - 10,
+        size: 8,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+
+      // Discount tutarı - AMOUNT sütununda (negatif değer)
+      const discountTutari = (totalAmount * discountOrani) / 100;
+      currentPage.drawText(`-${this.formatTurkishNumber(discountTutari)} ${totalCurrency}`, {
+        x: 480,
+        y: currentY - 10,
+        size: 8,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+
+      // Sadece gerekli dikey çizgiler
+      const discountVerticalLines = [350, 475];
+      discountVerticalLines.forEach(x => {
+        currentPage.drawLine({
+          start: { x: x, y: currentY + 5 },
+          end: { x: x, y: currentY - 15 },
+          thickness: 1,
+          color: rgb(0, 0, 0),
+        });
+      });
+
+      currentY -= 20;
+      discountedAmount = totalAmount - discountTutari; // İndirimli tutarı hesapla
+    }
+
+    // KDV hesaplama (indirimli tutar üzerinden)
     const kdvEnabled = formData['KDV Ekle Enabled'];
     const kdvOrani = parseFloat(formData['KDV'] || 0);
     if (kdvEnabled && kdvOrani > 0) {
@@ -686,8 +737,8 @@ class InvoiceTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // KDV tutarı - AMOUNT sütununda
-      const kdvTutari = (totalAmount * kdvOrani) / 100;
+      // KDV tutarı - AMOUNT sütununda (indirimli tutar üzerinden)
+      const kdvTutari = (discountedAmount * kdvOrani) / 100;
       currentPage.drawText(this.formatTurkishNumber(kdvTutari), {
         x: 480,
         y: currentY - 10,
@@ -728,7 +779,7 @@ class InvoiceTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      const genelToplam = totalAmount + kdvTutari;
+      const genelToplam = discountedAmount + kdvTutari;
       currentPage.drawText(this.formatTurkishNumber(genelToplam), {
         x: 480,
         y: currentY - 10,
@@ -753,8 +804,52 @@ class InvoiceTemplate extends BasePdfTemplate {
       // KUR BİLGİSİ'ni son sayfada GENEL TOPLAM ile aynı seviyede
       this.drawCurrencyInfo(currentPage, currentY + 10, formData);
     } else {
-      // KDV yoksa da KUR BİLGİSİ'ni son sayfada TOTAL AMOUNT'un altında
-      this.drawCurrencyInfo(currentPage, currentY - 10, formData);
+      // KDV yoksa ama discount varsa GENEL TOPLAM göster
+      if (discountEnabled && discountOrani > 0) {
+        // GENEL TOPLAM satırı - tablo formatında
+        currentPage.drawRectangle({
+          x: 50,
+          y: currentY - 15,
+          width: pageWidth - 105,
+          height: 20,
+          borderColor: rgb(0, 0, 0),
+          borderWidth: 1,
+        });
+
+        const generalTotalLabel = this.languageService.getText('generalTotal', this.language);
+        currentPage.drawText(generalTotalLabel, {
+          x: 355,
+          y: currentY - 10,
+          size: 8,
+          font: this.fontBold,
+          color: rgb(0, 0, 0),
+        });
+
+        currentPage.drawText(`${this.formatTurkishNumber(discountedAmount)} ${totalCurrency}`, {
+          x: 480,
+          y: currentY - 10,
+          size: 8,
+          font: this.fontBold,
+          color: rgb(0, 0, 0),
+        });
+
+        // Sadece gerekli dikey çizgiler GENEL TOPLAM satırında
+        const genelToplamVerticalLines = [350, 475];
+        genelToplamVerticalLines.forEach(x => {
+          currentPage.drawLine({
+            start: { x: x, y: currentY + 5 },
+            end: { x: x, y: currentY - 15 },
+            thickness: 1,
+            color: rgb(0, 0, 0),
+          });
+        });
+
+        currentY -= 20;
+        this.drawCurrencyInfo(currentPage, currentY + 10, formData);
+      } else {
+        // Ne KDV ne de discount yoksa KUR BİLGİSİ'ni TOTAL AMOUNT'un altında
+        this.drawCurrencyInfo(currentPage, currentY - 10, formData);
+      }
     }
 
     return currentY + 10;
