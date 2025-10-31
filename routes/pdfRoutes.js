@@ -134,9 +134,6 @@ router.post('/generate-product-label', pdfController.generateProductLabel);
 // Hangers Shipment PDF oluşturma
 router.post('/hangers-shipment', pdfController.generateHangersShipment);
 
-// OCR-based Packing List PDF oluşturma
-router.post('/generate-packing-list-ocr', pdfController.generatePackingListWithOcr);
-
 // Washing icons endpoint
 router.get('/washing-icons', pdfController.getWashingIcons);
 

@@ -9,6 +9,7 @@ class RecipientController {
   // Tüm recipients'ları getir
   async getAllRecipients(req, res) {
     try {
+      console.log('🎯 API Call: GET /api/recipients');
       const recipients = await this.recipientService.getAllRecipients();
       res.json({
         success: true,
@@ -67,6 +68,7 @@ class RecipientController {
   async searchRecipients(req, res) {
     try {
       const { q, country, city, hasEmail, hasPhone } = req.query;
+      console.log('🔍 API Call: GET /api/recipients/search - Query:', req.query);
       
       // Query'yi temizle
       const cleanQuery = sanitizeSearchQuery(q);
@@ -100,6 +102,10 @@ class RecipientController {
   async addRecipient(req, res) {
     try {
       const recipientData = req.body;
+      console.log('➕ API Call: POST /api/recipients - Data:', recipientData);
+      console.log('🔍 Field names received:', Object.keys(recipientData));
+      console.log('🔍 contactPerson field value:', recipientData.contactPerson);
+      console.log('🔍 cityStateCountry field value:', recipientData.cityStateCountry);
 
       // Veri doğrulama
       const validation = validateRecipient(recipientData, false);
@@ -161,6 +167,7 @@ class RecipientController {
     try {
       const { id } = req.params;
       const recipientData = req.body;
+      console.log('✏️ API Call: PUT /api/recipients/' + id + ' - Data:', recipientData);
 
       // Önce recipient'ın var olup olmadığını kontrol et
       const existingRecipient = await this.recipientService.getRecipientById(id);
@@ -232,6 +239,7 @@ class RecipientController {
   async deleteRecipient(req, res) {
     try {
       const { id } = req.params;
+      console.log('🗑️ API Call: DELETE /api/recipients/' + id);
 
       // Önce recipient'ın var olup olmadığını kontrol et
       const existingRecipient = await this.recipientService.getRecipientById(id);
@@ -292,6 +300,7 @@ class RecipientController {
   async bulkDelete(req, res) {
     try {
       const { ids } = req.body;
+      console.log('🗑️ API Call: POST /api/recipients/bulk-delete - IDs:', ids);
 
       if (!ids || !Array.isArray(ids) || ids.length === 0) {
         return res.status(400).json({
@@ -330,6 +339,7 @@ class RecipientController {
   async bulkUpdate(req, res) {
     try {
       const { updates } = req.body;
+      console.log('✏️ API Call: POST /api/recipients/bulk-update - Updates count:', updates?.length);
 
       if (!updates || !Array.isArray(updates) || updates.length === 0) {
         return res.status(400).json({

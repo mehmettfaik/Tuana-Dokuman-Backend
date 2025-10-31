@@ -35,6 +35,8 @@ class BasePdfTemplate {
       this.font = helveticaNeueLight;
       this.fontBold = helveticaNeueBold || helveticaNeueLight; // Bold varsa kullan
       this.fontItalic = helveticaNeueLightItalic || helveticaNeueLight;
+      //console.log('✅ Using Helvetica Neue Light font');
+      //console.log('✅ Bold font loaded:', !!helveticaNeueBold);
     } else {
       // Helvetica Neue UltraLight fontlarını yüklemeyi dene
       const helveticaNeueUltraLight = await this.fontService.loadHelveticaNeueUltraLight(this.pdfDoc);
@@ -45,11 +47,13 @@ class BasePdfTemplate {
         this.font = helveticaNeueUltraLight;        // Normal text için UltraLight
         this.fontBold = helveticaNeueUltraLight;    // Bold yerine yine UltraLight
         this.fontItalic = helveticaNeueUltraLightItalic || helveticaNeueUltraLight; // İtalik varsa kullan
+        //console.log('✅ Using Helvetica Neue UltraLight fonts (Açık)');
       } else {
         // Fallback olarak standart fontları kullan
         this.font = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
         this.fontBold = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
         this.fontItalic = await this.pdfDoc.embedFont(StandardFonts.HelveticaOblique);
+        //console.log('⚠️  Using standard Helvetica fonts (custom font not found)');
       }
     }
   }

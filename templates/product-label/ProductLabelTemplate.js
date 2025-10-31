@@ -74,7 +74,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
         page.drawText('TUANA', {
           x: this.margin + logoSize + 8, // Logo'dan 8 point boşluk
           y: this.pageHeight - this.margin - logoSize + 12, // Logo ortasında hizala
-          size: 25,
+          size: 27,
           font: this.font,
           color: rgb(0, 0, 0),
         });
@@ -224,14 +224,15 @@ class ProductLabelTemplate extends BasePdfTemplate {
     // FABRIC WEIGHT / WIDTH (tek satırda)
     const fabricWeight = productData.fabricWeight || 
                         productData['FABRIC WEIGHT'] || 
-                         '';
+                        productData.grossWeight ||
+                        productData.netWeight || '';
     
     const fabricWidth = productData.width || 
                        productData['WIDTH'] || 
-                        '';
+                       productData.fabricWidth || '';
     
     if (fabricWeight || fabricWidth) {
-      const fabricInfo = `WEIGHT / WIDTH: ${fabricWeight || ''}`;
+      const fabricInfo = `WEIGHT / WIDTH: ${fabricWeight || 'N/A'}`;
       page.drawText(fabricInfo, {
         x: this.margin,
         y: currentY,
