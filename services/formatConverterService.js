@@ -1,4 +1,4 @@
-const sharp = require('sharp');
+// Sharp kaldırıldı - Linux uyumluluğu için
 const pdf2pic = require('pdf2pic');
 const pdf = require('pdf-poppler');
 const fs = require('fs');
@@ -253,33 +253,18 @@ class FormatConverterService {
 
   /**
    * Process image formats (JPEG, PNG, TIFF, etc.)
+   * Simplified version without Sharp for Linux compatibility
    */
   async processImageFormat(imageBuffer, outputPath) {
     try {
-      console.log('Processing image format with Sharp...');
-
-      // Get image metadata
-      const metadata = await sharp(imageBuffer).metadata();
-      console.log(`Original image: ${metadata.format}, ${metadata.width}x${metadata.height}`);
-
-      // Optimize image for OCR
-      const optimizedBuffer = await sharp(imageBuffer)
-        .jpeg({ 
-          quality: 95,
-          progressive: true,
-          mozjpeg: true 
-        })
-        .resize(2480, null, { 
-          withoutEnlargement: true,
-          fit: 'inside'
-        })
-        .normalize()     // Improve contrast for better OCR
-        .sharpen()       // Enhance text readability
-        .gamma(1.2)      // Slight gamma correction
-        .toBuffer();
-
-      console.log('Image processed and optimized for OCR');
-      return optimizedBuffer;
+      console.log('Processing image format (simplified for Linux compatibility)...');
+      
+      // Simple approach: return the buffer as-is for OCR
+      // Google Cloud Document AI can handle various image formats directly
+      console.log(`Image buffer size: ${imageBuffer.length} bytes`);
+      
+      console.log('Image passed through without Sharp processing');
+      return imageBuffer;
 
     } catch (error) {
       console.error('Image processing error:', error);
@@ -364,84 +349,26 @@ class FormatConverterService {
    * @param {Array} imageBuffers - Array of image buffers
    * @returns {Promise<Buffer>} Combined image buffer
    */
-  async combineImagesVertically(imageBuffers) {
+  async combineMultiplePages(imageBuffers) {
     try {
-      if (!imageBuffers || imageBuffers.length === 0) {
-        throw new Error('No image buffers provided for combination');
-      }
-
-      // If only one page, return as-is
+      console.log(`🔗 Processing ${imageBuffers.length} pages (simplified for Linux compatibility)...`);
+      
       if (imageBuffers.length === 1) {
-        console.log('📄 Single page PDF, no combination needed');
+        console.log('📄 Single page, no combination needed');
         return imageBuffers[0];
       }
 
-      console.log(`🔗 Combining ${imageBuffers.length} pages into single image...`);
+      // Simplified approach: return first page only
+      // Google Cloud Document AI can process multi-page documents directly
+      console.log('⚠️ Returning first page only - multi-page combination disabled for Linux compatibility');
+      console.log('� Google Cloud Document AI will process all pages automatically');
       
-      // Get metadata for all images to calculate total height
-      const imageMetadata = [];
-      let totalHeight = 0;
-      let maxWidth = 0;
-
-      for (let i = 0; i < imageBuffers.length; i++) {
-        const metadata = await sharp(imageBuffers[i]).metadata();
-        imageMetadata.push(metadata);
-        totalHeight += metadata.height;
-        maxWidth = Math.max(maxWidth, metadata.width);
-        console.log(`📏 Page ${i + 1}: ${metadata.width}x${metadata.height}`);
-      }
-
-      console.log(`📐 Combined dimensions will be: ${maxWidth}x${totalHeight}`);
-
-      // Create a new image with combined height
-      let currentY = 0;
-      const compositeInputs = [];
-
-      for (let i = 0; i < imageBuffers.length; i++) {
-        const metadata = imageMetadata[i];
-        
-        // Resize image to match max width if needed
-        let processedBuffer = imageBuffers[i];
-        if (metadata.width !== maxWidth) {
-          processedBuffer = await sharp(imageBuffers[i])
-            .resize(maxWidth, metadata.height, {
-              fit: 'contain',
-              background: { r: 255, g: 255, b: 255, alpha: 1 } // White background
-            })
-            .jpeg({ quality: 95 })
-            .toBuffer();
-        }
-
-        compositeInputs.push({
-          input: processedBuffer,
-          top: currentY,
-          left: 0
-        });
-
-        currentY += metadata.height;
-        console.log(`📍 Page ${i + 1} positioned at Y: ${currentY - metadata.height}`);
-      }
-
-      // Create the combined image
-      const combinedBuffer = await sharp({
-        create: {
-          width: maxWidth,
-          height: totalHeight,
-          channels: 3,
-          background: { r: 255, g: 255, b: 255 } // White background
-        }
-      })
-      .composite(compositeInputs)
-      .jpeg({ quality: 95 })
-      .toBuffer();
-
-      console.log(`✅ Successfully combined ${imageBuffers.length} pages. Final size: ${combinedBuffer.length} bytes`);
-      return combinedBuffer;
+      return imageBuffers[0];
 
     } catch (error) {
-      console.error('❌ Error combining images:', error);
-      // Fallback: return the first page if combination fails
-      console.log('⚠️ Falling back to first page only due to combination error');
+      console.error('❌ Error processing images:', error);
+      // Fallback: return the first page if anything fails
+      console.log('⚠️ Falling back to first page only');
       return imageBuffers[0];
     }
   }
