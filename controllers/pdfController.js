@@ -41,7 +41,8 @@ exports.startPdfGeneration = async (req, res) => {
     const { docType, formType, formData, language } = req.body;
     const documentType = docType || formType;
 
-    console.log('PDF generation job start request:', { documentType, language });
+    console.log('📋 PDF generation job start request:', { documentType, language });
+    console.log('🔍 Original request:', { docType, formType, documentType });
 
     if (!documentType) {
       return res.status(400).json({ 
@@ -288,6 +289,8 @@ exports.generatePDF = async (req, res) => {
     let template;
     let pdfFileName;
     
+    console.log(`🎯 Template selection for documentType: "${documentType}"`);
+    
     if (documentType === 'proforma-invoice') {
       template = new ProformaInvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_PROFORMA_FATURA' : 'TUANA_PROFORMA_INVOICE';
@@ -305,6 +308,7 @@ exports.generatePDF = async (req, res) => {
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_BORC_DEKONTU' : 'TUANA_DEBIT_NOTE';
     } else {
       // Default: technical sheet
+      console.log(`⚠️  No template match for "${documentType}", using default TechnicalSheetTemplate`);
       template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_TEKNIK_SHEET' : 'TUANA_TECHNICAL_SHEET';
     }
@@ -1415,3 +1419,66 @@ const generateHangersShipment = async (req, res) => {
 };
 
 exports.generateHangersShipment = generateHangersShipment;
+
+/**
+ * Generate Packing List with OCR-extracted data
+ */
+const generatePackingListWithOcr = async (req, res) => {
+  try {
+    console.log('Generating Packing List with OCR data...');
+    
+    // OCR'dan gelen veriler req.body'de olacak
+    const ocrData = req.body.ocrData || {};
+    const formData = req.body.formData || {};
+    const language = req.body.language || 'en';
+
+    console.log('OCR Data received:', ocrData);
+    console.log('Form Data received:', formData);
+
+    // OCR verilerini form verilerine merge et
+    const mergedData = {
+      ...formData,
+      ...ocrData
+    };
+
+    console.log('Merged Data:', mergedData);
+
+    // PDF oluştur
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+
+    // Logo servisi
+    const logoService = new LogoService();
+    const logoImage = await logoService.loadLogo(pdfDoc);
+
+    // Template oluştur
+    const template = new PackingListTemplate(pdfDoc, logoImage, language);
+    await template.initialize();
+
+    // PDF generate et
+    await template.generate(mergedData);
+
+    // PDF bytes al
+    const pdfBytes = await pdfDoc.save();
+
+    // Response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="packing-list-ocr.pdf"');
+    res.setHeader('Content-Length', pdfBytes.length);
+
+    // PDF'i gönder
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    console.error('Packing List OCR PDF generation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Packing List OCR PDF generation failed',
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generatePackingListWithOcr = generatePackingListWithOcr;

@@ -901,6 +901,8 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     if (!text) return 12; // Varsayılan tek satır yüksekliği
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
+    // Allow caller to override maximum number of lines (default 3)
+    const maxLines = options.maxLines || 3;
     const words = text.split(' ');
     let currentLine = '';
     let currentY = y;
@@ -925,8 +927,8 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentY -= lineHeight;
         lineCount++;
         
-        // Maksimum 3 satır ile sınırla adresler için
-        if (lineCount >= 3) {
+        // Maksimum satır sayısını caller belirtebilir (adresler için default 3)
+        if (lineCount >= maxLines) {
           if (i < words.length - 1) {
             currentLine += '...';
           }
@@ -1081,49 +1083,51 @@ SWIFT: TEBUTRIS 032`
 
     noteY -= 10; // NOTES içeriği başlangıcı
     
-    // Notes içeriği - frontend'den gelen Notlar alanını kullan
+    // NOTES içeriği - frontend'den gelen Notlar alanını kullan
+    // Use wrapped drawing so long notes move to next lines and push content below
     if (formData['Notlar'] && formData['Notlar'].trim()) {
-      // Notları çok satırlı olarak ekle
-      const notLines = formData['Notlar'].split('\n');
-      notLines.forEach((line, index) => {
-        if (line.trim()) {
-          this.drawSafeText(page, line.trim(), {
-            x: 55,
-            y: noteY,
-            size: 8,
-            font: this.font,
-            color: rgb(0, 0, 0),
-          });
-          noteY -= 12;
-        }
+      // Allow longer notes; allow up to 10 wrapped lines before truncation
+      const usedHeight = this.drawWrappedAddress(page, formData['Notlar'], {
+        x: 55,
+        y: noteY,
+        size: 8,
+        font: this.font,
+        color: rgb(0, 0, 0),
+        maxWidth: pageWidth - 110,
+        lineHeight: 12,
+        maxLines: 10
       });
+      noteY -= usedHeight;
     } else if (formData.notes && Array.isArray(formData.notes)) {
-      // Fallback: eski array formatını da destekle
-      formData.notes.forEach(note => {
-        if (note && note.trim()) {
-          this.drawSafeText(page, note, {
-            x: 55,
-            y: noteY,
-            size: 8,
-            font: this.font,
-            color: rgb(0, 0, 0),
-          });
-          noteY -= 12;
-        }
-      });
+      // Fallback: eski array formatını also support and wrap each line
+      for (const note of formData.notes) {
+        if (!note || !note.trim()) continue;
+        const usedHeight = this.drawWrappedAddress(page, note, {
+          x: 55,
+          y: noteY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: pageWidth - 110,
+          lineHeight: 12,
+          maxLines: 6
+        });
+        noteY -= usedHeight;
+      }
     }
 
-    // NOTES altında çizgi - sabit pozisyon
+    // NOTES altında çizgi - dinamik pozisyon
     const lineY = noteY - 8;
     page.drawLine({
-      start: { x: 50, y: lineY  },
-      end: { x: pageWidth - 50, y: lineY },
+      start: { x: 50, y: 227  },
+      end: { x: pageWidth - 50, y: 227 },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
 
-    // Sabit pozisyon döndür
-    return 240; // Sabit return değeri
+    // Return dynamic Y so sections below move down as notes grow
+    // Add a small padding of 12px
+    return lineY - 12;
   }
 
   drawProformaFooter(page, pageWidth, startY = null, formData = {}) {
