@@ -4,6 +4,7 @@ module.exports = {
   to: 'ALICI',
   issueDate: 'TARİH',
   notes: 'NOTLAR VE GENEL KOŞULLAR',
+  generalConditions: 'GENEL KOŞULLAR',
   paymentTerms: 'ÖDEME KOŞULLARI',
   transportType: 'TAŞIMA TİPİ',
   signature: 'SATIŞ TEMSİLCİSİ İMZASI',
@@ -201,7 +202,6 @@ priceOfferNotes: [
   '7. SİPARİŞİN KISMEN VEYA TAMAMEN İPTALİ YA DA SÖZLEŞME HÜKÜMLERİNİN İHLALİ HALİNDE, SİPARİŞ TOPLAM TUTARININ %30’UNDAN AZ OLMAMAK ',
   '    KAYDIYLA UĞRANILAN ZARAR TALEP EDİLEBİLİR.',
   '8. BU SÖZLEŞMEDEN DOĞABİLECEK İHTİLAFLARDA İSTANBUL MAHKEMELERİ VE İCRA DAİRELERİ YETKİLİDİR.',
-  '9. KAŞE VE İMZA İLE TEYİT EDİLMEMİŞ SİPARİŞLER İŞLEME ALINMAYACAKTIR.'
 ],
 
   // Hangers Shipment specific
