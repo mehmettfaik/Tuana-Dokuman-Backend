@@ -1,7 +1,6 @@
 const express = require('express');
 const router = express.Router();
 const pdfController = require('../controllers/pdfController');
-const ocrController = require('../controllers/ocrController');
 
 // Test endpoint
 router.get('/', (req, res) => {
@@ -85,9 +84,6 @@ router.get('/health', (req, res) => {
   }
 });
 
-// OCR / Upload endpoint (accepts multipart form-data, field name: file)
-router.post('/upload', ocrController.uploadMiddleware, ocrController.handleUpload);
-
 // ============================================================================
 // LEGACY ENDPOINTS (for backward compatibility)
 // ============================================================================
@@ -137,6 +133,9 @@ router.post('/generate-product-label', pdfController.generateProductLabel);
 
 // Hangers Shipment PDF oluşturma
 router.post('/hangers-shipment', pdfController.generateHangersShipment);
+
+// OCR-based Packing List PDF oluşturma
+router.post('/generate-packing-list-ocr', pdfController.generatePackingListWithOcr);
 
 // Washing icons endpoint
 router.get('/washing-icons', pdfController.getWashingIcons);
