@@ -133,8 +133,8 @@ class PdfJsConverter {
 
     console.log(`📐 Combined dimensions: ${maxWidth}x${totalHeight}`);
 
-    // Create combined image
-    const combined = new Jimp(maxWidth, totalHeight, 0xffffff);
+    // Create combined image - Jimp v1.6.0 syntax
+    const combined = new Jimp({ width: maxWidth, height: totalHeight, color: 0xffffff });
 
     let currentY = 0;
     jimpImages.forEach((img, index) => {

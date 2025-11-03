@@ -14,7 +14,7 @@
   "dependencies": {
     "@google-cloud/documentai": "^9.5.0",
     "axios": "^1.12.2",
-    "canvas": "^3.2.0",
+    "canvas": "^2.11.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^4.19.2",
@@ -24,8 +24,6 @@
     "jimp": "^1.6.0",
     "multer": "^2.0.2",
     "pdf-lib": "^1.17.1",
-    "pdf-poppler": "^0.2.3",
-    "pdf2pic": "^3.2.0",
     "pdfjs-dist": "^3.11.174",
     "sharp": "^0.34.4",
     "uuid": "^9.0.0"

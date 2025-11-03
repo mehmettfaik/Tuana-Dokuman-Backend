@@ -1,6 +1,6 @@
 const sharp = require('sharp');
-const pdf2pic = require('pdf2pic');
-const pdf = require('pdf-poppler');
+// const pdf2pic = require('pdf2pic'); // Removed: causes "linux is NOT supported" error
+// const pdf = require('pdf-poppler');  // Removed: causes Linux compatibility issues
 const fs = require('fs');
 const path = require('path');
 const { PdfJsConverter } = require('./formatConverterPdfJs');
@@ -117,79 +117,15 @@ class FormatConverterService {
 
   /**
    * Legacy PDF conversion using pdf2pic (kept as fallback)
+   * NOTE: pdf2pic causes "linux is NOT supported" errors, so this is disabled
    */
   async convertPdfToImageLegacy(pdfBuffer, outputPath) {
     try {
-      console.log('Converting PDF to image using pdf2pic (legacy)...');
+      console.log('Legacy pdf2pic method not available on Linux platforms');
+      throw new Error('pdf2pic not available - Linux compatibility disabled this fallback');
       
-      // Write PDF buffer to temporary file
-      const timestamp = Date.now();
-      const tempPdfPath = path.join(this.outputDir, `temp_${timestamp}.pdf`);
-      fs.writeFileSync(tempPdfPath, pdfBuffer);
-      
-      console.log('Temporary PDF written to:', tempPdfPath);
-
-      // Configure pdf2pic for high quality conversion
-      const convert = pdf2pic.fromPath(tempPdfPath, {
-        density: 300,           // High DPI for better OCR
-        saveFilename: `converted_${timestamp}`,
-        savePath: this.outputDir,
-        format: "jpg",
-        width: 2480,           // High resolution
-        height: 3508,          // A4 proportions
-        quality: 95            // High quality
-      });
-
-      // Convert ALL pages - pdf2pic bulk conversion
-      console.log('🔍 Converting all PDF pages...');
-      const results = await convert.bulk(-1, { responseType: "image" }); // -1 = all pages
-      
-      if (!results || !Array.isArray(results) || results.length === 0) {
-        throw new Error('PDF conversion failed - no pages converted');
-      }
-
-      console.log(`📄 Successfully converted ${results.length} pages`);
-      
-      // Combine all pages into a single image vertically
-      const pageBuffers = [];
-      const tempFiles = [tempPdfPath];
-      
-      for (let i = 0; i < results.length; i++) {
-        const pageResult = results[i];
-        if (pageResult.path && fs.existsSync(pageResult.path)) {
-          const pageBuffer = fs.readFileSync(pageResult.path);
-          pageBuffers.push(pageBuffer);
-          tempFiles.push(pageResult.path);
-          console.log(`📋 Page ${i + 1} loaded: ${pageBuffer.length} bytes`);
-        }
-      }
-      
-      if (pageBuffers.length === 0) {
-        throw new Error('No valid pages found after conversion');
-      }
-
-      // Combine all pages into single image using Sharp
-      console.log('🔗 Combining all pages into single image...');
-      const combinedImageBuffer = await this.combineImagesVertically(pageBuffers);
-      
-      // Clean up temporary files
-      console.log('🧹 Cleaning up temporary files...');
-      tempFiles.forEach(filePath => {
-        try {
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
-        } catch (cleanupError) {
-          console.error('Error cleaning up temp file:', filePath, cleanupError);
-        }
-      });
-
-      if (!combinedImageBuffer || combinedImageBuffer.length === 0) {
-        throw new Error('PDF conversion failed - combined image buffer is empty');
-      }
-
-      console.log(`✅ Legacy PDF converted successfully! Combined image size: ${combinedImageBuffer.length} bytes`);
-      return combinedImageBuffer;
+      // Code below is commented out due to Linux compatibility issues
+      // All legacy pdf2pic code has been disabled to prevent "linux is NOT supported" errors
 
     } catch (error) {
       console.error('Legacy PDF conversion with pdf2pic failed:', error);
@@ -199,80 +135,14 @@ class FormatConverterService {
 
   /**
    * Alternative PDF conversion using pdf-poppler
+   * NOTE: pdf-poppler causes Linux compatibility issues, so this is disabled
    */
   async convertPdfWithPoppler(pdfBuffer) {
     try {
-      console.log('Converting PDF using pdf-poppler...');
+      console.log('pdf-poppler method not available on Linux platforms');
+      throw new Error('pdf-poppler not available - Linux compatibility disabled this method');
       
-      if (!pdfBuffer || pdfBuffer.length === 0) {
-        throw new Error('PDF buffer is empty');
-      }
-      
-      const timestamp = Date.now();
-      const tempPdfPath = path.join(this.outputDir, `poppler_temp_${timestamp}.pdf`);
-      
-      // Write buffer to temp file
-      fs.writeFileSync(tempPdfPath, pdfBuffer);
-      console.log('Temp PDF written for poppler:', tempPdfPath);
-      
-      // Convert options for ALL pages
-      const options = {
-        format: 'jpeg',
-        out_dir: this.outputDir,
-        out_prefix: `poppler_converted_${timestamp}`,
-        // Remove page: 1 to convert all pages
-        scale: 2048
-      };
-      
-      // Convert PDF to images (all pages)
-      console.log('🔄 Converting all pages with pdf-poppler...');
-      const result = await pdf.convert(tempPdfPath, options);
-      console.log('Poppler conversion result:', result);
-      
-      if (!result || !Array.isArray(result) || result.length === 0) {
-        throw new Error('PDF-Poppler conversion produced no results');
-      }
-      
-      console.log(`📄 Poppler converted ${result.length} pages`);
-      
-      // Read all converted images
-      const pageBuffers = [];
-      const tempFiles = [tempPdfPath];
-      
-      for (let i = 1; i <= result.length; i++) {
-        const imagePath = path.join(this.outputDir, `${options.out_prefix}-${i}.jpg`);
-        
-        if (fs.existsSync(imagePath)) {
-          const pageBuffer = fs.readFileSync(imagePath);
-          pageBuffers.push(pageBuffer);
-          tempFiles.push(imagePath);
-          console.log(`📋 Poppler page ${i} loaded: ${pageBuffer.length} bytes`);
-        } else {
-          console.warn(`⚠️ Expected page ${i} not found: ${imagePath}`);
-        }
-      }
-      
-      if (pageBuffers.length === 0) {
-        throw new Error('No valid pages found after poppler conversion');
-      }
-
-      // Combine all pages into single image
-      console.log('🔗 Combining poppler pages...');
-      const combinedBuffer = await this.combineImagesVertically(pageBuffers);
-      
-      // Clean up temp files
-      tempFiles.forEach(filePath => {
-        try {
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-          }
-        } catch (cleanupError) {
-          console.error('Poppler cleanup error:', filePath, cleanupError);
-        }
-      });
-      
-      console.log(`✅ PDF-Poppler multi-page conversion successful! Combined size: ${combinedBuffer.length} bytes`);
-      return combinedBuffer;
+      // All pdf-poppler code commented out due to Linux compatibility issues
       
     } catch (error) {
       console.error('PDF-Poppler conversion error:', error);
@@ -333,51 +203,29 @@ class FormatConverterService {
   }
 
   /**
-   * Convert multiple pages of PDF to images
+   * Convert multiple pages of PDF to images using cross-platform converter
    */
   async convertPdfMultiPage(pdfBuffer, maxPages = 5) {
     try {
-      console.log('Converting multi-page PDF...');
+      console.log('Converting multi-page PDF with cross-platform converter...');
       
-      const tempPdfPath = path.join(this.outputDir, `temp_multipage_${Date.now()}.pdf`);
-      fs.writeFileSync(tempPdfPath, pdfBuffer);
-
-      const convert = pdf2pic.fromPath(tempPdfPath, {
-        density: 300,
-        saveFilename: "page",
-        savePath: this.outputDir,
-        format: "jpg",
-        width: 2480,
-        height: 3508,
-        quality: 95
+      // Use the cross-platform converter instead of pdf2pic
+      const pageBuffers = await this.pdfConverter.convertPdfBufferToImages(pdfBuffer, {
+        scale: 2.0,  // Higher quality for multi-page
+        quality: 95,
+        optimizeForOcr: true
       });
-
-      const pages = [];
-      const convertPromises = [];
-
-      // Convert up to maxPages
-      for (let i = 1; i <= maxPages; i++) {
-        convertPromises.push(
-          convert(i, { responseType: "buffer" })
-            .then(result => ({ pageNumber: i, buffer: result.buffer }))
-            .catch(error => {
-              console.log(`Page ${i} conversion failed (probably doesn't exist):`, error.message);
-              return null;
-            })
-        );
-      }
-
-      const results = await Promise.all(convertPromises);
       
-      // Filter successful conversions
-      const successfulPages = results.filter(result => result && result.buffer);
+      // Limit to maxPages if specified
+      const limitedPages = maxPages > 0 ? pageBuffers.slice(0, maxPages) : pageBuffers;
       
-      // Clean up temp file
-      try {
-        fs.unlinkSync(tempPdfPath);
-      } catch (cleanupError) {
-        console.error('Error cleaning up temp PDF:', cleanupError);
-      }
+      console.log(`✅ Cross-platform converter processed ${limitedPages.length} pages`);
+      
+      // Return in expected format
+      const successfulPages = limitedPages.map((buffer, index) => ({
+        pageNumber: index + 1,
+        buffer: buffer
+      }));
 
       console.log(`Converted ${successfulPages.length} pages from PDF`);
       return successfulPages;
