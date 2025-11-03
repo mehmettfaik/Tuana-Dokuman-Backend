@@ -166,13 +166,20 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
   const { mapping } = companyConfig;
   
   console.log(`🔄 Mapping fields for company: ${companyName}`);
+  console.log(`📋 Input OCR Data Count: ${ocrData ? ocrData.length : 0}`);
+  console.log(`📋 Company Config:`, companyConfig);
   
   if (!ocrData || !Array.isArray(ocrData)) {
-    console.log('❌ Invalid OCR data provided');
+    console.log('❌ Invalid OCR data provided:', typeof ocrData);
     return [];
   }
   
-  return ocrData.map(item => {
+  // Log sample input data
+  if (ocrData.length > 0) {
+    console.log('📋 Sample Input Data:', JSON.stringify(ocrData[0], null, 2));
+  }
+  
+  const result = ocrData.map(item => {
     const mappedItem = {};
     const processedFields = new Set(); // Hangi field'ların işlendiğini takip et
     
@@ -275,6 +282,16 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
     
     return mappedItem;
   });
+  
+  // Log final mapping result
+  console.log(`📦 Mapping completed: ${result.length} items processed`);
+  if (result.length > 0) {
+    console.log('📋 Sample Mapped Item:', JSON.stringify(result[0], null, 2));
+  } else {
+    console.error('❌ NO MAPPED ITEMS PRODUCED - MAPPING FAILED');
+  }
+  
+  return result;
 }
 
 /**

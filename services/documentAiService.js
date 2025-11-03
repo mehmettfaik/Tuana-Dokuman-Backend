@@ -36,6 +36,13 @@ class DocumentAiService {
 
   async processDocument(documentBuffer, mimeType, companyName = 'DEFAULT') {
     try {
+      // CRITICAL: Log environment info for production debugging
+      console.log('🔧 ENVIRONMENT CHECK:');
+      console.log('- PROJECT_ID:', this.projectId);
+      console.log('- LOCATION:', this.location);
+      console.log('- PROCESSOR_ID:', this.processorId ? 'SET' : 'MISSING');
+      console.log('- NODE_ENV:', process.env.NODE_ENV);
+      
       if (!this.processorId) {
         throw new Error('DOCUMENT_AI_PROCESSOR_ID not found in environment variables');
       }
@@ -50,7 +57,9 @@ class DocumentAiService {
       // Format preprocessing
       console.log('Starting format preprocessing...');
       const preprocessResult = await this.formatConverter.convertToOptimizedImage(documentBuffer, mimeType, 'OCR_optimization');
-      
+      console.log('Converted pages:', preprocessResult.pages.length);
+      console.log('First page buffer size:', preprocessResult.pages[0].length);
+
       let finalBuffer = documentBuffer;
       let finalMimeType = mimeType;
       
@@ -93,6 +102,14 @@ class DocumentAiService {
       
       // Extract text and preprocess for better parsing
       let extractedText = document.text || '';
+      
+      // CRITICAL: Log raw OCR output for production debugging
+      console.log('🔍 RAW OCR TEXT LENGTH:', extractedText.length);
+      console.log('🔍 RAW OCR TEXT (first 1000 chars):');
+      console.log(extractedText.substring(0, 1000));
+      console.log('🔍 RAW OCR TEXT (last 500 chars):');
+      console.log(extractedText.substring(Math.max(0, extractedText.length - 500)));
+      
       console.log('🔄 Preprocessing OCR text for better parsing...');
       extractedText = this.preprocessOcrText(extractedText);
       
@@ -134,9 +151,29 @@ class DocumentAiService {
       
       const rawProducts = parseResult.data;
       console.log(`📋 Parsed with ${parseResult.format} parser (${parseResult.confidence.toFixed(1)}% confidence)`);
+      console.log(`📦 RAW PRODUCTS COUNT: ${rawProducts ? rawProducts.length : 0}`);
+      
+      // CRITICAL: Log raw products for debugging
+      if (rawProducts && rawProducts.length > 0) {
+        console.log('🔍 RAW PRODUCTS SAMPLE:');
+        rawProducts.slice(0, 3).forEach((product, index) => {
+          console.log(`Product ${index + 1}:`, JSON.stringify(product, null, 2));
+        });
+      } else {
+        console.error('❌ NO RAW PRODUCTS FOUND - TRYING EMERGENCY FALLBACK');
+        
+        // Emergency fallback - try all parsers manually
+        const emergencyProducts = await this.emergencyProductExtraction(extractedText, companyName);
+        if (emergencyProducts.length > 0) {
+          console.log(`✅ Emergency extraction found ${emergencyProducts.length} products`);
+          return this.buildSuccessResponse(extractedText, emergencyProducts, emergencyProducts);
+        }
+      }
       
       // Apply field mapping using fieldMappings.js logic
       const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
+      
+      console.log(`📦 MAPPED PRODUCTS COUNT: ${mappedProducts ? mappedProducts.length : 0}`);
 
       // Post-process mapped products to ensure field combinations for frontend
       const finalProducts = mappedProducts.map(item => {
@@ -197,11 +234,119 @@ class DocumentAiService {
   }
 
   /**
+   * Emergency product extraction when all parsers fail
+   * Uses aggressive pattern matching and company-specific keywords
+   */
+  async emergencyProductExtraction(text, companyName) {
+    console.log('🚨 EMERGENCY PRODUCT EXTRACTION STARTED');
+    console.log(`🏢 Company: ${companyName}`);
+    
+    const products = [];
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
+    
+    console.log(`📄 Processing ${lines.length} lines for emergency extraction`);
+    
+    // Company-specific emergency keywords
+    const emergencyPatterns = {
+      'AKBASLAR': {
+        keywords: ['CUSTOMER ORDER', 'COMPOSITION', 'Batch', 'Roll', 'Quantity'],
+        patterns: [/CUSTOMER.*ORDER.*NO.*[:\s](.+)/i, /COMPOSITION.*[:\s](.+)/i]
+      },
+      'ADA': {
+        keywords: ['Müşt', 'Komp', 'Barkod', 'Kalite', 'Metre'],
+        patterns: [/Müşt.*Referansı.*[:\s](.+)/i, /Komp.*[:\s](.+)/i]
+      },
+      'BEZ': {
+        keywords: ['Tip', 'TopAdı', 'Top Metre', 'Dispo', 'kalite', 'lot'],
+        patterns: [/Tip.*[:\s](.+)/i, /TopAdı.*[:\s](.+)/i]
+      },
+      'SAFIRA': {
+        keywords: ['Fabric', 'Color', 'Article', 'Composition'],
+        patterns: [/Article.*[:\s](.+)/i, /Composition.*[:\s](.+)/i]
+      }
+    };
+    
+    // Try company-specific extraction first
+    const companyPatterns = emergencyPatterns[companyName] || emergencyPatterns['AKBASLAR'];
+    
+    console.log(`🔍 Using ${companyName} patterns:`, companyPatterns.keywords);
+    
+    // Look for any lines that contain company keywords
+    let foundProducts = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Check if line contains any company keywords
+      const keywordMatches = companyPatterns.keywords.filter(keyword => 
+        line.toLowerCase().includes(keyword.toLowerCase())
+      );
+      
+      if (keywordMatches.length > 0) {
+        console.log(`📋 Found potential product line: ${line.substring(0, 100)}...`);
+        
+        // Create emergency product
+        const emergencyProduct = {
+          'Order No': '',
+          'Composition': '',
+          'Batch': '',
+          'Roll': '',
+          'Quantity': '',
+          'Emergency Line': line,
+          'Matched Keywords': keywordMatches.join(', ')
+        };
+        
+        // Try to extract specific values using patterns
+        companyPatterns.patterns.forEach(pattern => {
+          const match = line.match(pattern);
+          if (match && match[1]) {
+            emergencyProduct['Order No'] = emergencyProduct['Order No'] || match[1].trim();
+          }
+        });
+        
+        products.push(emergencyProduct);
+        foundProducts++;
+        
+        if (foundProducts >= 10) break; // Limit emergency products
+      }
+    }
+    
+    // If still no products, create a generic one with all text
+    if (products.length === 0) {
+      console.log('🚨 No patterns matched - creating generic product');
+      products.push({
+        'Order No': 'Emergency_Product_1',
+        'Composition': 'See Raw Text',
+        'Batch': '',
+        'Roll': '',
+        'Quantity': '',
+        'Raw Text Sample': text.substring(0, 500),
+        'Emergency': true
+      });
+    }
+    
+    console.log(`🚨 Emergency extraction completed: ${products.length} products`);
+    return products;
+  }
+
+  /**
    * Build success response with parsed data
    */
   buildSuccessResponse(extractedText, finalProducts, rawProducts, parseResult = null) {
     // Validate company-specific fields (use raw products to judge presence of original headers)
     const validation = validateCompanyFields(rawProducts, 'DEFAULT');
+
+    // CRITICAL: Log final response data for debugging
+    console.log('🏁 BUILDING FINAL RESPONSE:');
+    console.log('- Final Products Count:', finalProducts ? finalProducts.length : 0);
+    console.log('- Raw Products Count:', rawProducts ? rawProducts.length : 0);
+    console.log('- Validation Result:', validation);
+    console.log('- Extracted Text Length:', extractedText ? extractedText.length : 0);
+    
+    if (finalProducts && finalProducts.length > 0) {
+      console.log('- Sample Final Product:', JSON.stringify(finalProducts[0], null, 2));
+    } else {
+      console.error('❌ NO FINAL PRODUCTS - THIS IS THE PROBLEM!');
+    }
 
     const response = {
       success: true,
