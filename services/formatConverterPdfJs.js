@@ -21,16 +21,24 @@ class PdfJsConverter {
       // Test canvas availability
       const testCanvas = createCanvas(10, 10);
       console.log('✅ Canvas module available');
+      this.canvasAvailable = true;
       
       // Test Jimp availability  
       console.log('✅ Jimp module available');
+      this.jimpAvailable = true;
       
       // Test pdfjs-dist
       console.log('✅ pdfjs-dist module available');
+      this.pdfjsAvailable = true;
       
     } catch (error) {
       console.error('❌ Dependency check failed:', error);
-      throw new Error(`Cross-platform converter dependencies missing: ${error.message}`);
+      this.canvasAvailable = false;
+      this.jimpAvailable = false;
+      this.pdfjsAvailable = false;
+      
+      // Don't throw error, just log warning - let fallback handle it
+      console.warn('⚠️ Cross-platform converter dependencies not available, will use fallback methods');
     }
   }
 
@@ -145,6 +153,11 @@ class PdfJsConverter {
    */
   async convertPdfToCombinedImage(pdfBuffer, options = {}) {
     console.log('🔄 Starting combined image conversion...');
+    
+    // Check if dependencies are available
+    if (!this.canvasAvailable || !this.jimpAvailable || !this.pdfjsAvailable) {
+      throw new Error('Cross-platform converter dependencies not available in this environment');
+    }
     
     let images;
     try {

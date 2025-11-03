@@ -54,7 +54,8 @@ class FormatConverterService {
         buffer: convertedBuffer,
         mimeType: 'image/jpeg',
         outputPath: outputPath,
-        originalFormat: mimeType
+        originalFormat: mimeType,
+        pages: [convertedBuffer] // Add pages array for compatibility with documentAiService
       };
 
     } catch (error) {

@@ -57,8 +57,21 @@ class DocumentAiService {
       // Format preprocessing
       console.log('Starting format preprocessing...');
       const preprocessResult = await this.formatConverter.convertToOptimizedImage(documentBuffer, mimeType, 'OCR_optimization');
-      console.log('Converted pages:', preprocessResult.pages.length);
-      console.log('First page buffer size:', preprocessResult.pages[0].length);
+      
+      // Safely check preprocessResult structure
+      if (preprocessResult && preprocessResult.pages && Array.isArray(preprocessResult.pages)) {
+        console.log('Converted pages:', preprocessResult.pages.length);
+        if (preprocessResult.pages[0]) {
+          console.log('First page buffer size:', preprocessResult.pages[0].length);
+        }
+      } else {
+        console.log('⚠️ preprocessResult.pages is not available:', {
+          hasPreprocessResult: !!preprocessResult,
+          hasPages: !!(preprocessResult && preprocessResult.pages),
+          pagesType: preprocessResult && typeof preprocessResult.pages,
+          isArray: preprocessResult && Array.isArray(preprocessResult.pages)
+        });
+      }
 
       let finalBuffer = documentBuffer;
       let finalMimeType = mimeType;
