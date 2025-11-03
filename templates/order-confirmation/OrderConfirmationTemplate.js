@@ -75,16 +75,11 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
 
     // DESCRIPTION OF GOODS tablosu
     y = this.drawGoodsTable(page, pageWidth, y, formData);
-    
-    // SABİT POZİSYONLAR - Dinamik hesaplama yok
-    // Frontend NOTES bölümü (Notlar alanı) - SABİT POZİSYON
-    this.drawFrontendNotesSection(page, pageWidth, 300, formData);
+    y -= 10; // KDV sonrası minimal boşluk
 
-    // NOTES AND GENERAL CONDITIONS bölümü - SABİT POZİSYON  
-    this.drawNotesSection(page, pageWidth, 220, formData);
-    
-    // Sonraki bölümler için sabit Y değeri
-    y = 80;
+    // NOTES bölümü
+    y = this.drawNotesSection(page, pageWidth, y, formData);
+    y -= 40; // NOTES'tan sonra daha fazla boşluk
 
     // KUR BİLGİSİ ve BANKA BİLGİLERİ bölümü (varsa)
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
@@ -434,7 +429,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     
     while (processedItems < goods.length) {
       // İlk sayfa için 7 ürün, diğer sayfalar için 27 ürün
-      const itemsPerPage = pageIndex === 0 ? 6 : 27;
+      const itemsPerPage = pageIndex === 0 ? 7 : 27;
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);
@@ -822,8 +817,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     if (!text) return 12; // Varsayılan tek satır yüksekliği
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
-    // Allow caller to override maximum number of lines (default 3)
-    const maxLines = options.maxLines || 3;
     const words = text.split(' ');
     let currentLine = '';
     let currentY = y;
@@ -848,8 +841,8 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         currentY -= lineHeight;
         lineCount++;
         
-        // Maksimum satır sayısını caller belirtebilir (adresler için default 3)
-        if (lineCount >= maxLines) {
+        // Maksimum 3 satır ile sınırla adresler için
+        if (lineCount >= 3) {
           if (i < words.length - 1) {
             currentLine += '...';
           }
@@ -873,54 +866,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     
     // Kullanılan toplam yüksekliği döndür
     return (lineCount + 1) * lineHeight;
-  }
-
-  // Frontend'den gelen notlar için ayrı NOTES bölümü - SABİT POZİSYON
-  drawFrontendNotesSection(page, pageWidth, fixedY, formData) {
-    // Frontend'den gelen Notlar alanı varsa çiz
-    if (!formData['Notlar'] || !formData['Notlar'].trim()) {
-      return; // Not yoksa çıkış
-    }
-
-    // SABİT POZİSYON: 300'den başla
-    const startY = 340;
-
-    // NOTES üstünde çizgi - SABİT POZİSYON
-    page.drawLine({
-      start: { x: 50, y: startY },
-      end: { x: pageWidth - 50, y: startY },
-      thickness: 1,
-      color: rgb(0, 0, 0),
-    });
-
-    // NOTES başlığı - SABİT POZİSYON
-    const notesLabel = this.languageService.getText('note', this.language);
-    page.drawText(notesLabel, {
-      x: 55,
-      y: startY - 10,
-      size: 8,
-      font: this.fontBold,
-      color: rgb(0, 0, 0),
-    });
-
-    // NOTES içeriği - SABİT POZİSYON
-    let noteContentY = startY - 25;
-    const notLines = formData['Notlar'].split('\n');
-    let lineCount = 0;
-    
-    notLines.forEach(line => {
-      if (line.trim() && lineCount < 4 && noteContentY > 240) { // Maksimum 4 satır, minimum Y=240
-        this.drawSafeText(page, line.trim(), {
-          x: 55,
-          y: noteContentY,
-          size: 8,
-          font: this.font,
-          color: rgb(0, 0, 0),
-        });
-        noteContentY -= 12;
-        lineCount++;
-      }
-    });
   }
 
   // Kur bilgisi ve banka bilgileri bölümü
@@ -1022,32 +967,52 @@ SWIFT: TEBUTRIS 032`
     return bankAccounts[currency] || '';
   }
 
-  drawNotesSection(page, pageWidth, fixedY, formData) {
-    // SABİT POZİSYON: 220'den başla
-    const startY = 310;
+  drawNotesSection(page, pageWidth, y, formData) {
+    // BANKA BİLGİLERİ varlığını kontrol et
+    const bankaBilgileri = formData['Banka Bilgileri'];
     
-    // NOTES AND GENERAL CONDITIONS üstünde çizgi - SABİT POZİSYON
+    // BANKA BİLGİLERİ varsa normal pozisyon, yoksa daha aşağı
+    const notesLineY = bankaBilgileri ? 265 : 320;
+    const notesTitleY = bankaBilgileri ? 255 : 310;
+    
+    // NOTES üstünde çizgi - dinamik pozisyon
     page.drawLine({
-      start: { x: 50, y: startY-5 },
-      end: { x: pageWidth - 50, y: startY-5 },
+      start: { x: 50, y: notesLineY },
+      end: { x: pageWidth - 50, y: notesLineY },
       thickness: 1,
       color: rgb(0, 0, 0),
     });
 
-    // NOTES AND GENERAL CONDITIONS başlığı - SABİT POZİSYON
-    const notesAndConditionsLabel = this.languageService.getText('generalConditions', this.language) || 'NOTES AND GENERAL CONDITIONS';
-    page.drawText(notesAndConditionsLabel, {
+    let noteY = notesTitleY; // NOTES başlığı pozisyonu - dinamik
+
+    // NOTES başlığı - küçük font
+    const notesLabel = this.languageService.getText('notes', this.language);
+    page.drawText(notesLabel, {
       x: 55,
-      y: startY - 15,
+      y: noteY,
       size: 8,
       font: this.fontBold,
       color: rgb(0, 0, 0),
     });
 
-    let noteY = startY - 30; // İçerik başlangıcı - SABİT POZİSYON
+    noteY -= 15; // NOTES içeriği başlangıcı
     
     // Order Confirmation notes içeriği - dil desteği ile
-    const orderConfirmationNotes = this.languageService.getText('orderConfirmationNotes', this.language) || [];
+    const orderConfirmationNotes = this.languageService.getText('orderConfirmationNotes', this.language) || [
+      '1. TUANA SHALL NOT BE HELD RESPONSIBLE FOR ANY DELAYS CAUSED BY THIRD-PARTY FORWARDERS OR',
+      '   TRANSPORTERS.',
+      '2. ALL ORDER REQUESTS MUST BE SUBMITTED VIA EMAIL TO THE DESIGNATED CONTACT PERSON FROM THE',
+      '   TUANA TEAM.',
+      '3. FOR ORDERS WITH A TOTAL VOLUME BELOW 1,000 METERS, TUANA WILL APPLY A CHARGE OF',
+      '   APPROXIMATELY €150 FOR THE PREPARATION OF THE ATR DOCUMENT, ONLY IF THE CLIENT REQUESTS SUCH',
+      '   DOCUMENTATION. FOR ORDERS EXCEEDING 1,000 METERS, THIS COST WILL BE COVERED BY TUANA.',
+      '4. CANCELLATION REQUESTS WILL NOT BE ACCEPTED IF SUBMITTED MORE THAN 48 HOURS AFTER ORDER',
+      '   CONFIRMATION, BASED ON THE CLIENT\'S LOCAL TIME. IN SUCH CASES, TUANA RESERVES THE RIGHT TO',
+      '   INVOICE THE FULL AMOUNT OF THE ORDER.',
+      '5. ANY QUALITY CLAIMS MUST BE SUBMITTED VIA EMAIL WITHIN 14 CALENDAR DAYS OF',
+      '   RECEIPT OF GOODS, ACCOMPANIED BY SUPPORTING PHOTOS AND A DETAILED DESCRIPTION. NO CLAIMS WILL',
+      '   BE ACCEPTED AFTER THE FABRIC HAS BEEN CUT OR PROCESSED.'
+    ];
 
     orderConfirmationNotes.forEach((line, index) => {
       // Eğer satır rakamla başlıyorsa (yeni madde), ekstra boşluk ekle
@@ -1067,8 +1032,17 @@ SWIFT: TEBUTRIS 032`
       noteY -= 10;
     });
 
-    // NOTES AND GENERAL CONDITIONS altında çizgi - SABİT POZİSYON
-   
+    // NOTES altında çizgi - sabit pozisyon
+    const lineY = noteY - 8;
+    // page.drawLine({
+    //   start: { x: 50, y: lineY  },
+    //   end: { x: pageWidth - 50, y: lineY },
+    //   thickness: 1,
+    //   color: rgb(0, 0, 0),
+    // });
+
+    // Sabit pozisyon döndür
+    return 240; // Sabit return değeri
   }
 
   drawOrderConfirmationFooter(page, pageWidth, startY = null, formData = {}) {
