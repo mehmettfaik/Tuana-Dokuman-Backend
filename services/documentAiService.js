@@ -36,13 +36,6 @@ class DocumentAiService {
 
   async processDocument(documentBuffer, mimeType, companyName = 'DEFAULT') {
     try {
-      // CRITICAL: Log environment info for production debugging
-      console.log('🔧 ENVIRONMENT CHECK:');
-      console.log('- PROJECT_ID:', this.projectId);
-      console.log('- LOCATION:', this.location);
-      console.log('- PROCESSOR_ID:', this.processorId ? 'SET' : 'MISSING');
-      console.log('- NODE_ENV:', process.env.NODE_ENV);
-      
       if (!this.processorId) {
         throw new Error('DOCUMENT_AI_PROCESSOR_ID not found in environment variables');
       }
@@ -54,35 +47,43 @@ class DocumentAiService {
         throw new Error('File size exceeds 20MB limit for Document AI processing');
       }
 
-      // Format preprocessing
-      console.log('Starting format preprocessing...');
-      const preprocessResult = await this.formatConverter.convertToOptimizedImage(documentBuffer, mimeType, 'OCR_optimization');
+      // Format preprocessing - PDF'ler için özel kontrol
+      // Document AI, PDF'leri direkt işleyebilir ancak bazen taranmış PDF'lerde sorun olabilir
+      console.log('Checking if format preprocessing is needed...');
       
-      // Safely check preprocessResult structure
-      if (preprocessResult && preprocessResult.pages && Array.isArray(preprocessResult.pages)) {
-        console.log('Converted pages:', preprocessResult.pages.length);
-        if (preprocessResult.pages[0]) {
-          console.log('First page buffer size:', preprocessResult.pages[0].length);
-        }
-      } else {
-        console.log('⚠️ preprocessResult.pages is not available:', {
-          hasPreprocessResult: !!preprocessResult,
-          hasPages: !!(preprocessResult && preprocessResult.pages),
-          pagesType: preprocessResult && typeof preprocessResult.pages,
-          isArray: preprocessResult && Array.isArray(preprocessResult.pages)
-        });
-      }
-
       let finalBuffer = documentBuffer;
       let finalMimeType = mimeType;
+      let conversionApplied = false;
       
-      if (preprocessResult.success) {
-        finalBuffer = preprocessResult.buffer;
-        finalMimeType = 'image/jpeg';
-        console.log('Preprocessing complete: ' + mimeType + ' → ' + finalMimeType);
+      // PDF'ler için: önce direkt gönder, başarısız olursa image'e çevir
+      if (mimeType === 'application/pdf') {
+        console.log('� Sending PDF directly to Document AI (will convert to image if OCR fails)...');
+        // İlk deneme: direkt PDF
+        finalBuffer = documentBuffer;
+        finalMimeType = mimeType;
+      }
+      // Non-standard image formats
+      else if (!['image/jpeg', 'image/png', 'image/tiff', 'image/gif', 'image/bmp', 'image/webp'].includes(mimeType)) {
+        console.log('Starting format preprocessing for:', mimeType);
+        const preprocessResult = await this.formatConverter.convertToOptimizedImage(
+          documentBuffer, 
+          mimeType, 
+          'OCR_optimization'
+        );
+        
+        if (preprocessResult.success) {
+          finalBuffer = preprocessResult.buffer;
+          finalMimeType = 'image/jpeg';
+          conversionApplied = true;
+          console.log('Preprocessing complete: ' + mimeType + ' → ' + finalMimeType);
+        } else {
+          console.log('Preprocessing failed, using original format:', mimeType);
+        }
+      } else {
+        console.log(`Format ${mimeType} - sending directly to Document AI`);
       }
 
-      // Document AI processing with enhanced OCR settings
+      // Document AI processing
       const name = `projects/${this.projectId}/locations/${this.location}/processors/${this.processorId}`;
       const request = {
         name,
@@ -90,16 +91,6 @@ class DocumentAiService {
           content: finalBuffer,
           mimeType: finalMimeType,
         },
-        // Enhanced OCR processing hints for better accuracy
-        processOptions: {
-          ocrConfig: {
-            enableImageQualityScores: true,
-            enableSymbol: true,
-            computeStyleInfo: true,
-            // Enhanced language hints
-            languageHints: ['en', 'tr'], // English and Turkish
-          }
-        }
       };
 
       console.log('Processing document with Document AI...');
@@ -113,80 +104,24 @@ class DocumentAiService {
 
       console.log('Document processed successfully');
       
-      // Extract text and preprocess for better parsing
-      let extractedText = document.text || '';
-      
-      // CRITICAL: Log raw OCR output for production debugging
-      console.log('🔍 RAW OCR TEXT LENGTH:', extractedText.length);
-      console.log('🔍 RAW OCR TEXT (first 1000 chars):');
-      console.log(extractedText.substring(0, 1000));
-      console.log('🔍 RAW OCR TEXT (last 500 chars):');
-      console.log(extractedText.substring(Math.max(0, extractedText.length - 500)));
-      
-      console.log('🔄 Preprocessing OCR text for better parsing...');
-      extractedText = this.preprocessOcrText(extractedText);
-      
-      console.log('📝 Preprocessed OCR text length:', extractedText.length);
-      
-      // Enhanced debug logging for production troubleshooting
-      console.log('🔍 OCR Text Sample (first 500 chars):');
-      console.log(extractedText.substring(0, 500));
-      console.log('🔍 OCR Text Sample (last 500 chars):');  
-      console.log(extractedText.substring(Math.max(0, extractedText.length - 500)));
-      
+      // Extract text and parse data using new parser system
+      const extractedText = document.text || '';
       const parseResult = this.parserFactory.parseDocument(extractedText);
       
       if (!parseResult.success) {
-        console.error('❌ Parser factory failed:', parseResult.error);
-        console.log('🔄 Attempting enhanced legacy parsing fallback...');
-        
-        // Enhanced fallback: try multiple legacy approaches
-        let rawProducts = [];
-        
-        // Try legacy parsing first
-        try {
-          rawProducts = this.parseDocumentDataLegacy(extractedText);
-          console.log(`📋 Legacy parser found ${rawProducts.length} products`);
-        } catch (legacyError) {
-          console.error('Legacy parser also failed:', legacyError);
-        }
-        
-        // If still no products, try extracting basic text patterns
-        if (rawProducts.length === 0) {
-          console.log('🔄 Trying basic text pattern extraction...');
-          rawProducts = this.extractBasicPatterns(extractedText);
-          console.log(`📋 Pattern extraction found ${rawProducts.length} potential products`);
-        }
-        
+        console.error('Parser factory failed:', parseResult.error);
+        // Fallback to legacy parsing if parser fails
+        const rawProducts = this.parseDocumentDataLegacy(extractedText);
         const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
+        
         return this.buildSuccessResponse(extractedText, mappedProducts, rawProducts);
       }
       
       const rawProducts = parseResult.data;
       console.log(`📋 Parsed with ${parseResult.format} parser (${parseResult.confidence.toFixed(1)}% confidence)`);
-      console.log(`📦 RAW PRODUCTS COUNT: ${rawProducts ? rawProducts.length : 0}`);
-      
-      // CRITICAL: Log raw products for debugging
-      if (rawProducts && rawProducts.length > 0) {
-        console.log('🔍 RAW PRODUCTS SAMPLE:');
-        rawProducts.slice(0, 3).forEach((product, index) => {
-          console.log(`Product ${index + 1}:`, JSON.stringify(product, null, 2));
-        });
-      } else {
-        console.error('❌ NO RAW PRODUCTS FOUND - TRYING EMERGENCY FALLBACK');
-        
-        // Emergency fallback - try all parsers manually
-        const emergencyProducts = await this.emergencyProductExtraction(extractedText, companyName);
-        if (emergencyProducts.length > 0) {
-          console.log(`✅ Emergency extraction found ${emergencyProducts.length} products`);
-          return this.buildSuccessResponse(extractedText, emergencyProducts, emergencyProducts);
-        }
-      }
       
       // Apply field mapping using fieldMappings.js logic
       const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
-      
-      console.log(`📦 MAPPED PRODUCTS COUNT: ${mappedProducts ? mappedProducts.length : 0}`);
 
       // Post-process mapped products to ensure field combinations for frontend
       const finalProducts = mappedProducts.map(item => {
@@ -247,119 +182,11 @@ class DocumentAiService {
   }
 
   /**
-   * Emergency product extraction when all parsers fail
-   * Uses aggressive pattern matching and company-specific keywords
-   */
-  async emergencyProductExtraction(text, companyName) {
-    console.log('🚨 EMERGENCY PRODUCT EXTRACTION STARTED');
-    console.log(`🏢 Company: ${companyName}`);
-    
-    const products = [];
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 5);
-    
-    console.log(`📄 Processing ${lines.length} lines for emergency extraction`);
-    
-    // Company-specific emergency keywords
-    const emergencyPatterns = {
-      'AKBASLAR': {
-        keywords: ['CUSTOMER ORDER', 'COMPOSITION', 'Batch', 'Roll', 'Quantity'],
-        patterns: [/CUSTOMER.*ORDER.*NO.*[:\s](.+)/i, /COMPOSITION.*[:\s](.+)/i]
-      },
-      'ADA': {
-        keywords: ['Müşt', 'Komp', 'Barkod', 'Kalite', 'Metre'],
-        patterns: [/Müşt.*Referansı.*[:\s](.+)/i, /Komp.*[:\s](.+)/i]
-      },
-      'BEZ': {
-        keywords: ['Tip', 'TopAdı', 'Top Metre', 'Dispo', 'kalite', 'lot'],
-        patterns: [/Tip.*[:\s](.+)/i, /TopAdı.*[:\s](.+)/i]
-      },
-      'SAFIRA': {
-        keywords: ['Fabric', 'Color', 'Article', 'Composition'],
-        patterns: [/Article.*[:\s](.+)/i, /Composition.*[:\s](.+)/i]
-      }
-    };
-    
-    // Try company-specific extraction first
-    const companyPatterns = emergencyPatterns[companyName] || emergencyPatterns['AKBASLAR'];
-    
-    console.log(`🔍 Using ${companyName} patterns:`, companyPatterns.keywords);
-    
-    // Look for any lines that contain company keywords
-    let foundProducts = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Check if line contains any company keywords
-      const keywordMatches = companyPatterns.keywords.filter(keyword => 
-        line.toLowerCase().includes(keyword.toLowerCase())
-      );
-      
-      if (keywordMatches.length > 0) {
-        console.log(`📋 Found potential product line: ${line.substring(0, 100)}...`);
-        
-        // Create emergency product
-        const emergencyProduct = {
-          'Order No': '',
-          'Composition': '',
-          'Batch': '',
-          'Roll': '',
-          'Quantity': '',
-          'Emergency Line': line,
-          'Matched Keywords': keywordMatches.join(', ')
-        };
-        
-        // Try to extract specific values using patterns
-        companyPatterns.patterns.forEach(pattern => {
-          const match = line.match(pattern);
-          if (match && match[1]) {
-            emergencyProduct['Order No'] = emergencyProduct['Order No'] || match[1].trim();
-          }
-        });
-        
-        products.push(emergencyProduct);
-        foundProducts++;
-        
-        if (foundProducts >= 10) break; // Limit emergency products
-      }
-    }
-    
-    // If still no products, create a generic one with all text
-    if (products.length === 0) {
-      console.log('🚨 No patterns matched - creating generic product');
-      products.push({
-        'Order No': 'Emergency_Product_1',
-        'Composition': 'See Raw Text',
-        'Batch': '',
-        'Roll': '',
-        'Quantity': '',
-        'Raw Text Sample': text.substring(0, 500),
-        'Emergency': true
-      });
-    }
-    
-    console.log(`🚨 Emergency extraction completed: ${products.length} products`);
-    return products;
-  }
-
-  /**
    * Build success response with parsed data
    */
   buildSuccessResponse(extractedText, finalProducts, rawProducts, parseResult = null) {
     // Validate company-specific fields (use raw products to judge presence of original headers)
     const validation = validateCompanyFields(rawProducts, 'DEFAULT');
-
-    // CRITICAL: Log final response data for debugging
-    console.log('🏁 BUILDING FINAL RESPONSE:');
-    console.log('- Final Products Count:', finalProducts ? finalProducts.length : 0);
-    console.log('- Raw Products Count:', rawProducts ? rawProducts.length : 0);
-    console.log('- Validation Result:', validation);
-    console.log('- Extracted Text Length:', extractedText ? extractedText.length : 0);
-    
-    if (finalProducts && finalProducts.length > 0) {
-      console.log('- Sample Final Product:', JSON.stringify(finalProducts[0], null, 2));
-    } else {
-      console.error('❌ NO FINAL PRODUCTS - THIS IS THE PROBLEM!');
-    }
 
     const response = {
       success: true,
@@ -435,102 +262,6 @@ class DocumentAiService {
       console.error('Error in legacy parsing:', error);
       return [];
     }
-  }
-
-  /**
-   * Extract basic patterns when all parsers fail
-   * Last resort method to find any tabular data
-   */
-  extractBasicPatterns(text) {
-    console.log('🔍 Attempting basic pattern extraction...');
-    const products = [];
-    
-    if (!text) return products;
-    
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    
-    // Look for lines that might be product rows (contain numbers, letters, and separators)
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      
-      // Skip obvious header lines
-      if (line.toLowerCase().includes('customer') || 
-          line.toLowerCase().includes('composition') ||
-          line.toLowerCase().includes('total') ||
-          line.toLowerCase().includes('page')) {
-        continue;
-      }
-      
-      // Look for lines with mixed content that might be product data
-      const hasNumbers = /\d/.test(line);
-      const hasLetters = /[a-zA-Z]/.test(line);
-      const hasSeparators = /[\s\-_\|,;:]/.test(line);
-      
-      if (hasNumbers && hasLetters && hasSeparators && line.length > 10) {
-        console.log(`📋 Found potential product line: ${line.substring(0, 50)}...`);
-        
-        // Create a basic product with the raw line as the main field
-        products.push({
-          'Order No': '',
-          'Composition': '',
-          'Batch': '',
-          'Roll': '',
-          'Quantity': '',
-          'Raw Line': line  // Keep original line for reference
-        });
-      }
-    }
-    
-    console.log(`📋 Basic pattern extraction found ${products.length} potential products`);
-    return products;
-  }
-
-  /**
-   * Preprocess OCR text for better parsing accuracy
-   * Fixes common OCR issues that can prevent product detection
-   */
-  preprocessOcrText(text) {
-    if (!text) return '';
-    
-    let processed = text;
-    
-    // Fix common OCR character mistakes
-    processed = processed
-      .replace(/[İI]/g, 'I')  // Normalize Turkish I characters
-      .replace(/[şŞ]/g, 's')  // Normalize Turkish characters
-      .replace(/[çÇ]/g, 'c')
-      .replace(/[ğĞ]/g, 'g')
-      .replace(/[üÜ]/g, 'u')
-      .replace(/[öÖ]/g, 'o')
-      // Fix common OCR number/letter confusion
-      .replace(/0/g, 'O')     // Sometimes 0 is mistaken for O
-      .replace(/1/g, 'I')     // Sometimes 1 is mistaken for I
-      // Normalize spacing around common keywords
-      .replace(/\s*:\s*/g, ': ')
-      .replace(/\s*-\s*/g, ' - ')
-      // Remove excessive whitespace
-      .replace(/\s+/g, ' ')
-      .trim();
-    
-    // Add line breaks before common section headers for better parsing
-    const sectionHeaders = [
-      'CUSTOMER ORDER NO',
-      'COMPOSITION',
-      'Müşt. Referansı', 
-      'Komp',
-      'Tip',
-      'TopAdı',
-      'Top Metre',
-      'Dispo No'
-    ];
-    
-    sectionHeaders.forEach(header => {
-      const regex = new RegExp(`(?<!^|\n)\\s*(${header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-      processed = processed.replace(regex, '\n$1');
-    });
-    
-    console.log('📋 OCR text preprocessing completed');
-    return processed;
   }
 
   /**

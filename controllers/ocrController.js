@@ -126,89 +126,15 @@ const processDocument = async (req, res) => {
       try {
         // Read the uploaded file
         const filePath = uploadedFile.path;
-        
-        // Enhanced format support - all formats now supported with preprocessing
-        console.log(`Processing ${uploadedFile.mimetype} with format conversion preprocessing...`);
-        
         const documentBuffer = fs.readFileSync(filePath);
         
-        console.log(`Original format: ${uploadedFile.mimetype}`);
+        console.log(`📄 Processing ${uploadedFile.mimetype} document...`);
+        console.log(`📏 File size: ${documentBuffer.length} bytes`);
         
-        let finalBuffer = documentBuffer;
-        let finalMimeType = uploadedFile.mimetype;
-        let conversionUsed = false;
-        
-        // Convert problematic formats to JPEG for better OCR compatibility
-        if (uploadedFile.mimetype === 'application/pdf' || 
-            !['image/jpeg', 'image/png'].includes(uploadedFile.mimetype)) {
-          
-          console.log('Converting to optimized JPEG for better OCR...');
-          console.log('Original buffer size:', documentBuffer.length);
-          
-          try {
-            const conversionResult = await formatConverterService.convertToOptimizedImage(
-              documentBuffer, 
-              uploadedFile.mimetype, 
-              uploadedFile.originalname
-            );
-            
-            if (conversionResult.success) {
-              finalBuffer = conversionResult.buffer;
-              finalMimeType = 'image/jpeg';
-              conversionUsed = true;
-              console.log('Format conversion successful - using JPEG for OCR');
-              console.log('Converted buffer size:', finalBuffer.length);
-            } else {
-              console.error('Format conversion failed:', conversionResult.error);
-              
-              // Clean up and return error for PDF conversion failures
-              if (uploadedFile.mimetype === 'application/pdf') {
-                try {
-                  fs.unlinkSync(filePath);
-                } catch (cleanupError) {
-                  console.error('Error cleaning up uploaded file:', cleanupError);
-                }
-                
-                return res.status(500).json({
-                  success: false,
-                  error: 'Dosya formatı dönüştürülemedi. Farklı bir dosya deneyin.',
-                  originalError: conversionResult.error,
-                  suggestions: [
-                    'PDF dosyanızı JPG veya PNG formatına dönüştürün',
-                    'Farklı bir PDF dosyası deneyin',
-                    'PDF\'in şifreli olmadığından emin olun'
-                  ],
-                  supportedFormats: ['JPG', 'PNG', 'TIFF', 'PDF (bazı formatlar desteklenmeyebilir)']
-                });
-              }
-            }
-          } catch (conversionError) {
-            console.error('Format conversion exception:', conversionError);
-            
-            // For PDF files, this is a critical error
-            if (uploadedFile.mimetype === 'application/pdf') {
-              try {
-                fs.unlinkSync(filePath);
-              } catch (cleanupError) {
-                console.error('Error cleaning up uploaded file:', cleanupError);
-              }
-              
-              return res.status(500).json({
-                success: false,
-                error: 'Dosya formatında sorun tespit edildi. Format dönüştürme işlemi başarısız.',
-                originalError: conversionError.message,
-                suggestions: [
-                  'PDF dosyanızı JPG veya PNG formatına dönüştürün',
-                  'Farklı bir PDF editörü ile dosyayı yeniden kaydedin',
-                  'PDF dosya boyutunu küçültmeyi deneyin'
-                ],
-                supportedFormats: ['JPG', 'PNG', 'TIFF', 'PDF (bazı formatlar desteklenmeyebilir)']
-              });
-            }
-          }
-        }
-        
-        // Process with Document AI
+        // Document AI can handle PDFs and standard images directly
+        // No conversion needed - send directly to Google Document AI
+        const finalBuffer = documentBuffer;
+        const finalMimeType = uploadedFile.mimetype;
         
         // Company name detection - frontend'den gelebilir veya dosya adından çıkarılabilir
         let companyName = 'DEFAULT';
@@ -228,7 +154,7 @@ const processDocument = async (req, res) => {
           }
         }
         
-        console.log(`Detected company: ${companyName}`);
+        console.log(`🏢 Detected company: ${companyName}`);
         
         const result = await documentAiService.processDocument(
           finalBuffer, 
@@ -244,7 +170,7 @@ const processDocument = async (req, res) => {
           }
 
           if (result.success) {
-            console.log('OCR processing successful');
+            console.log('✅ OCR processing successful');
             console.log('📄 RAW OCR TEXT FROM CONTROLLER:');
             console.log('=====================================');
             console.log(result.extractedText);
@@ -345,9 +271,9 @@ const testOcr = async (req, res) => {
         ],
         preprocessing: [
           'Tüm formatlar otomatik olarak optimize ediliyor',
-          'PDF → High-quality JPEG dönüşümü',
+          'PDF → High-quality JPEG dönüşümü (pdf-lib + canvas)',
           'Görüntü kalitesi OCR için optimize ediliyor',
-          'Sharp.js ve pdf2pic kullanımı'
+          'Linux/Render uyumlu sistem (Sharp.js + pdf-lib)'
         ],
         reliability: [
           'PDF: %99 (preprocessing ile)',

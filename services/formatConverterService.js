@@ -1,15 +1,11 @@
 const sharp = require('sharp');
-// const pdf2pic = require('pdf2pic'); // Removed: causes "linux is NOT supported" error
-// const pdf = require('pdf-poppler');  // Removed: causes Linux compatibility issues
 const fs = require('fs');
 const path = require('path');
-const { PdfJsConverter } = require('./formatConverterPdfJs');
 
 class FormatConverterService {
   constructor() {
     this.outputDir = 'temp/converted/';
     this.ensureOutputDir();
-    this.pdfConverter = new PdfJsConverter();
   }
 
   /**
@@ -30,7 +26,7 @@ class FormatConverterService {
    */
   async convertToOptimizedImage(inputBuffer, mimeType, originalFilename = 'document') {
     try {
-      console.log(`Converting ${mimeType} to optimized JPEG for OCR...`);
+      console.log(`Converting ${mimeType} to optimized format for OCR...`);
       
       let convertedBuffer;
       // Ensure originalFilename is a valid string and has an extension
@@ -40,8 +36,12 @@ class FormatConverterService {
 
       // Handle different input formats
       if (mimeType === 'application/pdf') {
-        // Convert PDF to images
-        convertedBuffer = await this.convertPdfToImage(inputBuffer, outputPath);
+        // Skip PDF conversion - should be sent directly to Document AI
+        return {
+          success: false,
+          error: 'PDF conversion disabled - send PDFs directly to Document AI',
+          originalFormat: mimeType
+        };
       } else if (this.isImageFormat(mimeType)) {
         // Process other image formats
         convertedBuffer = await this.processImageFormat(inputBuffer, outputPath);
@@ -54,8 +54,7 @@ class FormatConverterService {
         buffer: convertedBuffer,
         mimeType: 'image/jpeg',
         outputPath: outputPath,
-        originalFormat: mimeType,
-        pages: [convertedBuffer] // Add pages array for compatibility with documentAiService
+        originalFormat: mimeType
       };
 
     } catch (error) {
@@ -69,99 +68,14 @@ class FormatConverterService {
   }
 
   /**
-   * Convert PDF to high-quality JPEG image using cross-platform pdfjs-dist
+   * Convert PDF to high-quality JPEG image
+   * Simple approach: PDFs are sent directly to Document AI
+   * This method is kept for non-PDF image format conversions
    */
   async convertPdfToImage(pdfBuffer, outputPath) {
-    try {
-      console.log('🔄 Converting PDF using cross-platform pdfjs-dist converter...');
-      console.log('PDF buffer size:', pdfBuffer.length);
-      
-      if (!pdfBuffer || pdfBuffer.length === 0) {
-        throw new Error('PDF buffer is empty or undefined');
-      }
-      
-      // Basic PDF validation
-      const pdfHeader = pdfBuffer.slice(0, 5).toString();
-      if (!pdfHeader.includes('%PDF')) {
-        throw new Error('Invalid PDF file - missing PDF header');
-      }
-      
-      console.log('PDF validation passed');
-
-      // Use new cross-platform converter with enhanced error handling
-      let combinedImageBuffer;
-      try {
-        console.log('🔄 Attempting cross-platform PDF conversion...');
-        combinedImageBuffer = await this.pdfConverter.convertPdfToCombinedImage(pdfBuffer, {
-          scale: 2.0,              // Higher scale for better OCR accuracy in production
-          quality: 95,             // Very high quality for OCR
-          optimizeForOcr: true     // Enable OCR optimizations
-        });
-        
-        console.log('✅ Cross-platform conversion completed');
-        console.log('📊 Result type:', typeof combinedImageBuffer);
-        console.log('📊 Result is Buffer:', Buffer.isBuffer(combinedImageBuffer));
-        console.log('📊 Result length:', combinedImageBuffer ? combinedImageBuffer.length : 'undefined');
-        
-      } catch (conversionError) {
-        console.error('❌ Cross-platform conversion failed:', conversionError);
-        throw new Error(`PDF conversion error: ${conversionError.message}`);
-      }
-
-      if (!combinedImageBuffer || !Buffer.isBuffer(combinedImageBuffer) || combinedImageBuffer.length === 0) {
-        throw new Error('Cross-platform PDF conversion failed - no valid image buffer produced');
-      }
-
-      console.log(`✅ Cross-platform PDF converted successfully! Image size: ${combinedImageBuffer.length} bytes`);
-      return combinedImageBuffer;
-
-    } catch (error) {
-      console.error('Cross-platform PDF conversion failed:', error);
-      
-      // Fallback to original pdf2pic method if available
-      try {
-        console.log('🔄 Falling back to pdf2pic method...');
-        return await this.convertPdfToImageLegacy(pdfBuffer, outputPath);
-      } catch (fallbackError) {
-        console.error('Legacy PDF conversion fallback also failed:', fallbackError);
-        throw new Error(`PDF conversion failed: ${error.message}. Fallback error: ${fallbackError.message}`);
-      }
-    }
-  }
-
-  /**
-   * Legacy PDF conversion using pdf2pic (kept as fallback)
-   * NOTE: pdf2pic causes "linux is NOT supported" errors, so this is disabled
-   */
-  async convertPdfToImageLegacy(pdfBuffer, outputPath) {
-    try {
-      console.log('Legacy pdf2pic method not available on Linux platforms');
-      throw new Error('pdf2pic not available - Linux compatibility disabled this fallback');
-      
-      // Code below is commented out due to Linux compatibility issues
-      // All legacy pdf2pic code has been disabled to prevent "linux is NOT supported" errors
-
-    } catch (error) {
-      console.error('Legacy PDF conversion with pdf2pic failed:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Alternative PDF conversion using pdf-poppler
-   * NOTE: pdf-poppler causes Linux compatibility issues, so this is disabled
-   */
-  async convertPdfWithPoppler(pdfBuffer) {
-    try {
-      console.log('pdf-poppler method not available on Linux platforms');
-      throw new Error('pdf-poppler not available - Linux compatibility disabled this method');
-      
-      // All pdf-poppler code commented out due to Linux compatibility issues
-      
-    } catch (error) {
-      console.error('PDF-Poppler conversion error:', error);
-      throw error;
-    }
+    // PDF conversion is disabled - Document AI handles PDFs natively
+    // This method should not be called for PDFs anymore
+    throw new Error('PDF conversion disabled - PDFs should be sent directly to Document AI');
   }
 
   /**
@@ -214,40 +128,6 @@ class FormatConverterService {
       'image/bmp'
     ];
     return imageFormats.includes(mimeType);
-  }
-
-  /**
-   * Convert multiple pages of PDF to images using cross-platform converter
-   */
-  async convertPdfMultiPage(pdfBuffer, maxPages = 5) {
-    try {
-      console.log('Converting multi-page PDF with cross-platform converter...');
-      
-      // Use the cross-platform converter instead of pdf2pic
-      const pageBuffers = await this.pdfConverter.convertPdfBufferToImages(pdfBuffer, {
-        scale: 2.0,  // Higher quality for multi-page
-        quality: 95,
-        optimizeForOcr: true
-      });
-      
-      // Limit to maxPages if specified
-      const limitedPages = maxPages > 0 ? pageBuffers.slice(0, maxPages) : pageBuffers;
-      
-      console.log(`✅ Cross-platform converter processed ${limitedPages.length} pages`);
-      
-      // Return in expected format
-      const successfulPages = limitedPages.map((buffer, index) => ({
-        pageNumber: index + 1,
-        buffer: buffer
-      }));
-
-      console.log(`Converted ${successfulPages.length} pages from PDF`);
-      return successfulPages;
-
-    } catch (error) {
-      console.error('Multi-page PDF conversion error:', error);
-      throw new Error(`Multi-page PDF conversion failed: ${error.message}`);
-    }
   }
 
   /**
