@@ -60,7 +60,7 @@ class DocumentAiService {
         console.log('Preprocessing complete: ' + mimeType + ' → ' + finalMimeType);
       }
 
-      // Document AI processing
+      // Document AI processing with enhanced OCR settings
       const name = `projects/${this.projectId}/locations/${this.location}/processors/${this.processorId}`;
       const request = {
         name,
@@ -68,6 +68,16 @@ class DocumentAiService {
           content: finalBuffer,
           mimeType: finalMimeType,
         },
+        // Enhanced OCR processing hints for better accuracy
+        processOptions: {
+          ocrConfig: {
+            enableImageQualityScores: true,
+            enableSymbol: true,
+            computeStyleInfo: true,
+            // Enhanced language hints
+            languageHints: ['en', 'tr'], // English and Turkish
+          }
+        }
       };
 
       console.log('Processing document with Document AI...');
@@ -81,16 +91,44 @@ class DocumentAiService {
 
       console.log('Document processed successfully');
       
-      // Extract text and parse data using new parser system
-      const extractedText = document.text || '';
+      // Extract text and preprocess for better parsing
+      let extractedText = document.text || '';
+      console.log('🔄 Preprocessing OCR text for better parsing...');
+      extractedText = this.preprocessOcrText(extractedText);
+      
+      console.log('📝 Preprocessed OCR text length:', extractedText.length);
+      
+      // Enhanced debug logging for production troubleshooting
+      console.log('🔍 OCR Text Sample (first 500 chars):');
+      console.log(extractedText.substring(0, 500));
+      console.log('🔍 OCR Text Sample (last 500 chars):');  
+      console.log(extractedText.substring(Math.max(0, extractedText.length - 500)));
+      
       const parseResult = this.parserFactory.parseDocument(extractedText);
       
       if (!parseResult.success) {
-        console.error('Parser factory failed:', parseResult.error);
-        // Fallback to legacy parsing if parser fails
-        const rawProducts = this.parseDocumentDataLegacy(extractedText);
-        const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
+        console.error('❌ Parser factory failed:', parseResult.error);
+        console.log('🔄 Attempting enhanced legacy parsing fallback...');
         
+        // Enhanced fallback: try multiple legacy approaches
+        let rawProducts = [];
+        
+        // Try legacy parsing first
+        try {
+          rawProducts = this.parseDocumentDataLegacy(extractedText);
+          console.log(`📋 Legacy parser found ${rawProducts.length} products`);
+        } catch (legacyError) {
+          console.error('Legacy parser also failed:', legacyError);
+        }
+        
+        // If still no products, try extracting basic text patterns
+        if (rawProducts.length === 0) {
+          console.log('🔄 Trying basic text pattern extraction...');
+          rawProducts = this.extractBasicPatterns(extractedText);
+          console.log(`📋 Pattern extraction found ${rawProducts.length} potential products`);
+        }
+        
+        const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
         return this.buildSuccessResponse(extractedText, mappedProducts, rawProducts);
       }
       
@@ -239,6 +277,102 @@ class DocumentAiService {
       console.error('Error in legacy parsing:', error);
       return [];
     }
+  }
+
+  /**
+   * Extract basic patterns when all parsers fail
+   * Last resort method to find any tabular data
+   */
+  extractBasicPatterns(text) {
+    console.log('🔍 Attempting basic pattern extraction...');
+    const products = [];
+    
+    if (!text) return products;
+    
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    
+    // Look for lines that might be product rows (contain numbers, letters, and separators)
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      
+      // Skip obvious header lines
+      if (line.toLowerCase().includes('customer') || 
+          line.toLowerCase().includes('composition') ||
+          line.toLowerCase().includes('total') ||
+          line.toLowerCase().includes('page')) {
+        continue;
+      }
+      
+      // Look for lines with mixed content that might be product data
+      const hasNumbers = /\d/.test(line);
+      const hasLetters = /[a-zA-Z]/.test(line);
+      const hasSeparators = /[\s\-_\|,;:]/.test(line);
+      
+      if (hasNumbers && hasLetters && hasSeparators && line.length > 10) {
+        console.log(`📋 Found potential product line: ${line.substring(0, 50)}...`);
+        
+        // Create a basic product with the raw line as the main field
+        products.push({
+          'Order No': '',
+          'Composition': '',
+          'Batch': '',
+          'Roll': '',
+          'Quantity': '',
+          'Raw Line': line  // Keep original line for reference
+        });
+      }
+    }
+    
+    console.log(`📋 Basic pattern extraction found ${products.length} potential products`);
+    return products;
+  }
+
+  /**
+   * Preprocess OCR text for better parsing accuracy
+   * Fixes common OCR issues that can prevent product detection
+   */
+  preprocessOcrText(text) {
+    if (!text) return '';
+    
+    let processed = text;
+    
+    // Fix common OCR character mistakes
+    processed = processed
+      .replace(/[İI]/g, 'I')  // Normalize Turkish I characters
+      .replace(/[şŞ]/g, 's')  // Normalize Turkish characters
+      .replace(/[çÇ]/g, 'c')
+      .replace(/[ğĞ]/g, 'g')
+      .replace(/[üÜ]/g, 'u')
+      .replace(/[öÖ]/g, 'o')
+      // Fix common OCR number/letter confusion
+      .replace(/0/g, 'O')     // Sometimes 0 is mistaken for O
+      .replace(/1/g, 'I')     // Sometimes 1 is mistaken for I
+      // Normalize spacing around common keywords
+      .replace(/\s*:\s*/g, ': ')
+      .replace(/\s*-\s*/g, ' - ')
+      // Remove excessive whitespace
+      .replace(/\s+/g, ' ')
+      .trim();
+    
+    // Add line breaks before common section headers for better parsing
+    const sectionHeaders = [
+      'CUSTOMER ORDER NO',
+      'COMPOSITION',
+      'Müşt. Referansı', 
+      'Komp',
+      'Tip',
+      'TopAdı',
+      'Top Metre',
+      'Dispo No'
+    ];
+    
+    sectionHeaders.forEach(header => {
+      const regex = new RegExp(`(?<!^|\n)\\s*(${header.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+      processed = processed.replace(regex, '\n$1');
+    });
+    
+    console.log('📋 OCR text preprocessing completed');
+    return processed;
   }
 
   /**

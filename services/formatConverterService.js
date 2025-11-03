@@ -87,10 +87,10 @@ class FormatConverterService {
       
       console.log('PDF validation passed');
 
-      // Use new cross-platform converter
+      // Use new cross-platform converter - Optimized for production OCR
       const combinedImageBuffer = await this.pdfConverter.convertPdfToCombinedImage(pdfBuffer, {
-        scale: 1.5,              // Good balance of quality/performance
-        quality: 90,             // High quality for OCR
+        scale: 2.0,              // Higher scale for better OCR accuracy in production
+        quality: 95,             // Very high quality for OCR
         optimizeForOcr: true     // Enable OCR optimizations
       });
 

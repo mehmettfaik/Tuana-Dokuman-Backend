@@ -63,9 +63,10 @@ class ParserFactory {
       console.log(`  ${format.name}: ${format.percentage.toFixed(1)}% (${format.score}/${format.totalKeywords})`);
     });
 
-    // Return the format with highest percentage if it's above 30%
+    // Return the format with highest percentage - Lower threshold for production compatibility
     for (const format of formats) {
-      if (format.percentage >= 30) {
+      // Lower threshold to 15% for better production compatibility
+      if (format.percentage >= 15) {
         console.log(`Detected format: ${format.name} (${format.percentage.toFixed(1)}% confidence)`);
         return {
           format: format.name,
@@ -74,6 +75,18 @@ class ParserFactory {
           matchedKeywords: format.matchedKeywords
         };
       }
+    }
+    
+    // If still no match, try the highest scoring format even if below 15%
+    if (formats.length > 0 && formats[0].percentage > 5) {
+      const bestFormat = formats[0];
+      console.log(`🔄 Using best available format: ${bestFormat.name} (${bestFormat.percentage.toFixed(1)}% confidence - low threshold)`);
+      return {
+        format: bestFormat.name,
+        parser: bestFormat.parser,
+        confidence: bestFormat.percentage,
+        matchedKeywords: bestFormat.matchedKeywords
+      };
     }
     
     console.log('⚠️ No format detected with sufficient confidence, using general parsing');
@@ -107,15 +120,47 @@ class ParserFactory {
 
       // Parse document using detected parser
       console.log(`📋 Parsing document with ${detection.format} parser...`);
-      const parsedData = detection.parser.parse(text);
+      let parsedData = detection.parser.parse(text);
+
+      // Enhanced fallback: If primary parser returns no products, try alternative parsers
+      if (!parsedData || parsedData.length === 0) {
+        console.log('⚠️ Primary parser found no products, trying alternative parsers...');
+        
+        // Try all parsers except the one already tried
+        const allFormats = Object.keys(this.parsers);
+        for (const formatName of allFormats) {
+          if (formatName !== detection.format) {
+            console.log(`🔄 Trying ${formatName} parser as fallback...`);
+            try {
+              const alternativeData = this.parsers[formatName].parse(text);
+              if (alternativeData && alternativeData.length > 0) {
+                console.log(`✅ ${formatName} parser found ${alternativeData.length} products!`);
+                return {
+                  success: true,
+                  data: alternativeData,
+                  format: formatName,
+                  confidence: detection.confidence,
+                  matchedKeywords: detection.matchedKeywords,
+                  fallbackUsed: true,
+                  error: null
+                };
+              }
+            } catch (altError) {
+              console.log(`❌ ${formatName} parser failed: ${altError.message}`);
+            }
+          }
+        }
+        
+        console.log('❌ All parsers failed to find products');
+      }
 
       return {
         success: true,
-        data: parsedData,
+        data: parsedData || [],
         format: detection.format,
         confidence: detection.confidence,
         matchedKeywords: detection.matchedKeywords,
-        error: null
+        error: parsedData && parsedData.length > 0 ? null : 'No products found in document'
       };
 
     } catch (error) {
