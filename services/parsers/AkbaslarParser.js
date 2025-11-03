@@ -128,72 +128,115 @@ class AkbaslarParser extends BaseParser {
     const rows = [];
     const lines = text.split('\n');
     const fullText = lines.join('\n');
+    
+    this.log('Starting AKBASLAR table parsing...');
+    this.log(`Total lines to analyze: ${lines.length}`);
         
+    // Strategy 1: Standard table pattern - tek satırda tüm veriler
     // Pattern: "2 1 11052179 100009650445 51,55 17.500 17.000 2"
     // Gruplar: sıra, sack, batch_no, roll_no, quantity, gross_weight, net_weight, pcs
-    const tablePattern = /(\d+)\s+(\d+)\s+(\d{7,})\s+(\d{9,})\s+([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)\s+(\d+)/g;
+    const standardPattern = /(\d+)\s+(\d+)\s+(\d{7,8})\s+(\d{9,12})\s+([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)\s+(\d+)/g;
     
     let match;
-    while ((match = tablePattern.exec(fullText)) !== null) {
+    while ((match = standardPattern.exec(fullText)) !== null) {
       const row = {
-        'Batch No': match[3], // Batch number (7-8 digits)
-        'Roll No': match[4],  // Roll number (9+ digits)
-        'Quantity Meter': match[5], // Quantity with comma
-        'Gross Weight': match[6],   // Gross weight
-        'Net Weight': match[7]      // Net weight
+        'Batch No': match[3],
+        'Roll No': match[4],
+        'Quantity Meter': match[5],
+        'Gross Weight': match[6],
+        'Net Weight': match[7]
       };
       
       rows.push(row);
-      this.log(`Found table row: Batch="${match[3]}", Roll="${match[4]}", Qty="${match[5]}", Net="${match[7]}"`);
+      this.log(`[Strategy 1] Found: Batch="${match[3]}", Roll="${match[4]}", Qty="${match[5]}", Net="${match[7]}"`);
     }
     
-// Alternatif: Bozuk format ayrıştırma (çok satırlı veri)
-    if (rows.length === 0) {
-      this.log('Trying alternative parsing for broken format...');
+    // Strategy 2: Daha esnek pattern - bazı boşluklar eksik olabilir
+    // Batch ve Roll numaraları yan yana olabilir
+    if (rows.length < 20) { // Eğer yeterince satır bulamadıysak
+      this.log('Trying Strategy 2: Flexible spacing pattern...');
       
-      for (let i = 0; i < lines.length - 1; i++) {
-        const line1 = lines[i].trim();
-        const line2 = lines[i + 1].trim();
+      const flexiblePattern = /(\d{7,8})\s*(\d{9,12})\s+([0-9.,]+)\s+([0-9.,]+)\s+([0-9.,]+)/g;
+      const foundBatches = new Set(rows.map(r => r['Batch No'] + r['Roll No']));
+      
+      let flexMatch;
+      while ((flexMatch = flexiblePattern.exec(fullText)) !== null) {
+        const batchRollKey = flexMatch[1] + flexMatch[2];
         
-        // Pattern: line1 = "11052179", line2 = "100009650445 51,55"
-        const batchMatch = line1.match(/^(\d{7,})$/);
-        const rollDataMatch = line2.match(/^(\d{9,})\s+([0-9.,]+)$/);
-        
-        if (batchMatch && rollDataMatch) {
-          // Ağırlıkları bir sonraki satırlarda ara
-          let grossWeight = '';
-          let netWeight = '';
-          
-          if (i + 2 < lines.length) {
-            const weightLine1 = lines[i + 2].trim();
-            if (weightLine1.match(/^[0-9.,]+$/)) {
-              grossWeight = weightLine1;
-            }
-          }
-          
-          if (i + 3 < lines.length) {
-            const weightLine2 = lines[i + 3].trim();
-            if (weightLine2.match(/^[0-9.,]+$/)) {
-              netWeight = weightLine2;
-            }
-          }
-          
+        // Duplicate kontrolü
+        if (!foundBatches.has(batchRollKey)) {
           const row = {
-            'Batch No': batchMatch[1],
-            'Roll No': rollDataMatch[1],
-            'Quantity Meter': rollDataMatch[2],
-            'Gross Weight': grossWeight,
-            'Net Weight': netWeight
+            'Batch No': flexMatch[1],
+            'Roll No': flexMatch[2],
+            'Quantity Meter': flexMatch[3],
+            'Gross Weight': flexMatch[4],
+            'Net Weight': flexMatch[5]
           };
           
           rows.push(row);
-          this.log(`Alternative parsing - Batch="${batchMatch[1]}", Roll="${rollDataMatch[1]}"`);
-          i += 3; 
+          foundBatches.add(batchRollKey);
+          this.log(`[Strategy 2] Found: Batch="${flexMatch[1]}", Roll="${flexMatch[2]}", Qty="${flexMatch[3]}", Net="${flexMatch[5]}"`);
         }
       }
     }
     
-    this.log(`Total table rows found: ${rows.length}`);
+    // Strategy 3: Satır satır analiz - en esnek yöntem
+    if (rows.length < 20) {
+      this.log('Trying Strategy 3: Line-by-line analysis...');
+      
+      const foundBatches = new Set(rows.map(r => r['Batch No'] + r['Roll No']));
+      
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Batch number'ı ara (7-8 digits)
+        const batchMatch = line.match(/\b(\d{7,8})\b/);
+        if (!batchMatch) continue;
+        
+        const batchNo = batchMatch[1];
+        
+        // Aynı satırda veya yakın satırlarda Roll number ara (9-12 digits)
+        for (let j = i; j <= i + 2 && j < lines.length; j++) {
+          const searchLine = lines[j].trim();
+          const rollMatch = searchLine.match(/\b(\d{9,12})\b/);
+          
+          if (rollMatch && rollMatch[1] !== batchNo) {
+            const rollNo = rollMatch[1];
+            const batchRollKey = batchNo + rollNo;
+            
+            if (foundBatches.has(batchRollKey)) continue;
+            
+            // Quantity, Gross, Net weight ara (decimal sayılar)
+            const numbers = [];
+            for (let k = i; k <= i + 5 && k < lines.length; k++) {
+              const numLine = lines[k].trim();
+              const numMatches = numLine.match(/\b([0-9]{1,3}[.,][0-9]+)\b/g);
+              if (numMatches) {
+                numbers.push(...numMatches);
+              }
+            }
+            
+            // En az 3 sayı olmalı (qty, gross, net)
+            if (numbers.length >= 3) {
+              const row = {
+                'Batch No': batchNo,
+                'Roll No': rollNo,
+                'Quantity Meter': numbers[0] || '',
+                'Gross Weight': numbers[1] || '',
+                'Net Weight': numbers[2] || ''
+              };
+              
+              rows.push(row);
+              foundBatches.add(batchRollKey);
+              this.log(`[Strategy 3] Found: Batch="${batchNo}", Roll="${rollNo}", Qty="${numbers[0]}", Net="${numbers[2]}"`);
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    this.log(`✅ Total table rows found: ${rows.length}`);
     return rows;
   }
 
