@@ -3,11 +3,13 @@ const pdf2pic = require('pdf2pic');
 const pdf = require('pdf-poppler');
 const fs = require('fs');
 const path = require('path');
+const { PdfJsConverter } = require('./formatConverterPdfJs');
 
 class FormatConverterService {
   constructor() {
     this.outputDir = 'temp/converted/';
     this.ensureOutputDir();
+    this.pdfConverter = new PdfJsConverter();
   }
 
   /**
@@ -66,11 +68,11 @@ class FormatConverterService {
   }
 
   /**
-   * Convert PDF to high-quality JPEG image
+   * Convert PDF to high-quality JPEG image using cross-platform pdfjs-dist
    */
   async convertPdfToImage(pdfBuffer, outputPath) {
     try {
-      console.log('Converting PDF to image using pdf2pic...');
+      console.log('🔄 Converting PDF using cross-platform pdfjs-dist converter...');
       console.log('PDF buffer size:', pdfBuffer.length);
       
       if (!pdfBuffer || pdfBuffer.length === 0) {
@@ -84,6 +86,41 @@ class FormatConverterService {
       }
       
       console.log('PDF validation passed');
+
+      // Use new cross-platform converter
+      const combinedImageBuffer = await this.pdfConverter.convertPdfToCombinedImage(pdfBuffer, {
+        scale: 1.5,              // Good balance of quality/performance
+        quality: 90,             // High quality for OCR
+        optimizeForOcr: true     // Enable OCR optimizations
+      });
+
+      if (!combinedImageBuffer || combinedImageBuffer.length === 0) {
+        throw new Error('Cross-platform PDF conversion failed - no image produced');
+      }
+
+      console.log(`✅ Cross-platform PDF converted successfully! Image size: ${combinedImageBuffer.length} bytes`);
+      return combinedImageBuffer;
+
+    } catch (error) {
+      console.error('Cross-platform PDF conversion failed:', error);
+      
+      // Fallback to original pdf2pic method if available
+      try {
+        console.log('🔄 Falling back to pdf2pic method...');
+        return await this.convertPdfToImageLegacy(pdfBuffer, outputPath);
+      } catch (fallbackError) {
+        console.error('Legacy PDF conversion fallback also failed:', fallbackError);
+        throw new Error(`PDF conversion failed: ${error.message}. Fallback error: ${fallbackError.message}`);
+      }
+    }
+  }
+
+  /**
+   * Legacy PDF conversion using pdf2pic (kept as fallback)
+   */
+  async convertPdfToImageLegacy(pdfBuffer, outputPath) {
+    try {
+      console.log('Converting PDF to image using pdf2pic (legacy)...');
       
       // Write PDF buffer to temporary file
       const timestamp = Date.now();
@@ -151,20 +188,12 @@ class FormatConverterService {
         throw new Error('PDF conversion failed - combined image buffer is empty');
       }
 
-      console.log(`✅ Multi-page PDF converted successfully! Combined image size: ${combinedImageBuffer.length} bytes`);
+      console.log(`✅ Legacy PDF converted successfully! Combined image size: ${combinedImageBuffer.length} bytes`);
       return combinedImageBuffer;
 
     } catch (error) {
-      console.error('PDF conversion with pdf2pic failed:', error);
-      
-      // Try alternative method with pdf-poppler
-      try {
-        console.log('Attempting PDF conversion with pdf-poppler fallback...');
-        return await this.convertPdfWithPoppler(pdfBuffer);
-      } catch (fallbackError) {
-        console.error('PDF conversion fallback also failed:', fallbackError);
-        throw new Error(`PDF conversion failed: ${error.message}. Fallback error: ${fallbackError.message}`);
-      }
+      console.error('Legacy PDF conversion with pdf2pic failed:', error);
+      throw error;
     }
   }
 
