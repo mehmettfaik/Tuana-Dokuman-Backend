@@ -73,6 +73,70 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working' });
 });
 
+// Health check endpoint for production debugging
+app.get('/api/health', async (req, res) => {
+  try {
+    console.log('🔍 Health check started...');
+    
+    const healthStatus = {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      environment: {
+        nodeVersion: process.version,
+        platform: process.platform,
+        arch: process.arch,
+        memory: process.memoryUsage(),
+        env: process.env.NODE_ENV || 'development'
+      },
+      dependencies: {}
+    };
+    
+    // Test critical dependencies
+    try {
+      const { createCanvas } = require('canvas');
+      const testCanvas = createCanvas(10, 10);
+      healthStatus.dependencies.canvas = '✅ Available';
+    } catch (error) {
+      healthStatus.dependencies.canvas = `❌ Error: ${error.message}`;
+    }
+    
+    try {
+      const Jimp = require('jimp');
+      healthStatus.dependencies.jimp = '✅ Available';
+    } catch (error) {
+      healthStatus.dependencies.jimp = `❌ Error: ${error.message}`;
+    }
+    
+    try {
+      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
+      healthStatus.dependencies.pdfjs = '✅ Available';
+    } catch (error) {
+      healthStatus.dependencies.pdfjs = `❌ Error: ${error.message}`;
+    }
+    
+    // Test PdfJsConverter initialization
+    try {
+      const { PdfJsConverter } = require('./services/formatConverterPdfJs');
+      const converter = new PdfJsConverter();
+      healthStatus.pdfConverter = '✅ Initialized successfully';
+    } catch (error) {
+      healthStatus.pdfConverter = `❌ Error: ${error.message}`;
+    }
+    
+    console.log('✅ Health check completed:', healthStatus);
+    res.json(healthStatus);
+    
+  } catch (error) {
+    console.error('❌ Health check failed:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Health check failed',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
 // Firebase test endpoint
 app.get('/api/firebase/test', async (req, res) => {
   try {

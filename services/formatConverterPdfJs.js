@@ -11,6 +11,27 @@ class PdfJsConverter {
   constructor() {
     // Disable worker in Node.js environment
     pdfjsLib.GlobalWorkerOptions.workerSrc = null;
+    
+    // Check dependencies availability
+    this.checkDependencies();
+  }
+  
+  checkDependencies() {
+    try {
+      // Test canvas availability
+      const testCanvas = createCanvas(10, 10);
+      console.log('✅ Canvas module available');
+      
+      // Test Jimp availability  
+      console.log('✅ Jimp module available');
+      
+      // Test pdfjs-dist
+      console.log('✅ pdfjs-dist module available');
+      
+    } catch (error) {
+      console.error('❌ Dependency check failed:', error);
+      throw new Error(`Cross-platform converter dependencies missing: ${error.message}`);
+    }
   }
 
   /**
@@ -30,6 +51,15 @@ class PdfJsConverter {
     } = options;
 
     console.log(`🔄 Converting PDF with pdfjs-dist (${pdfBuffer.length} bytes)...`);
+    
+    // Validate dependencies
+    if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+      throw new Error('Invalid PDF buffer provided');
+    }
+    
+    if (pdfBuffer.length === 0) {
+      throw new Error('Empty PDF buffer provided');
+    }
     
     try {
       // Load PDF document (convert Buffer to Uint8Array)
@@ -114,9 +144,28 @@ class PdfJsConverter {
    * @returns {Promise<Buffer>} Single JPEG buffer with all pages combined
    */
   async convertPdfToCombinedImage(pdfBuffer, options = {}) {
-    const images = await this.convertPdfBufferToImages(pdfBuffer, options);
+    console.log('🔄 Starting combined image conversion...');
+    
+    let images;
+    try {
+      images = await this.convertPdfBufferToImages(pdfBuffer, options);
+    } catch (error) {
+      console.error('❌ Failed to convert PDF to images:', error);
+      throw new Error(`PDF to images conversion failed: ${error.message}`);
+    }
+    
+    if (!images || !Array.isArray(images)) {
+      throw new Error('PDF conversion returned invalid result - not an array');
+    }
+    
+    if (images.length === 0) {
+      throw new Error('PDF conversion returned no images');
+    }
+    
+    console.log(`📊 Generated ${images.length} images from PDF`);
     
     if (images.length === 1) {
+      console.log('📄 Single page PDF, returning as-is');
       return images[0];
     }
 

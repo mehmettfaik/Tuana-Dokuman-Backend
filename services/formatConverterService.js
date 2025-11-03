@@ -87,15 +87,28 @@ class FormatConverterService {
       
       console.log('PDF validation passed');
 
-      // Use new cross-platform converter - Optimized for production OCR
-      const combinedImageBuffer = await this.pdfConverter.convertPdfToCombinedImage(pdfBuffer, {
-        scale: 2.0,              // Higher scale for better OCR accuracy in production
-        quality: 95,             // Very high quality for OCR
-        optimizeForOcr: true     // Enable OCR optimizations
-      });
+      // Use new cross-platform converter with enhanced error handling
+      let combinedImageBuffer;
+      try {
+        console.log('🔄 Attempting cross-platform PDF conversion...');
+        combinedImageBuffer = await this.pdfConverter.convertPdfToCombinedImage(pdfBuffer, {
+          scale: 2.0,              // Higher scale for better OCR accuracy in production
+          quality: 95,             // Very high quality for OCR
+          optimizeForOcr: true     // Enable OCR optimizations
+        });
+        
+        console.log('✅ Cross-platform conversion completed');
+        console.log('📊 Result type:', typeof combinedImageBuffer);
+        console.log('📊 Result is Buffer:', Buffer.isBuffer(combinedImageBuffer));
+        console.log('📊 Result length:', combinedImageBuffer ? combinedImageBuffer.length : 'undefined');
+        
+      } catch (conversionError) {
+        console.error('❌ Cross-platform conversion failed:', conversionError);
+        throw new Error(`PDF conversion error: ${conversionError.message}`);
+      }
 
-      if (!combinedImageBuffer || combinedImageBuffer.length === 0) {
-        throw new Error('Cross-platform PDF conversion failed - no image produced');
+      if (!combinedImageBuffer || !Buffer.isBuffer(combinedImageBuffer) || combinedImageBuffer.length === 0) {
+        throw new Error('Cross-platform PDF conversion failed - no valid image buffer produced');
       }
 
       console.log(`✅ Cross-platform PDF converted successfully! Image size: ${combinedImageBuffer.length} bytes`);
