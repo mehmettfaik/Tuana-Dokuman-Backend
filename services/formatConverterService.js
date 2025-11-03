@@ -1,4 +1,5 @@
-// Sharp kaldırıldı - Linux uyumluluğu için
+// Sharp kaldırıldı - Linux uyumluluğu için, Jimp kullanıyoruz
+const Jimp = require('jimp');
 const pdf2pic = require('pdf2pic');
 const pdf = require('pdf-poppler');
 const fs = require('fs');
