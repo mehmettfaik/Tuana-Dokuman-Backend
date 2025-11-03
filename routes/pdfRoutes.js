@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const pdfController = require('../controllers/pdfController');
+const ocrController = require('../controllers/ocrController');
 
 // Test endpoint
 router.get('/', (req, res) => {
@@ -83,6 +84,9 @@ router.get('/health', (req, res) => {
     });
   }
 });
+
+// OCR / Upload endpoint (accepts multipart form-data, field name: file)
+router.post('/upload', ocrController.uploadMiddleware, ocrController.handleUpload);
 
 // ============================================================================
 // LEGACY ENDPOINTS (for backward compatibility)
