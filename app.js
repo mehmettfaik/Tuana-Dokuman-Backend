@@ -8,18 +8,16 @@ const { initializeFirebase } = require('./config/firebase');
 const app = express();
 
 // Firebase'i başlat
-try {
-  initializeFirebase();
-} catch (error) {
-  console.error('❌ Firebase initialization failed:', error.message);
-  // Firebase olmadan da çalışabilir, sadece recipients API'si çalışmaz
+const firebaseInitialized = initializeFirebase();
+if (!firebaseInitialized) {
+  console.warn('⚠️ Firebase is not initialized. Recipients API will return errors.');
 }
 
 // CORS middleware - EN ÜSTTE OLMALI
 app.use(cors({
   origin: '*', // Geçici olarak hepsine izin ver
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'X-API-Key'],
   exposedHeaders: ['Content-Type', 'Content-Length'],
   credentials: false,
   preflightContinue: false,
@@ -30,7 +28,7 @@ app.use(cors({
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept, X-API-Key');
   res.header('Access-Control-Expose-Headers', 'Content-Type, Content-Length');
   
   if (req.method === 'OPTIONS') {
@@ -47,7 +45,9 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   if (req.url.includes('/recipients')) {
+    console.log('Recipients API Call - Headers:', req.headers);
     if (req.body && Object.keys(req.body).length > 0) {
+      console.log('Recipients API Call - Body:', req.body);
     }
   }
   next();
@@ -56,8 +56,6 @@ app.use((req, res, next) => {
 // Routes
 const pdfRoutes = require('./routes/pdfRoutes');
 const recipientRoutes = require('./routes/recipientRoutes');
-const ocrRoutes = require('./routes/ocrRoutes');
-const uploadRoutes = require('./routes/uploadRoutes');
 
 // Test endpoints
 app.get('/', (req, res) => {
@@ -102,28 +100,38 @@ app.get('/api/firebase/test', async (req, res) => {
 
 // Recipients test endpoint
 app.get('/api/recipients/test', (req, res) => {
+  // Firebase yapılandırma durumunu kontrol et
+  const firebaseConfig = {
+    projectId: !!process.env.FIREBASE_PROJECT_ID,
+    clientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: !!process.env.FIREBASE_PRIVATE_KEY
+  };
+  
+  const isFirebaseConfigured = firebaseConfig.projectId && firebaseConfig.clientEmail && firebaseConfig.privateKey;
+  
   res.json({ 
-    message: 'Recipients API is working',
+    message: 'Recipients API status',
     timestamp: new Date().toISOString(),
     version: '2.0.0',
+    firebaseStatus: {
+      configured: isFirebaseConfigured,
+      config: firebaseConfig,
+      initialized: firebaseInitialized !== null
+    },
     features: [
       'CRUD Operations',
       'Advanced Search with Filters',
-      'Bulk Operations',
       'Data Validation',
-      'Duplicate Prevention',
       'Statistics & Analytics'
     ],
     routes: [
       'GET /api/recipients - List all recipients',
-      'GET /api/recipients/search?q=term&country=TR&city=Istanbul&hasEmail=true - Advanced search',
+      'GET /api/recipients/search?q=term - Search recipients',
       'GET /api/recipients/stats - Get statistics',
       'GET /api/recipients/:id - Get specific recipient',
       'POST /api/recipients - Create new recipient',
       'PUT /api/recipients/:id - Update recipient',
-      'DELETE /api/recipients/:id - Delete recipient',
-      'POST /api/recipients/bulk-delete - Bulk delete recipients',
-      'POST /api/recipients/bulk-update - Bulk update recipients'
+      'DELETE /api/recipients/:id - Delete recipient'
     ]
   });
 });
@@ -202,6 +210,8 @@ const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📋 PDF API available at http://localhost:${PORT}/api/pdf`);
+  console.log(`🌐 Server listening on all interfaces (0.0.0.0:${PORT})`);
+  console.log(`💾 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
 // Handle server errors
