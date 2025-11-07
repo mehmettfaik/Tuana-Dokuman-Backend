@@ -131,9 +131,9 @@ function sanitizeRecipient(data) {
     sanitized.phone = data.phone.toString().trim();
   }
 
-  // Email
+  // Email - preserve original casing; only trim whitespace
   if (data.email) {
-    sanitized.email = data.email.toString().trim().toLowerCase();
+    sanitized.email = data.email.toString().trim();
   }
 
   // Tarih alanlarını koru (update durumunda)
