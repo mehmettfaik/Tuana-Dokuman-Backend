@@ -19,7 +19,7 @@ try {
 app.use(cors({
   origin: '*', // Geçici olarak hepsine izin ver
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With', 'X-API-Key'],
   exposedHeaders: ['Content-Type', 'Content-Length'],
   credentials: false,
   preflightContinue: false,
@@ -30,7 +30,7 @@ app.use(cors({
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept, X-API-Key');
   res.header('Access-Control-Expose-Headers', 'Content-Type, Content-Length');
   
   if (req.method === 'OPTIONS') {

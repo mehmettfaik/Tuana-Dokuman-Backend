@@ -31,19 +31,26 @@ const initializeFirebase = () => {
       }
       // For production, use environment variables
       else if (process.env.FIREBASE_PROJECT_ID) {
+        console.log('🔄 Initializing Firebase with environment variables...');
+        
         // Sanitize inputs (Render and other platforms may add surrounding quotes)
-        const projectId = process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_PROJECT_ID.trim();
-        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_CLIENT_EMAIL.trim().replace(/^"|"$/g, '');
-        let privateKey = process.env.FIREBASE_PRIVATE_KEY && process.env.FIREBASE_PRIVATE_KEY.trim();
+        const projectId = process.env.FIREBASE_PROJECT_ID?.trim().replace(/^["']|["']$/g, '');
+        const clientEmail = process.env.FIREBASE_CLIENT_EMAIL?.trim().replace(/^["']|["']$/g, '');
+        let privateKey = process.env.FIREBASE_PRIVATE_KEY?.trim();
+        
         if (privateKey) {
-          // Replace escaped newlines and remove surrounding quotes if present
-          privateKey = privateKey.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
+          // Remove surrounding quotes first
+          privateKey = privateKey.replace(/^["']|["']$/g, '');
+          // Replace literal \n with actual newlines
+          privateKey = privateKey.replace(/\\n/gm, '\n');
         }
 
         // Basic validation and helpful error message
         if (!projectId || !clientEmail || !privateKey) {
           throw new Error('Firebase credentials incomplete. Ensure FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL and FIREBASE_PRIVATE_KEY are set correctly in environment.');
         }
+
+        console.log('📊 Project ID:', projectId);
 
         admin.initializeApp({
           credential: admin.credential.cert({
