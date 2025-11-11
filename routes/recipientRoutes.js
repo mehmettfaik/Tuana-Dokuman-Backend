@@ -1,12 +1,9 @@
 const express = require('express');
 const RecipientController = require('../controllers/recipientController');
-const { authMiddleware } = require('../middleware/auth');
 
 const router = express.Router();
 const recipientController = new RecipientController();
 
-// Tüm recipient route'larını authentication ile koru
-router.use(authMiddleware);
 
 // Tüm recipients'ları getir
 // GET /api/recipients
