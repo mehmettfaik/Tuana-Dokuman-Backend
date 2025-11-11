@@ -45,7 +45,6 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Request logging
 app.use((req, res, next) => {
-  console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   if (req.url.includes('/recipients')) {
     if (req.body && Object.keys(req.body).length > 0) {
     }
@@ -58,6 +57,7 @@ const pdfRoutes = require('./routes/pdfRoutes');
 const recipientRoutes = require('./routes/recipientRoutes');
 const ocrRoutes = require('./routes/ocrRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const formRoutes = require('./routes/formRoutes');
 
 // Test endpoints
 app.get('/', (req, res) => {
@@ -73,68 +73,23 @@ app.get('/test', (req, res) => {
   res.json({ message: 'Test endpoint working' });
 });
 
-// Health check endpoint for production debugging
-app.get('/api/health', async (req, res) => {
-  try {
-    console.log('🔍 Health check started...');
-    
-    const healthStatus = {
-      status: 'ok',
-      timestamp: new Date().toISOString(),
-      environment: {
-        nodeVersion: process.version,
-        platform: process.platform,
-        arch: process.arch,
-        memory: process.memoryUsage(),
-        env: process.env.NODE_ENV || 'development'
-      },
-      dependencies: {}
-    };
-    
-    // Test critical dependencies
-    try {
-      const { createCanvas } = require('canvas');
-      const testCanvas = createCanvas(10, 10);
-      healthStatus.dependencies.canvas = '✅ Available';
-    } catch (error) {
-      healthStatus.dependencies.canvas = `❌ Error: ${error.message}`;
-    }
-    
-    try {
-      const Jimp = require('jimp');
-      healthStatus.dependencies.jimp = '✅ Available';
-    } catch (error) {
-      healthStatus.dependencies.jimp = `❌ Error: ${error.message}`;
-    }
-    
-    try {
-      const pdfjsLib = require('pdfjs-dist/legacy/build/pdf.js');
-      healthStatus.dependencies.pdfjs = '✅ Available';
-    } catch (error) {
-      healthStatus.dependencies.pdfjs = `❌ Error: ${error.message}`;
-    }
-    
-    // Test PdfJsConverter initialization
-    try {
-      const { PdfJsConverter } = require('./services/formatConverterPdfJs');
-      const converter = new PdfJsConverter();
-      healthStatus.pdfConverter = '✅ Initialized successfully';
-    } catch (error) {
-      healthStatus.pdfConverter = `❌ Error: ${error.message}`;
-    }
-    
-    console.log('✅ Health check completed:', healthStatus);
-    res.json(healthStatus);
-    
-  } catch (error) {
-    console.error('❌ Health check failed:', error);
-    res.status(500).json({
-      status: 'error',
-      message: 'Health check failed',
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
-  }
+// Auth test endpoint (public)
+app.get('/api/auth/test', (req, res) => {
+  res.json({ 
+    message: 'Auth API is available',
+    timestamp: new Date().toISOString(),
+    info: 'Use POST to protected endpoints with Authorization: Bearer <token> header'
+  });
+});
+
+// Protected auth test endpoint
+const { authMiddleware } = require('./middleware/auth');
+app.get('/api/auth/verify', authMiddleware, (req, res) => {
+  res.json({
+    success: true,
+    message: 'Token is valid',
+    user: req.user
+  });
 });
 
 // Firebase test endpoint
@@ -192,6 +147,31 @@ app.get('/api/recipients/test', (req, res) => {
   });
 });
 
+// Forms test endpoint
+app.get('/api/forms/test', (req, res) => {
+  res.json({ 
+    message: 'Forms API is working',
+    timestamp: new Date().toISOString(),
+    version: '1.0.0',
+    features: [
+      'Create Forms',
+      'List All Forms',
+      'Get Form by ID',
+      'Delete Forms',
+      'Bulk Delete',
+      'Statistics'
+    ],
+    routes: [
+      'POST /api/forms - Create new form',
+      'GET /api/forms - List all forms',
+      'GET /api/forms/:formId - Get specific form',
+      'DELETE /api/forms/:formId - Delete form',
+      'POST /api/forms/bulk-delete - Bulk delete forms',
+      'GET /api/forms/stats - Get statistics'
+    ]
+  });
+});
+
 // Global health endpoint (for render.com and general monitoring)
 app.get('/api/health', (req, res) => {
   try {
@@ -217,16 +197,10 @@ app.use('/api/pdf', pdfRoutes);
 app.use('/api/recipients', recipientRoutes);
 app.use('/api/ocr', ocrRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/forms', formRoutes);
 
-// Debug: List upload routes specifically
-console.log('📋 Upload routes debug:');
-console.log('  Stack length:', uploadRoutes.stack?.length);
+
 uploadRoutes.stack?.forEach((layer, index) => {
-  console.log(`  Route ${index}:`, {
-    method: layer.route?.stack?.[0]?.method,
-    path: layer.route?.path,
-    regexp: layer.regexp?.toString()
-  });
 });
 
 // 404 handler

@@ -1,8 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const pdfController = require('../controllers/pdfController');
+const { authMiddleware } = require('../middleware/auth');
 
-// Test endpoint
+// Test endpoint (public - authentication gerektirmez)
 router.get('/', (req, res) => {
   res.json({ 
     message: 'PDF API is working',
@@ -33,8 +34,11 @@ router.get('/', (req, res) => {
 });
 
 // ============================================================================
-// NEW QUEUE-BASED ENDPOINTS
+// NEW QUEUE-BASED ENDPOINTS - Authentication Required
 // ============================================================================
+
+// Tüm PDF generation endpoint'lerini authentication ile koru
+router.use(authMiddleware);
 
 // Start PDF generation
 router.post('/start', pdfController.startPdfGeneration);

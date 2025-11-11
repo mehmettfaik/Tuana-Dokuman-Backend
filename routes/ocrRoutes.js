@@ -1,13 +1,17 @@
 const express = require('express');
 const router = express.Router();
 const ocrController = require('../controllers/ocrController');
+const { authMiddleware } = require('../middleware/auth');
+
+// Tüm OCR route'larını authentication ile koru
+router.use(authMiddleware);
 
 // OCR Routes
 
 /**
  * @route POST /api/ocr/process
  * @description Process uploaded document with OCR and extract packing list data
- * @access Public
+ * @access Private (Authenticated)
  * @param {File} document - Document file to process (PDF, JPEG, PNG, TIFF, etc.)
  */
 router.post('/process', ocrController.processDocument);
