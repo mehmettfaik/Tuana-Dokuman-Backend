@@ -1,7 +1,7 @@
 const ExcelJS = require('exceljs');
 const path = require('path');
 const fs = require('fs');
-const excelOcrParser = require('../services/excelOcrParser');
+const excelOcrParser = require('../services/parsers/excelOcrParser');
 const convert = require('heic-convert');
 
 /**
