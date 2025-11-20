@@ -50,8 +50,8 @@ function validateRecipient(data, isUpdate = false) {
   if (data.vat) {
     if (typeof data.vat !== 'string') {
       errors.push('VAT must be a string');
-    } else if (data.vat.length > 20) {
-      errors.push('VAT must be less than 20 characters');
+    } else if (data.vat.length > 40) {
+      errors.push('VAT must be less than 40 characters');
     }
   }
 
@@ -68,7 +68,7 @@ function validateRecipient(data, isUpdate = false) {
   if (data.phone) {
     if (typeof data.phone !== 'string') {
       errors.push('Phone must be a string');
-    } else if (data.phone.length > 20) {
+    } else if (data.phone.length > 50) {
       errors.push('Phone must be less than 20 characters');
     }
   }

@@ -165,7 +165,7 @@ const createExcelFromPhotos = async (req, res) => {
         success: false,
         message: 'Hiçbir fotoğraftan ürün verisi çıkarılamadı. Lütfen fotoğrafların açık ve net olduğundan emin olun.',
         hint: 'OCR verisi çıkarıldı ancak Article, Composition, Weight veya Width bilgileri bulunamadı.',
-        suggestion: 'Fotoğraflarda şu bilgilerin görünür olması gerekiyor: Article (Ürün kodu), Composition (Kumaş), Weight (Gramaj), Width (En)',
+        suggestion: 'Fotoğraflarda şu bilgilerin görünür olması gerekiyor: Article (Ürün kodu), Composition (Karışım), Weight (Gramaj), Width (En)',
         details: {
           totalPhotos: files.length,
           processed: totalProcessed,
