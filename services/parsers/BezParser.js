@@ -18,48 +18,36 @@ class BezParser extends BaseParser {
       'Kumaş Sevk Listesi'
     ];
   }
-
+//
   /**
    * Parse BEZ format text
    * @param {string} text - OCR extracted text
    * @returns {Array} - Array of parsed products
    */
   parse(text) {
-    this.log('Parsing BEZ format (IMPROVED)...');
-    this.log('Full OCR text for BEZ:');
-    this.log('=====================================');
-    this.log(text);
-    this.log('=====================================');
     
     const products = [];
     const lines = text.split('\n').map(line => line.trim()).filter(line => line);
     
-    this.log('Analyzing all lines for BEZ products...');
-    this.log(`Total lines: ${lines.length}`);
     
     // 1. Find all Tip sections and their boundaries
     const tipSections = this.findTipSections(lines);
-    this.log(`Found ${tipSections.length} Tip sections`);
     
     // 2. Process each Tip section separately
     for (const section of tipSections) {
-      this.log(`Processing Tip section: "${section.tip.substring(0, 50)}..."`);
       
       // Find all TopAdı codes in this section
       const topAdıCodes = this.findTopAdiCodes(lines, section);
       
       if (topAdıCodes.length === 0) {
-        this.log(`No TopAdı codes found in this section`, 'warn');
         continue;
       }
       
       // 3. Collect field data after TopAdı codes
       const fieldLines = this.collectFieldLines(lines, section, topAdıCodes);
-      this.log(`Found ${fieldLines.length} field lines after TopAdı codes`);
       
       // 4. Parse grouped field data intelligently  
       const numTops = topAdıCodes.length;
-      this.log(`Processing ${numTops} TopAdı codes`);
       
       // Group repeating and constant fields
       const { repeatingFields, constantFields } = this.parseFieldGroups(fieldLines, numTops);
@@ -85,26 +73,20 @@ class BezParser extends BaseParser {
         };
         
         products.push(product);
-        this.log(`Product ${products.length}: TopAdı="${topAdı}", Metre="${productFields.topMetre}", Dispo="${productFields.dispoNo}"`);
       }
     }
     
-    this.log(`Total BEZ products found: ${products.length}`);
     
     // Fallback if no products found
     if (products.length === 0) {
-      this.log('No products found, trying fallback parsing', 'warn');
       
       const fallbackProduct = this.createFallbackProduct(text, tipSections);
       if (fallbackProduct) {
         products.push(fallbackProduct);
-        this.log('BEZ Fallback product created');
       }
     }
     
-    this.log('Final BEZ products:');
     products.forEach((product, index) => {
-      this.log(`Product ${index + 1}: ${JSON.stringify(product)}`);
     });
     
     return products;
@@ -128,7 +110,6 @@ class BezParser extends BaseParser {
           startLine: i,
           endLine: lines.length - 1
         });
-        this.log(`Found Tip section at line ${i + 1}: "${tipInfo}"`);
       }
     }
     
@@ -156,7 +137,6 @@ class BezParser extends BaseParser {
           code: line,
           lineIndex: i
         });
-        this.log(`Found TopAdı: "${line}" at line ${i + 1}`);
       }
     }
     
@@ -194,10 +174,9 @@ class BezParser extends BaseParser {
     const repeatingFields = []; // Fields that repeat for each product
     const constantFields = [];   // Fields that appear once per product
     
-    this.log(`Analyzing ${fieldLines.length} field lines for ${numTops} products`);
-    
     for (let i = 0; i < fieldLines.length; i++) {
       const line = fieldLines[i].value;
+      const prevLine = i > 0 ? fieldLines[i - 1].value : '';
       
       // Classify field types
       if (line.match(/^ter\d+$/i)) {
@@ -208,18 +187,41 @@ class BezParser extends BaseParser {
         repeatingFields.push({ type: 'sipNo', value: line, index: i });
       } else if (line.match(/^\d{7}$/)) {
         repeatingFields.push({ type: 'dispoNo', value: line, index: i });
-      } else if (line.match(/^\d{1,3}[.,]\d{2}$/) && parseFloat(line.replace(',', '.')) > 30) {
-        constantFields.push({ type: 'topMetre', value: line, index: i });
-      } else if (line.match(/^\d{1,3}[.,]\d{2}$/) && parseFloat(line.replace(',', '.')) > 100 && parseFloat(line.replace(',', '.')) < 300) {
-        constantFields.push({ type: 'en', value: line, index: i });
+      } else if (line.match(/^\d{1,3}[.,]\d{2}$/)) {
+        // Ondalıklı sayı - etiket veya pozisyondan anlamaya çalış
+        const numValue = parseFloat(line.replace(',', '.'));
+        
+        // 1. Önceki satırda "Top Metre" veya "Metre" etiketi var mı?
+        if (prevLine.match(/Top\s*Metre|Metre/i)) {
+          constantFields.push({ type: 'topMetre', value: line, index: i });
+        }
+        // 2. Önceki satırda "En" veya "Width" etiketi var mı?
+        else if (prevLine.match(/\bEn\b|Width/i)) {
+          constantFields.push({ type: 'en', value: line, index: i });
+        }
+        // 3. Etiket yok - pozisyon bazlı: ilk ondalıklı sayı = Top Metre, ikinci = En
+        else {
+          // Kaç tane ondalıklı sayı var şimdiye kadar?
+          const decimalCount = constantFields.filter(f => 
+            f.type === 'topMetre' || f.type === 'en'
+          ).length;
+          
+          // Her ürün için 2 ondalıklı sayı bekleniyor: Top Metre ve En
+          const productIndex = Math.floor(decimalCount / 2);
+          const isFirstInProduct = decimalCount % 2 === 0;
+          
+          if (isFirstInProduct) {
+            constantFields.push({ type: 'topMetre', value: line, index: i });
+          } else {
+            constantFields.push({ type: 'en', value: line, index: i });
+          }
+        }
       } else if (line.match(/Kalite/i)) {
         constantFields.push({ type: 'kalite', value: line, index: i });
       } else if (line.match(/^[0-9]$/)) {
         constantFields.push({ type: 'lot', value: line, index: i });
       }
     }
-    
-    this.log(`Classified ${repeatingFields.length} repeating fields, ${constantFields.length} constant fields`);
     
     return { repeatingFields, constantFields };
   }
@@ -268,7 +270,6 @@ class BezParser extends BaseParser {
       }
     }
     
-    this.log(`Product ${productIndex + 1} fields: ${JSON.stringify(fields)}`);
     return fields;
   }
 

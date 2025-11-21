@@ -48,16 +48,24 @@ const fieldMappings = {
   BEZ: {
     keywords: ["Tip", "Top Metre", "TopAdı", "Dispo No", "kalite", "lot", "Kumaş Sevk Listesi"],
     mapping: {
+      // Ana field'lar - SADECE BUNLAR KULLANILACAK
       "Tip": "ARTICLE NUMBER / COMPOSITION / CUSTOMS CODE",
-      "Top Metre": "QUANTITY (METERS)",
       "TopAdı": "ROLL NUMBER ROLL DIMENSIONS",
-      "Dispo No": "LOT",
-      "kalite": "", // Boş bırak - ağırlık olarak kullanma
-      "lot": "", // Boş bırak - ağırlık olarak kullanma
-      "En": "", // Boş bırak - ağırlık bilgisi değil
-      "FABRIC WEIGHT / WIDTH": "", // Boş bırak
-      "GROSS WEIGHT(KG)": "", // Boş bırak
-      "NET WEIGHT (KG)": "" // Boş bırak
+      "Top Metre": "QUANTITY (METERS)",
+      
+      // LOT bilgisi (opsiyonel)
+      
+      // Diğer tüm field'lar boş - kullanılmasın
+      "Tezgah No": "",
+      "Müş. No": "",
+      "Sip. No": "",
+      "kalite": "",
+      "lot": "",
+      "En": "",
+      "FABRIC WEIGHT / WIDTH": "",
+      "GROSS WEIGHT(KG)": "",
+      "GROSS WEIGHT (KG)": "",
+      "NET WEIGHT (KG)": ""
     }
   },
 
@@ -154,7 +162,7 @@ function getCompanyMapping(companyName) {
     }
   }
   
-  console.log(`⚠️ No specific mapping found for ${companyName}, using DEFAULT`);
+  console.log(` No specific mapping found for ${companyName}, using DEFAULT`);
   return fieldMappings.DEFAULT;
 }
 
@@ -165,21 +173,14 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
   const companyConfig = getCompanyMapping(companyName);
   const { mapping } = companyConfig;
   
-  console.log(`🔄 Mapping fields for company: ${companyName}`);
-  console.log(`📋 Input OCR Data Count: ${ocrData ? ocrData.length : 0}`);
-  console.log(`📋 Company Config:`, companyConfig);
+  console.log(` Mapping fields for company: ${companyName}`);
   
   if (!ocrData || !Array.isArray(ocrData)) {
-    console.log('❌ Invalid OCR data provided:', typeof ocrData);
+    console.log(' Invalid OCR data provided');
     return [];
   }
   
-  // Log sample input data
-  if (ocrData.length > 0) {
-    console.log('📋 Sample Input Data:', JSON.stringify(ocrData[0], null, 2));
-  }
-  
-  const result = ocrData.map(item => {
+  return ocrData.map(item => {
     const mappedItem = {};
     const processedFields = new Set(); // Hangi field'ların işlendiğini takip et
     
@@ -233,7 +234,7 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
             processedFields.add("CUSTOMER ORDER NO");
             processedFields.add("COMPOSITION");
             
-            console.log(`🔗 Combined AKBASLAR fields: "${targetField}" = "${combinedValue}"`);
+            console.log(` Combined AKBASLAR fields: "${targetField}" = "${combinedValue}"`);
           }
           // ADA: Müşt. Referansı ve Komp field'larını birleştir
           else if (ocrField === "Müşt. Referansı" || ocrField === "Komp") {
@@ -256,14 +257,14 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
             processedFields.add("Müşt. Referansı");
             processedFields.add("Komp");
             
-            console.log(`🔗 Combined ADA fields: "${targetField}" = "${combinedValue}"`);
+            console.log(` Combined ADA fields: "${targetField}" = "${combinedValue}"`);
           }
           // SAFİRA: Kumaş Cinsi doğrudan mapping
           else if (ocrField === "Kumaş Cinsi") {
             mappedItem[targetField] = item[ocrField] || '';
             processedFields.add("Kumaş Cinsi");
             
-            console.log(`🔗 SAFİRA field: "${targetField}" = "${item[ocrField]}"`);
+            console.log(` SAFİRA field: "${targetField}" = "${item[ocrField]}"`);
           }
           else {
             mappedItem[targetField] = item[ocrField];
@@ -282,16 +283,6 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
     
     return mappedItem;
   });
-  
-  // Log final mapping result
-  console.log(`📦 Mapping completed: ${result.length} items processed`);
-  if (result.length > 0) {
-    console.log('📋 Sample Mapped Item:', JSON.stringify(result[0], null, 2));
-  } else {
-    console.error('❌ NO MAPPED ITEMS PRODUCED - MAPPING FAILED');
-  }
-  
-  return result;
 }
 
 /**
