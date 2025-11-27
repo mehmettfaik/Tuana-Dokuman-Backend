@@ -20,7 +20,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      // //console.log('HelveticaNeueLightItalic font not found, using default italic font');
       this.tuanaFont = this.fontItalic; // Fallback
     }
   }
@@ -85,7 +84,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
   }
 
   drawFormTable(page, pageWidth, y, formData) {
-    // //console.log('drawFormTable called with formData:', formData);
     
     // Field mapping for translations
     const fieldMappings = {
@@ -143,7 +141,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       
       const value = formData[fieldKey] || '';
       
-      //console.log(`Field: ${field}, FieldKey: ${fieldKey}, Value: "${value}"`);
       
       // İmza alanları her zaman dahil et (boş olsa bile)
       if (fieldKey === 'ISSUED BY' || fieldKey === 'RESPONSIBLE TECHNICIAN') {
@@ -288,12 +285,12 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       'wash_40': '40-derece.jpeg',
       'wash_50': '50-derece.jpeg',
       'wash_60': '60-derece.jpeg',
-      'cold_wash': 'cold-wash.jpeg',
+      //'cold_wash': 'cold-wash.jpeg',
       'hand_wash': 'hand-wash.jpeg',
       'machine_wash': 'machine-wash.jpeg',
-      'delicate_wash': 'delicate-wash.jpeg',
+      //'delicate_wash': 'delicate-wash.jpeg',
       'narin_yikama': 'narin-yıkama.jpeg',
-      'wash_hot': 'wash-hot.jpeg',
+      //'wash_hot': 'wash-hot.jpeg',
       'do_not_wash': 'do-not-wash.jpeg',
       'normal': 'normal.jpeg',
       'do_not_bleach': 'do-not-bleach.jpeg',
@@ -307,11 +304,11 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       'high_heat': 'high-heat.jpeg',
       'low_iron': 'low-iron.jpeg',
       'utu': 'utu.jpeg',
-      'buhar': 'buhar.jpeg',
+      //'buhar': 'buhar.jpeg',
       'do_not_iron': 'do-not-iron.jpeg',
       'dry_clean': 'dry-clean.jpeg',
       'do_not_dry_clean': 'do-not-dry-clean.jpeg',
-      'any_solvent': 'any-solvent.jpeg',
+      //'any_solvent': 'any-solvent.jpeg',
       'cleaning_pce_delicate': 'cleaning-PCE-delicate.jpeg',
       'cleaning_pce_very_delicate': 'cleaning-PCE-very-delicate.jpeg'
     };
@@ -336,7 +333,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       //   font: this.font,
       //   color: rgb(0.5, 0.5, 0.5),
       // });
-      //console.log('No care instructions selected');
       return;
     }
 
@@ -346,23 +342,21 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       imagePath: careInstructionsMapping[id]
     })).filter(item => item.imagePath); // Sadece geçerli mapping'leri al
 
-    //console.log('Selected care instructions:', selectedCareInstructions);
 
     // Maksimum 8 ikon sınırı
     const maxIcons = 8;
     const limitedCareInstructions = selectedCareInstructions.slice(0, maxIcons);
     
     if (selectedCareInstructions.length > maxIcons) {
-      //console.log(`Warning: ${selectedCareInstructions.length} care instructions selected, showing only first ${maxIcons}`);
     }
 
     // Her bir yıkama talimatı görselini yükle ve çiz
     let startX = 55;
     let currentX = startX;
     let currentY = y - 30;
-    const iconWidth = 45; // İkon genişliği (daha geniş)
-    const iconHeight = 40; // İkon yüksekliği (kare)
-    const iconSpacing = 55; // İkonlar arası boşluk
+    const iconWidth = 65; // İkon genişliği (daha geniş)
+    const iconHeight = 70; // İkon yüksekliği (kare)
+    const iconSpacing = 65; // İkonlar arası boşluk
     const maxIconsPerRow = 8; // Satır başına maksimum ikon sayısı
     let iconsInCurrentRow = 0;
 
@@ -382,7 +376,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
             height: iconHeight,
           });
           
-          //console.log(`Care instruction icon drawn: ${instruction.imagePath} at (${currentX}, ${currentY}) with size ${iconWidth}x${iconHeight}`);
         } else {
           // İkon yüklenemezse placeholder çiz
           page.drawRectangle({
@@ -400,10 +393,8 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
             font: this.font,
             color: rgb(0.5, 0.5, 0.5),
           });
-          //console.log(`Care instruction icon not found: ${instruction.imagePath}`);
         }
       } catch (error) {
-        console.error(`Error loading care instruction icon ${instruction.imagePath}:`, error);
         // Hata durumunda placeholder çiz
         page.drawRectangle({
           x: currentX,
@@ -429,7 +420,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
   }
 
   drawNotesSection(page, pageWidth, y, formData) {
-    //console.log('drawNotesSection called with formData:', formData);
     
     page.drawLine({
       start: { x: 50, y: y + 33 },
@@ -456,7 +446,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       formData?.NOTE_3 || formData?.NOTE3 || ''
     ];
 
-    //console.log('Notes to render:', notes);
 
     for (let i = 1; i <= 3; i++) {
       page.drawText(`${i}.`, {
@@ -470,7 +459,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       // Not varsa yaz
       const noteText = notes[i - 1];
       if (noteText && noteText.trim() !== '') {
-        //console.log(`Rendering note ${i}: ${noteText}`);
         
         // Güvenli metin çizimi kullan
         this.drawSafeText(page, noteText, {
@@ -481,7 +469,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
       } else {
-        //console.log(`Note ${i} is empty or undefined`);
+
       }
       
       y -= 15;
