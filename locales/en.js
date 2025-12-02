@@ -215,5 +215,23 @@ module.exports = {
   pieces: 'PIECES',
   hsCustomsCode: 'HS (CUSTOMS) CODE',
   trackingCode: 'TRACKING CODE',
-  courier: 'COURIER'
+  courier: 'COURIER',
+
+  // Quality Control specific
+  qualityControlReport: 'QUALITY CONTROL REPORT',
+  articleCodeOur: 'ARTICLE CODE (OUR)',
+  articleCodeClient: 'ARTICLE CODE (CLIENT)',
+  orderNumber: 'ORDER NUMBER',
+  client: 'CLIENT',
+  composition: 'COMPOSITION',
+  weight: 'WEIGHT',
+  width: 'WIDTH',
+  rollNumber: 'ROLL NUMBER',
+  batchNumber: 'BATCH NUMBER',
+  rollLength: 'ROLL LENGTH',
+  meter: 'METER',
+  description: 'DESCRIPTION',
+  point: 'POINT (1-4)',
+  date: 'DATE',
+  meters: 'METERS'
 };

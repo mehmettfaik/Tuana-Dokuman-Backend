@@ -3,7 +3,7 @@ const fs = require('fs');
 const OrderConfirmationTemplate = require('./templates/order-confirmation/OrderConfirmationTemplate');
 
 async function testOrderConfirmationPagination() {
-  console.log('🧪 Testing Order Confirmation pagination...');
+  console.log(' Testing Order Confirmation pagination...');
   
   const pdfDoc = await PDFDocument.create();
   const template = new OrderConfirmationTemplate(pdfDoc);
@@ -34,21 +34,21 @@ async function testOrderConfirmationPagination() {
     goods: goods
   };
   
-  console.log(`📦 Testing with ${goods.length} products`);
-  console.log('📄 Expected: 7 products on first page, 23 products on second page');
+  console.log(` Testing with ${goods.length} products`);
+  console.log(' Expected: 7 products on first page, 23 products on second page');
   
   await template.generate(formData);
   
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync('./test-order-confirmation-30-products.pdf', pdfBytes);
   
-  console.log('✅ Test PDF created: test-order-confirmation-30-products.pdf');
-  console.log(`📊 PDF has ${pdfDoc.getPages().length} pages`);
+  console.log(' Test PDF created: test-order-confirmation-30-products.pdf');
+  console.log(` PDF has ${pdfDoc.getPages().length} pages`);
   
   if (pdfDoc.getPages().length === 2) {
-    console.log('✅ Pagination working correctly: 2 pages created for 30 products');
+    console.log(' Pagination working correctly: 2 pages created for 30 products');
   } else {
-    console.log(`❌ Pagination issue: Expected 2 pages, got ${pdfDoc.getPages().length} pages`);
+    console.log(` Pagination issue: Expected 2 pages, got ${pdfDoc.getPages().length} pages`);
   }
 }
 

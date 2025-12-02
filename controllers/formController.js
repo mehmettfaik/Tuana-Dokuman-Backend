@@ -7,9 +7,10 @@ const createForm = async (req, res) => {
     
     
     // Support goods sent either as top-level `goods` or nested in `formData.goods`
-    const { formData: rawFormData, goods: topGoods, formType, totals } = req.body;
+    const { formData: rawFormData, goods: topGoods, formType, totals, rolls: topRolls } = req.body;
     const formData = rawFormData || {};
     const goods = topGoods || formData.goods || [];
+    const rolls = topRolls || formData.rolls || [];
     
     
 
@@ -29,11 +30,16 @@ const createForm = async (req, res) => {
       // keep a copy in formData for frontends that expect nested goods
       normalizedFormData.goods = goods;
     }
+    if (!normalizedFormData.rolls && rolls.length > 0) {
+      // keep a copy in formData for frontends that expect nested rolls
+      normalizedFormData.rolls = rolls;
+    }
 
     const newForm = {
       formType,
       formData: normalizedFormData,
       goods: goods,
+      rolls: rolls,
       totals: totals || null,
       createdAt: new Date().toISOString()
     };
@@ -81,14 +87,17 @@ const getAllForms = async (req, res) => {
       const data = doc.data() || {};
       // Normalize goods: support top-level goods or nested formData.goods
       const goods = data.goods || (data.formData && data.formData.goods) || [];
+      const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
       const formData = { ...(data.formData || {}) };
       if (!formData.goods && goods.length > 0) formData.goods = goods;
+      if (!formData.rolls && rolls.length > 0) formData.rolls = rolls;
 
       forms.push({
         id: doc.id,
         formType: data.formType,
         formData,
         goods,
+        rolls,
         totals: data.totals || null,
         createdAt: data.createdAt || null,
         updatedAt: data.updatedAt || null
@@ -142,9 +151,11 @@ const getFormById = async (req, res) => {
 
     // ID ile birlikte data döndür
     const data = doc.data() || {};    
-    const goods = data.goods || (data.formData && data.formData.goods) || [];    
+    const goods = data.goods || (data.formData && data.formData.goods) || [];
+    const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
     const formData = { ...(data.formData || {}) };
     if (!formData.goods && goods.length > 0) formData.goods = goods;
+    if (!formData.rolls && rolls.length > 0) formData.rolls = rolls;
 
     // Return normalized shape so frontend always receives goods and formData.goods
     const response = {
@@ -152,6 +163,7 @@ const getFormById = async (req, res) => {
       formType: data.formType,
       formData,
       goods,
+      rolls,
       totals: data.totals || null,
       createdAt: data.createdAt || null,
       updatedAt: data.updatedAt || null

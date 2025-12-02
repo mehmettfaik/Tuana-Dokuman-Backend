@@ -15,7 +15,6 @@ class JobManager {
   async ensureOutputDirectory() {
     try {
       await fs.ensureDir(this.outputDir);
-      console.log(`Output directory created/verified: ${this.outputDir}`);
     } catch (error) {
       console.error('Error creating output directory:', error);
       // Fallback to system temp directory

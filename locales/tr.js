@@ -212,6 +212,24 @@ priceOfferNotes: [
   pieces: 'ADET',
   hsCustomsCode: 'GTİP KODU',
   trackingCode: 'TAKİP KODU',
-  courier: 'KARGO'
+  courier: 'KARGO',
+
+  // Quality Control specific
+  qualityControlReport: 'KALİTE KONTROL RAPORU',
+  articleCodeOur: 'ARTİKEL KODU',
+  articleCodeClient: 'ARTİKEL KODU (MÜŞTERİ)',
+  orderNumber: 'SİPARİŞ NUMARASI',
+  client: 'MÜŞTERİ',
+  composition: 'KARIŞIM',
+  weight: 'AĞIRLIK',
+  width: 'EN',
+  rollNumber: 'TOP NUMARASI',
+  batchNumber: 'LOT NUMARASI',
+  rollLength: 'TOP UZUNLUĞU',
+  meter: 'METRE',
+  description: 'AÇIKLAMA',
+  point: 'PUAN (1-4)',
+  date: 'TARİH',
+  meters: 'METRE'
 
 };

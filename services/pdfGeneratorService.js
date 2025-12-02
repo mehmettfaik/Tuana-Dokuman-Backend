@@ -16,6 +16,7 @@ const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
+const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
 
 // Service imports
 const LogoService = require('./logoService');
@@ -35,7 +36,6 @@ class PdfGeneratorService {
   async ensureOutputDirectory() {
     try {
       await fs.ensureDir(this.outputDir);
-      console.log(`PDF output directory created/verified: ${this.outputDir}`);
     } catch (error) {
       console.error('Error creating PDF output directory:', error);
       // Fallback to system temp directory
@@ -52,7 +52,6 @@ class PdfGeneratorService {
 
   async generatePDF(jobId, docType, formData, language = 'en') {
     try {
-      console.log(`Starting PDF generation for job ${jobId}, docType: ${docType}`);
 
 
       // Language validation
@@ -164,7 +163,6 @@ class PdfGeneratorService {
           const labelFilePath = path.join(this.outputDir, labelFileName);
           await fs.writeFile(labelFilePath, labelPdfBytes);
           
-          console.log(`Product Label PDF generated successfully for job ${jobId}: ${labelFilePath}`);
           return labelFilePath;
         case 'hangers-shipment':
 
@@ -173,6 +171,14 @@ class PdfGeneratorService {
             pdfFileName = 'TUANA_ASKILI_SEVKIYAT';
           } else {
             pdfFileName = 'TUANA_HANGERS_SHIPMENT';
+          }
+          break;
+        case 'quality-control':
+          template = new QualityControlTemplate(pdfDoc, logoImage, validatedLanguage);
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_KALITE_KONTROL';
+          } else {
+            pdfFileName = 'TUANA_QUALITY_CONTROL';
           }
           break;
         default:
@@ -199,7 +205,6 @@ class PdfGeneratorService {
       
       await fs.writeFile(filePath, pdfBytes);
       
-      console.log(`PDF generated successfully for job ${jobId}: ${filePath}`);
       return filePath;
 
     } catch (error) {
