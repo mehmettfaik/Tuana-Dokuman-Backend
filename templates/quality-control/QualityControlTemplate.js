@@ -229,7 +229,7 @@ class QualityControlTemplate extends BasePdfTemplate {
     currentY -= 12;
 
     const rollLengthLabel = this.languageService.getText('rollLength', this.language);
-    const metersLabel = this.languageService.getText('meters', this.language);
+    const metersLabel = this.languageService.getText('metersLabel', this.language);
     page.drawText(`${rollLengthLabel}: ${roll['Roll Length'] || ''} ${metersLabel}`, {
       x: 55,
       y: currentY + 29,

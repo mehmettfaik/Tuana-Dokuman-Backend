@@ -233,5 +233,5 @@ module.exports = {
   description: 'DESCRIPTION',
   point: 'POINT (1-4)',
   date: 'DATE',
-  meters: 'METERS'
+  metersLabel: 'METERS'
 };
