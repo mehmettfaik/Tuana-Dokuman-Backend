@@ -1,3 +1,5 @@
+const { note } = require("./en");
+
 module.exports = {
   // Common terms
   from: 'GÖNDEREN',
@@ -18,6 +20,7 @@ module.exports = {
   responsiblePerson: 'SORUMLU KİŞİ',
   telephone: 'TELEFON',
   email: 'E-POSTA',
+  note: 'NOT',
   
   // Price Offer specific
   priceOffer: 'FİYAT TEKLİFİ',

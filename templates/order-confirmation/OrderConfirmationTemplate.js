@@ -913,7 +913,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         this.drawSafeText(page, line.trim(), {
           x: 55,
           y: noteContentY,
-          size: 8,
+          size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
         });
@@ -996,31 +996,31 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
   }
 
   // Banka hesap bilgilerini döndüren yardımcı metod
-  getBankAccountInfo(currency) {
-    const bankAccounts = {
-      'TRY': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
-TEB (TÜRKIYE EKONOMI BANKASI)
-ŞUBE: MERTER (032)
-HESAP NO: 962246
-IBAN :TR78 0003 2000 0320 0000 9622 46`,
+//   getBankAccountInfo(currency) {
+//     const bankAccounts = {
+//       'TRY': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
+// TEB (TÜRKIYE EKONOMI BANKASI)
+// ŞUBE: MERTER (032)
+// HESAP NO: 962246
+// IBAN :TR78 0003 2000 0320 0000 9622 46`,
       
-      'USD': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
-TEB (TURKIYE EKONOMI BANKASI)
-BRANCH: MERTER (032)
-ACCOUNT NO: 967978
-IBAN: TR29 0003 2000 0320 0000 9679 78
-SWIFT: TEBUTRIS 032`,
+//       'USD': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
+// TEB (TURKIYE EKONOMI BANKASI)
+// BRANCH: MERTER (032)
+// ACCOUNT NO: 967978
+// IBAN: TR29 0003 2000 0320 0000 9679 78
+// SWIFT: TEBUTRIS 032`,
       
-      'EUR': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
-TEB (TURKIYE EKONOMI BANKASI)
-BRANCH: MERTER (032)
-ACCOUNT NO: 967979
-IBAN: TR02 0003 2000 0320 0000 9679 79
-SWIFT: TEBUTRIS 032`
-    };
+//       'EUR': `TUANA TEKSTIL SAN. VE TIC. LTD. STI.
+// TEB (TURKIYE EKONOMI BANKASI)
+// BRANCH: MERTER (032)
+// ACCOUNT NO: 967979
+// IBAN: TR02 0003 2000 0320 0000 9679 79
+// SWIFT: TEBUTRIS 032`
+//     };
 
-    return bankAccounts[currency] || '';
-  }
+//     return bankAccounts[currency] || '';
+//   }
 
   drawNotesSection(page, pageWidth, fixedY, formData) {
     // SABİT POZİSYON: 220'den başla
