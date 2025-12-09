@@ -1060,7 +1060,7 @@ SWIFT: TEBUTRIS 032`
       this.drawSafeText(page, line, {
         x: 55,
         y: noteY,
-        size: 8,
+        size: 7,
         font: this.font,
         color: rgb(0, 0, 0),
       });
