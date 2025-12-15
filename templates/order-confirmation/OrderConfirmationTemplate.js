@@ -548,7 +548,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         this.drawSafeText(currentPage, good['WEIGHT / WIDHT'] || '', {
           x: 260,
           y: currentY - 10,
-          size: 8,
+          size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
         });
@@ -556,7 +556,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         this.drawSafeText(currentPage, good['QUANTITY (METERS)'] || '', {
           x: 355,
           y: currentY - 10,
-          size: 8,
+          size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
         });
@@ -564,7 +564,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         this.drawSafeText(currentPage, good['PRICE'] || '', {
           x: 435,
           y: currentY - 10,
-          size: 8,
+          size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
         });

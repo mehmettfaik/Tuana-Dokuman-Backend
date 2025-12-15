@@ -18,12 +18,14 @@ const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
+const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
 
 // Service imports
 const LogoService = require('../services/logoService');
 const WashingIconsService = require('../services/washingIconsService');
 const FontService = require('../services/fontService');
 const LanguageService = require('../services/languageService');
+const ExcelExportService = require('../services/excelExportService');
 
 // PDF Generator Service instance
 const pdfGeneratorService = new PdfGeneratorService();
@@ -40,9 +42,6 @@ exports.startPdfGeneration = async (req, res) => {
   try {
     const { docType, formType, formData, language } = req.body;
     const documentType = docType || formType;
-
-    console.log('📋 PDF generation job start request:', { documentType, language });
-    console.log('🔍 Original request:', { docType, formType, documentType });
 
     if (!documentType) {
       return res.status(400).json({ 
@@ -81,11 +80,8 @@ exports.startPdfGeneration = async (req, res) => {
         
         // Job'ı tamamlandı olarak işaretle
         jobManager.updateJobStatus(jobId, 'completed', filePath);
-        
-        console.log(`PDF generation completed for job ${jobId}`);
-        
+                
       } catch (error) {
-        console.error(`PDF generation failed for job ${jobId}:`, error);
         jobManager.updateJobStatus(jobId, 'failed', null, error.message);
       }
     });
@@ -208,8 +204,6 @@ exports.downloadPdf = async (req, res) => {
     // PDF'i gönder
     res.send(pdfBuffer);
 
-    console.log(`PDF downloaded for job ${id}: ${fileName}`);
-
   } catch (error) {
     console.error('Error downloading PDF:', error);
     res.status(500).json({
@@ -225,9 +219,7 @@ exports.downloadPdf = async (req, res) => {
 // ============================================================================
 
 exports.generatePDF = async (req, res) => {
-  try {
-    //console.log('PDF generation request received:', req.body);
-    
+  try {    
     // docType veya formType'ı kabul et
     const { docType, formType, formData, language } = req.body;
     const documentType = docType || formType;
@@ -245,18 +237,8 @@ exports.generatePDF = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted docType:', documentType);
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
-    //console.log('FormData notes:', {
-    //   NOTE_1: formData?.NOTE_1,
-    //   NOTE_2: formData?.NOTE_2,
-    //   NOTE_3: formData?.NOTE_3
-    // });
 
     if (!documentType) {
-      //console.log('Error: Missing documentType');
       return res.status(400).json({ 
         error: 'docType or formType is required',
         received: req.body 
@@ -265,32 +247,26 @@ exports.generatePDF = async (req, res) => {
 
     // Invoice için INVOICE NUMBER kontrolü
     if (documentType === 'invoice' && (!formData || !formData['INVOICE NUMBER'])) {
-      //console.log('Error: Missing INVOICE NUMBER for invoice document type');
       return res.status(400).json({ 
         error: 'INVOICE NUMBER is required for invoice document type',
         received: formData 
       });
     }
 
-    //console.log('Document type validation passed, creating PDF...');
 
     // PDF oluşturma
-    //console.log('Creating PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Doküman tipine göre template seçimi - dil desteği ile
     let template;
     let pdfFileName;
-    
-    console.log(`🎯 Template selection for documentType: "${documentType}"`);
-    
+        
     if (documentType === 'proforma-invoice') {
       template = new ProformaInvoiceTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_PROFORMA_FATURA' : 'TUANA_PROFORMA_INVOICE';
@@ -308,7 +284,6 @@ exports.generatePDF = async (req, res) => {
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_BORC_DEKONTU' : 'TUANA_DEBIT_NOTE';
     } else {
       // Default: technical sheet
-      console.log(`⚠️  No template match for "${documentType}", using default TechnicalSheetTemplate`);
       template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_TEKNIK_SHEET' : 'TUANA_TECHNICAL_SHEET';
     }
@@ -316,7 +291,6 @@ exports.generatePDF = async (req, res) => {
     await template.initialize();
     
     // PDF üretme - dil desteği ile
-    //console.log('Generating PDF with template...');
     if (documentType === 'proforma-invoice') {
       await template.createProformaInvoice(formData, validatedLanguage);
     } else if (documentType === 'invoice') {
@@ -332,7 +306,6 @@ exports.generatePDF = async (req, res) => {
     }
     
     // PDF'i byte array olarak al
-    //console.log('Saving PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Doğru headers ayarla - timestamp'i kaldır ve sadece temiz filename kullan
@@ -340,9 +313,7 @@ exports.generatePDF = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${pdfFileName}_${Date.now()}.pdf"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    
-    //console.log('PDF generated successfully, size:', pdfBytes.length, 'bytes');
-    res.send(Buffer.from(pdfBytes));
+        res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
     console.error('PDF generation error:', error);
@@ -372,7 +343,6 @@ exports.getWashingIcons = (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('Get washing icons error:', error);
     res.status(500).json({
       error: 'Failed to check washing icons',
       message: error.message,
@@ -416,7 +386,6 @@ exports.getFontStatus = (req, res) => {
 // Proforma Invoice PDF oluşturma
 exports.generateProformaInvoice = async (req, res) => {
   try {
-    //console.log('Proforma Invoice PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -433,9 +402,6 @@ exports.generateProformaInvoice = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
 
     if (!formData) {
       return res.status(400).json({ 
@@ -445,14 +411,12 @@ exports.generateProformaInvoice = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Proforma Invoice PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Proforma Invoice template - language parametresi ile
@@ -460,11 +424,9 @@ exports.generateProformaInvoice = async (req, res) => {
     await template.initialize();
     
     // PDF üretme
-    //console.log('Generating Proforma Invoice PDF with template...');
     await template.createProformaInvoice(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Proforma Invoice PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -480,9 +442,7 @@ exports.generateProformaInvoice = async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
-    
-    //console.log('Proforma Invoice PDF generated successfully, size:', pdfBytes.length, 'bytes');
-    res.send(Buffer.from(pdfBytes));
+        res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
     console.error('Proforma Invoice PDF generation error:', error);
@@ -498,9 +458,7 @@ exports.generateProformaInvoice = async (req, res) => {
 
 // Technical Sheet PDF oluşturma
 exports.generateTechnicalSheet = async (req, res) => {
-  try {
-    //console.log('Technical Sheet PDF generation request received:', req.body);
-    
+  try {    
     const { formData, language } = req.body;
     
     // Language mapping ve validation
@@ -516,9 +474,6 @@ exports.generateTechnicalSheet = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
 
     if (!formData) {
       return res.status(400).json({ 
@@ -528,14 +483,12 @@ exports.generateTechnicalSheet = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Technical Sheet PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Technical Sheet template - language parametresi ile
@@ -543,11 +496,9 @@ exports.generateTechnicalSheet = async (req, res) => {
     await template.initialize();
     
     // PDF üretme
-    //console.log('Generating Technical Sheet PDF with template...');
     await template.createFabricTechnicalSheet(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Technical Sheet PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -564,12 +515,9 @@ exports.generateTechnicalSheet = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Technical Sheet PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
-    console.error('Technical Sheet PDF generation error:', error);
-    console.error('Error stack:', error.stack);
     res.status(500).json({ 
       error: 'Technical Sheet PDF generation failed',
       message: error.message,
@@ -582,7 +530,6 @@ exports.generateTechnicalSheet = async (req, res) => {
 // Invoice PDF oluşturma
 exports.generateInvoice = async (req, res) => {
   try {
-    //console.log('Invoice PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -600,8 +547,6 @@ exports.generateInvoice = async (req, res) => {
       validatedLanguage = 'en';
     }
     
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
 
     if (!formData) {
       return res.status(400).json({ 
@@ -619,14 +564,12 @@ exports.generateInvoice = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Invoice PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Invoice template - language parametresi ile
@@ -634,11 +577,9 @@ exports.generateInvoice = async (req, res) => {
     await template.initialize();
     
     // PDF üretme
-    //console.log('Generating Invoice PDF with template...');
     await template.createInvoice(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Invoice PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -655,12 +596,10 @@ exports.generateInvoice = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Invoice PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
-    console.error('Invoice PDF generation error:', error);
-    console.error('Error stack:', error.stack);
+
     res.status(500).json({ 
       error: 'Invoice PDF generation failed',
       message: error.message,
@@ -673,7 +612,6 @@ exports.generateInvoice = async (req, res) => {
 // Packing List PDF oluşturma
 exports.generatePackingList = async (req, res) => {
   try {
-    //console.log('Packing List PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -691,9 +629,6 @@ exports.generatePackingList = async (req, res) => {
       validatedLanguage = 'en';
     }
     
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
-
     if (!formData) {
       return res.status(400).json({ 
         error: 'formData is required',
@@ -710,14 +645,12 @@ exports.generatePackingList = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Packing List PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Packing List template - language parametresi ile
@@ -725,11 +658,9 @@ exports.generatePackingList = async (req, res) => {
     await template.initialize();
     
     // PDF üretme
-    //console.log('Generating Packing List PDF with template...');
     await template.createPackingList(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Packing List PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -746,13 +677,11 @@ exports.generatePackingList = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Packing List PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
     console.error('Packing List PDF generation error:', error);
-    console.error('Error stack:', error.stack);
-    res.status(500).json({ 
+    res.status(500).json({
       error: 'Packing List PDF generation failed',
       message: error.message,
       stack: error.stack,
@@ -761,10 +690,9 @@ exports.generatePackingList = async (req, res) => {
   }
 };
 
-// Credit Note PDF oluşturma
-exports.generateCreditNote = async (req, res) => {
+// Invoice Excel oluşturma
+exports.generateInvoiceExcel = async (req, res) => {
   try {
-    //console.log('Credit Note PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -782,9 +710,201 @@ exports.generateCreditNote = async (req, res) => {
       validatedLanguage = 'en';
     }
     
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
+    if (!formData) {
+      return res.status(400).json({ 
+        error: 'formData is required',
+        timestamp: new Date().toISOString()
+      });
+    }
 
+    // INVOICE NUMBER kontrolü - zorunlu alan
+    if (!formData['INVOICE NUMBER']) {
+      return res.status(400).json({ 
+        error: 'INVOICE NUMBER is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // Excel Export Service
+    const excelExportService = new ExcelExportService();
+    
+    // Excel üretme
+    const excelBuffer = await excelExportService.generateInvoiceExcel(formData, validatedLanguage);
+    
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_FATURA_${formData['INVOICE NUMBER']}_${Date.now()}.xlsx`;
+    } else {
+      fileName = `TUANA_INVOICE_${formData['INVOICE NUMBER']}_${Date.now()}.xlsx`;
+    }
+
+    // Doğru headers ayarla
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', excelBuffer.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    res.send(excelBuffer);
+
+  } catch (error) {
+    console.error('Invoice Excel generation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Invoice Excel generation failed',
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Proforma Invoice Excel oluşturma
+exports.generateProformaExcel = async (req, res) => {
+  try {
+    const { formData, language } = req.body;
+    
+    // Language mapping ve validation
+    const languageService = new LanguageService();
+    const languageMap = {
+      'turkish': 'tr',
+      'english': 'en'
+    };
+    
+    let validatedLanguage = languageMap[language] || language || 'en';
+    
+    if (!languageService.isValidLanguage(validatedLanguage)) {
+      console.warn(`Invalid language: ${language}. Using English as fallback.`);
+      validatedLanguage = 'en';
+    }
+    
+    if (!formData) {
+      return res.status(400).json({ 
+        error: 'formData is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // INVOICE NUMBER opsiyonel - yoksa otomatik oluştur
+    const proformaNumber = formData['INVOICE NUMBER'] || `PI-${Date.now()}`;
+
+    // Excel Export Service
+    const excelExportService = new ExcelExportService();
+    
+    // Excel üretme
+    const excelBuffer = await excelExportService.generateProformaExcel(formData, validatedLanguage);
+    
+    // Dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_PROFORMA_FATURA_${proformaNumber}_${Date.now()}.xlsx`;
+    } else {
+      fileName = `TUANA_PROFORMA_INVOICE_${proformaNumber}_${Date.now()}.xlsx`;
+    }
+
+    // Headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', excelBuffer.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    res.send(excelBuffer);
+
+  } catch (error) {
+    console.error('Proforma Excel generation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Proforma Excel generation failed',
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Packing List Excel oluşturma
+exports.generatePackingListExcel = async (req, res) => {
+  try {
+    const { formData, language } = req.body;
+    
+    // Language mapping ve validation
+    const languageService = new LanguageService();
+    const languageMap = {
+      'turkish': 'tr',
+      'english': 'en'
+    };
+    
+    let validatedLanguage = languageMap[language] || language || 'en';
+    
+    if (!languageService.isValidLanguage(validatedLanguage)) {
+      console.warn(`Invalid language: ${language}. Using English as fallback.`);
+      validatedLanguage = 'en';
+    }
+    
+    if (!formData) {
+      return res.status(400).json({ 
+        error: 'formData is required',
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    // INVOICE NUMBER opsiyonel - yoksa otomatik oluştur
+    const packingListNumber = formData['INVOICE NUMBER'] || `PL-${Date.now()}`;
+
+    // Excel Export Service
+    const excelExportService = new ExcelExportService();
+    
+    // Excel üretme
+    const excelBuffer = await excelExportService.generatePackingListExcel(formData, validatedLanguage);
+    
+    // Dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `TUANA_PAKETLEME_LISTESI_${packingListNumber}_${Date.now()}.xlsx`;
+    } else {
+      fileName = `TUANA_PACKING_LIST_${packingListNumber}_${Date.now()}.xlsx`;
+    }
+
+    // Headers
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', excelBuffer.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    res.send(excelBuffer);
+
+  } catch (error) {
+    console.error('Packing List Excel generation error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      error: 'Packing List Excel generation failed',
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+// Credit Note PDF oluşturma
+exports.generateCreditNote = async (req, res) => {
+  try {
+    
+    const { formData, language } = req.body;
+    
+    // Language mapping ve validation
+    const languageService = new LanguageService();
+    const languageMap = {
+      'turkish': 'tr',
+      'english': 'en'
+    };
+    
+    let validatedLanguage = languageMap[language] || language || 'en';
+    
+    if (!languageService.isValidLanguage(validatedLanguage)) {
+      console.warn(`Invalid language: ${language}. Using English as fallback.`);
+      validatedLanguage = 'en';
+    }
+    
     if (!formData) {
       return res.status(400).json({ 
         error: 'formData is required',
@@ -808,14 +928,12 @@ exports.generateCreditNote = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Credit Note PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Credit Note template - language parametresi ile
@@ -824,11 +942,9 @@ exports.generateCreditNote = async (req, res) => {
     
     
     // PDF üretme
-    //console.log('Generating Credit Note PDF with template...');
     await template.createCreditNote(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Credit Note PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -845,7 +961,6 @@ exports.generateCreditNote = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Credit Note PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
@@ -863,7 +978,6 @@ exports.generateCreditNote = async (req, res) => {
 // Debit Note PDF oluşturma
 exports.generateDebitNote = async (req, res) => {
   try {
-    //console.log('Debit Note PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -880,9 +994,6 @@ exports.generateDebitNote = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
 
     if (!formData) {
       return res.status(400).json({ 
@@ -907,14 +1018,12 @@ exports.generateDebitNote = async (req, res) => {
     }
 
     // PDF oluşturma
-    //console.log('Creating Debit Note PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Debit Note template - language parametresi ile
@@ -923,9 +1032,7 @@ exports.generateDebitNote = async (req, res) => {
     
     
     // PDF üretme
-    //console.log('Generating Debit Note PDF with template...');
     await template.createDebitNote(formData, validatedLanguage);    // PDF'i byte array olarak al
-    //console.log('Saving Debit Note PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -942,7 +1049,6 @@ exports.generateDebitNote = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Debit Note PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
@@ -959,7 +1065,6 @@ exports.generateDebitNote = async (req, res) => {
 
 exports.generateOrderConfirmation = async (req, res) => {
   try {
-    //console.log('Order Confirmation PDF generation request received:', req.body);
     
     const { formData, language } = req.body;
     
@@ -976,12 +1081,8 @@ exports.generateOrderConfirmation = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    //console.log('Extracted formData:', formData);
 
     if (!formData) {
-      //console.log('Error: Missing formData');
       return res.status(400).json({ 
         error: 'formData is required',
         received: req.body 
@@ -990,24 +1091,19 @@ exports.generateOrderConfirmation = async (req, res) => {
 
     // Order Confirmation için ORDER CONFIRMATION NUMBER kontrolü
     if (!formData['ORDER CONFIRMATION NUMBER']) {
-      //console.log('Error: Missing ORDER CONFIRMATION NUMBER');
       return res.status(400).json({ 
         error: 'ORDER CONFIRMATION NUMBER is required',
         received: formData 
       });
     }
 
-    //console.log('Order Confirmation validation passed, creating PDF...');
-
     // PDF oluşturma
-    //console.log('Creating Order Confirmation PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Order Confirmation template (Invoice template'ini kullanacağız) - language parametresi ile
@@ -1015,11 +1111,9 @@ exports.generateOrderConfirmation = async (req, res) => {
     await template.initialize();
     
     // PDF üretme
-    //console.log('Generating Order Confirmation PDF with template...');
     await template.createOrderConfirmation(formData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Order Confirmation PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -1036,7 +1130,6 @@ exports.generateOrderConfirmation = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Order Confirmation PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
@@ -1053,7 +1146,6 @@ exports.generateOrderConfirmation = async (req, res) => {
 
 exports.generateSiparis = async (req, res) => {
   try {
-    //console.log('Sipariş PDF generation request received:', req.body);
     
     // Language parametresini al
     const { language } = req.body;
@@ -1071,9 +1163,7 @@ exports.generateSiparis = async (req, res) => {
       console.warn(`Invalid language: ${language}. Using English as fallback.`);
       validatedLanguage = 'en';
     }
-    
-    //console.log('Extracted language:', language, '-> validated:', validatedLanguage);
-    
+        
     // Handle nested formData structure
     let actualFormData, actualGoods;
     
@@ -1091,11 +1181,7 @@ exports.generateSiparis = async (req, res) => {
       actualGoods = req.body.goods || [];
     }
     
-    //console.log('Extracted actualFormData:', actualFormData);
-    //console.log('Extracted actualGoods:', actualGoods);
-
     if (!actualFormData) {
-      //console.log('Error: Missing formData');
       return res.status(400).json({ 
         error: 'formData is required',
         received: req.body 
@@ -1105,24 +1191,19 @@ exports.generateSiparis = async (req, res) => {
     // Sipariş için ORDER NUMBER kontrolü (frontend'den gelen field name)
     const orderNumber = actualFormData['ORDER NUMBER'] || actualFormData['SİPARİŞ NUMARASI'];
     if (!orderNumber) {
-      //console.log('Error: Missing ORDER NUMBER or SİPARİŞ NUMARASI');
       return res.status(400).json({ 
         error: 'ORDER NUMBER or SİPARİŞ NUMARASI is required',
         received: actualFormData 
       });
     }
 
-    //console.log('Sipariş validation passed, creating PDF...');
-
     // PDF oluşturma
-    //console.log('Creating Sipariş PDF document...');
     const pdfDoc = await PDFDocument.create();
     
     // Fontkit'i register et (custom fontlar için gerekli)
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
-    //console.log('Loading logo...');
     const logoImage = await LogoService.loadLogo(pdfDoc);
     
     // Sipariş template (Invoice template'ini kullanacağız) - language parametresi ile
@@ -1136,11 +1217,9 @@ exports.generateSiparis = async (req, res) => {
     };
     
     // PDF üretme
-    //console.log('Generating Sipariş PDF with template...');
     await template.createSiparis(combinedData, validatedLanguage);
     
     // PDF'i byte array olarak al
-    //console.log('Saving Sipariş PDF...');
     const pdfBytes = await pdfDoc.save();
     
     // Dil seçimine göre dosya adı
@@ -1157,7 +1236,6 @@ exports.generateSiparis = async (req, res) => {
     res.setHeader('Content-Length', pdfBytes.length);
     res.setHeader('Access-Control-Allow-Origin', '*');
     
-    //console.log('Sipariş PDF generated successfully, size:', pdfBytes.length, 'bytes');
     res.send(Buffer.from(pdfBytes));
 
   } catch (error) {
@@ -1174,9 +1252,6 @@ exports.generateSiparis = async (req, res) => {
 
 const generatePriceOffer = async (req, res) => {
   try {
-    //console.log('Price Offer PDF generation started');
-    //console.log('Received data:', req.body);
-
     // Language ve form verilerini al
     const { formData: requestFormData, language: rawLanguage } = req.body;
     
@@ -1192,9 +1267,7 @@ const generatePriceOffer = async (req, res) => {
     if (languageMap[rawLanguage]) {
       language = languageMap[rawLanguage];
     }
-    
-    //console.log('Original language:', rawLanguage, 'Mapped language:', language);
-    
+        
     // Dil validasyonu
     const languageService = new LanguageService();
     if (!language || !languageService.isValidLanguage(language)) {
@@ -1215,9 +1288,6 @@ const generatePriceOffer = async (req, res) => {
       };
     }
     
-    //console.log('Processed formData:', formData);
-
-    //console.log('Processed formData:', formData);
 
     // PRICE OFFER NUMBER kontrolü
     const priceOfferNumber = formData['PRICE OFFER NUMBER'] || formData['priceOfferNumber'] || '';
@@ -1227,8 +1297,6 @@ const generatePriceOffer = async (req, res) => {
         message: 'PRICE OFFER NUMBER is required' 
       });
     }
-
-    //console.log('Creating Price Offer template...');
 
     // PDF dokümanı oluştur
     const pdfDoc = await PDFDocument.create();
@@ -1250,8 +1318,6 @@ const generatePriceOffer = async (req, res) => {
     
     // PDF'i byte array'e çevir
     const pdfBytes = await pdfDoc.save();
-    
-    //console.log('Price Offer PDF generated successfully');
 
     // Dil seçimine göre dosya adı
     let fileName;
@@ -1294,9 +1360,6 @@ exports.generatePriceOffer = generatePriceOffer;
  */
 const generateProductLabel = async (req, res) => {
   try {
-    console.log('Product Label PDF generation started');
-    console.log('Request body:', JSON.stringify(req.body, null, 2));
-
     const formData = req.body;
     const language = req.body.language || 'tr';
 
@@ -1315,8 +1378,6 @@ const generateProductLabel = async (req, res) => {
     
     // PDF'i byte array'e çevir
     const pdfBytes = await pdfDoc.save();
-    
-    console.log('Product Label PDF generated successfully');
 
     // Dil seçimine göre dosya adı
     let fileName;
@@ -1353,8 +1414,6 @@ exports.generateProductLabel = generateProductLabel;
 // Generate Hangers Shipment
 const generateHangersShipment = async (req, res) => {
   try {
-    console.log('Hangers Shipment PDF generation started');
-
     const formData = req.body;
     const language = req.body.language || 'tr';
 
@@ -1387,8 +1446,6 @@ const generateHangersShipment = async (req, res) => {
     
     // PDF'i byte array olarak al
     const pdfBytes = await pdfDoc.save();
-    
-    console.log('Hangers Shipment PDF generated successfully');
 
     // Dil seçimine göre dosya adı
     let fileName;
@@ -1424,24 +1481,17 @@ exports.generateHangersShipment = generateHangersShipment;
  * Generate Packing List with OCR-extracted data
  */
 const generatePackingListWithOcr = async (req, res) => {
-  try {
-    console.log('Generating Packing List with OCR data...');
-    
+  try {    
     // OCR'dan gelen veriler req.body'de olacak
     const ocrData = req.body.ocrData || {};
     const formData = req.body.formData || {};
     const language = req.body.language || 'en';
-
-    console.log('OCR Data received:', ocrData);
-    console.log('Form Data received:', formData);
 
     // OCR verilerini form verilerine merge et
     const mergedData = {
       ...formData,
       ...ocrData
     };
-
-    console.log('Merged Data:', mergedData);
 
     // PDF oluştur
     const pdfDoc = await PDFDocument.create();
@@ -1482,3 +1532,68 @@ const generatePackingListWithOcr = async (req, res) => {
 };
 
 exports.generatePackingListWithOcr = generatePackingListWithOcr;
+
+/**
+ * POST /api/pdf/quality-control
+ * Quality Control Report PDF'i oluştur
+ */
+const generateQualityControl = async (req, res) => {
+  try {
+    console.log('📋 formData keys:', req.body.formData ? Object.keys(req.body.formData) : 'undefined');
+    console.log('🎲 Rolls count:', req.body.rolls ? req.body.rolls.length : 0);
+    
+    const formData = req.body;
+    const language = req.body.language || 'en';
+
+    // Validation
+    if (!formData) {
+      console.error('❌ No form data provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Form data is required' 
+      });
+    }
+
+    // Language validation
+    const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'en';
+
+    // Quality Control template (BasePdfTemplate kullanıyor, PDFKit tabanlı)
+    const template = new QualityControlTemplate();
+    
+    // PDF üretme
+    const pdfBuffer = await template.generate(formData, validatedLanguage);
+
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `kalite-kontrol-${Date.now()}.pdf`;
+    } else {
+      fileName = `quality-control-${Date.now()}.pdf`;
+    }
+    
+
+    // Response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBuffer.length);
+
+    // PDF'i gönder
+    res.send(pdfBuffer);
+
+  } catch (error) {
+    console.error('❌ ============================================');
+    console.error('❌ Quality Control PDF generation error:', error);
+    console.error('❌ Stack:', error.stack);
+    console.error('❌ ============================================');
+    res.status(500).json({ 
+      success: false, 
+      message: 'Quality Control PDF generation failed',
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generateQualityControl = generateQualityControl;
+

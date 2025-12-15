@@ -16,8 +16,11 @@ router.get('/', (req, res) => {
       // Legacy endpoints (for backward compatibility)
       { path: '/api/pdf/generate', method: 'POST', description: 'Generate PDF (legacy)' },
       { path: '/api/pdf/generate-proforma', method: 'POST', description: 'Generate Proforma Invoice PDF (legacy)' },
+      { path: '/api/pdf/generate-proforma-excel', method: 'POST', description: 'Generate Proforma Invoice Excel' },
       { path: '/api/pdf/generate-invoice', method: 'POST', description: 'Generate Invoice PDF (legacy)' },
+      { path: '/api/pdf/generate-invoice-excel', method: 'POST', description: 'Generate Invoice Excel' },
       { path: '/api/pdf/generate-packing-list', method: 'POST', description: 'Generate Packing List PDF (legacy)' },
+      { path: '/api/pdf/generate-packing-list-excel', method: 'POST', description: 'Generate Packing List Excel' },
       { path: '/api/pdf/generate-technical', method: 'POST', description: 'Generate Technical Sheet PDF (legacy)' },
       { path: '/api/pdf/generate-credit-note', method: 'POST', description: 'Generate Credit Note PDF (legacy)' },
       { path: '/api/pdf/generate-debit-note', method: 'POST', description: 'Generate Debit Note PDF (legacy)' },
@@ -25,6 +28,7 @@ router.get('/', (req, res) => {
       { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF (legacy)' },
       { path: '/api/pdf/generate-product-label', method: 'POST', description: 'Generate Product Label PDF (legacy)' },
       { path: '/api/pdf/hangers-shipment', method: 'POST', description: 'Generate Hangers Shipment PDF' },
+      { path: '/api/pdf/quality-control', method: 'POST', description: 'Generate Quality Control Report PDF' },
       
       // Utility endpoints
       { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
@@ -108,11 +112,20 @@ router.post('/generatePDF', pdfController.generatePDF);
 // Proforma Invoice specific endpoint
 router.post('/generate-proforma', pdfController.generateProformaInvoice);
 
+// Proforma Invoice Excel export endpoint
+router.post('/generate-proforma-excel', pdfController.generateProformaExcel);
+
 // Invoice specific endpoint
 router.post('/generate-invoice', pdfController.generateInvoice);
 
+// Invoice Excel export endpoint
+router.post('/generate-invoice-excel', pdfController.generateInvoiceExcel);
+
 // Packing List specific endpoint
 router.post('/generate-packing-list', pdfController.generatePackingList);
+
+// Packing List Excel export endpoint
+router.post('/generate-packing-list-excel', pdfController.generatePackingListExcel);
 
 // Technical Sheet specific endpoint  
 router.post('/generate-technical', pdfController.generateTechnicalSheet);
@@ -137,6 +150,9 @@ router.post('/generate-product-label', pdfController.generateProductLabel);
 
 // Hangers Shipment PDF oluşturma
 router.post('/hangers-shipment', pdfController.generateHangersShipment);
+
+// Quality Control PDF oluşturma
+router.post('/quality-control', pdfController.generateQualityControl);
 
 // OCR-based Packing List PDF oluşturma
 router.post('/generate-packing-list-ocr', pdfController.generatePackingListWithOcr);
