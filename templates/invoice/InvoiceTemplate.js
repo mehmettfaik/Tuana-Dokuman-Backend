@@ -18,7 +18,6 @@ class InvoiceTemplate extends BasePdfTemplate {
     // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      // //console.log('HelveticaNeueLightItalic font not found, using default italic font');
       this.tuanaFont = this.fontItalic; // Fallback
     }
   }
@@ -122,7 +121,18 @@ class InvoiceTemplate extends BasePdfTemplate {
     });
 
     // Invoice Date (sağ üst köşe) - dil desteği ile
-    const currentDate = new Date().toLocaleDateString('en-GB');
+    // Frontend'den gelen 'INVOICE DATE' (YYYY-MM-DD) değeri varsa onu kullan
+    const invoiceDateInput = formData['INVOICE DATE'] || formData.invoiceDate || null;
+    let currentDate = new Date().toLocaleDateString('en-GB');
+    if (invoiceDateInput && typeof invoiceDateInput === 'string') {
+      const parts = invoiceDateInput.split('-');
+      if (parts.length === 3) {
+        const [yyyy, mm, dd] = parts;
+        if (yyyy && mm && dd) {
+          currentDate = `${dd}/${mm}/${yyyy}`;
+        }
+      }
+    }
     const invoiceDateLabel = this.languageService.getText('invoiceDate', this.language);
     page.drawText(`${invoiceDateLabel}: ${currentDate}`, {
       x: pageWidth - 185,
@@ -413,8 +423,6 @@ class InvoiceTemplate extends BasePdfTemplate {
       //   'AMOUNT': '2000,00'
       // }
     ];
-
-    // //console.log('Drawing goods table with data:', goods);
 
     let totalAmount = 0;
     let totalQuantity = 0;
@@ -1266,17 +1274,6 @@ SWIFT: TEBUTRIS 032`
    */
   buildPaymentShippingDetails(formData) {
     const fields = [];
-    
-    // Debug: formData içeriğini kontrol et
-    console.log('Invoice buildPaymentShippingDetails - formData keys:', Object.keys(formData));
-    console.log('Payment related fields:', {
-      paymentTerms: formData.paymentTerms,
-      'Payment Terms': formData['Payment Terms'],
-      transportType: formData.transportType,
-      'Transport Type': formData['Transport Type'],
-      countryOfOrigin: formData.countryOfOrigin,
-      'Country of Origin': formData['Country of Origin']
-    });
 
     // PAYMENT TERMS - Multiple field name support
     const paymentTermsValue = formData.paymentTerms || formData['Payment Terms'] || '';

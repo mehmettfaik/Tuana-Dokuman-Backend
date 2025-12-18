@@ -34,10 +34,53 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
+    // Türkçe locale ile formatla (binlik ayraçları ile)
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
     });
+  }
+
+  /**
+   * String içindeki matematiksel ifadeyi hesapla (ör: "3.390,00 + 170,00")
+   * @param {string} expression - Hesaplanacak ifade
+   * @returns {number} - Hesaplanan sonuç
+   */
+  parseAndCalculate(expression) {
+    if (!expression) return 0;
+    
+    // String'i string olarak tut
+    const str = String(expression).trim();
+    
+    // Eğer + işareti varsa, parçalara ayır ve topla
+    if (str.includes('+')) {
+      return str.split('+').reduce((sum, part) => {
+        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        return sum + (isNaN(num) ? 0 : num);
+      }, 0);
+    }
+    
+    // Eğer - işareti varsa, parçalara ayır ve çıkar
+    if (str.includes('-') && !str.startsWith('-')) {
+      const parts = str.split('-');
+      let result = 0;
+      parts.forEach((part, index) => {
+        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        if (index === 0) {
+          result = isNaN(num) ? 0 : num;
+        } else {
+          result -= isNaN(num) ? 0 : num;
+        }
+      });
+      return result;
+    }
+    
+    // Tek sayı ise direkt parse et
+    const cleaned = str.replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
   }
 
   async createProformaInvoice(formData = {}, language = null) {
@@ -53,7 +96,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     let y = pageHeight - 60; // Üst margin
 
     // PROFORMA IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Proforma Date)
-    this.drawProformaHeader(page, pageWidth, y);
+    this.drawProformaHeader(page, pageWidth, y, formData);
     y -= 70;
 
     // PROFORMA INVOICE başlığı - dil desteği ile
@@ -90,7 +133,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     return this.pdfDoc;
   }
 
-  drawProformaHeader(page, pageWidth, y) {
+  drawProformaHeader(page, pageWidth, y, formData) {
     // TUANA TEKSTIL başlığı
     this.drawSafeText(page, 'TUANA TEKSTIL', {
       x: 55,
@@ -120,8 +163,19 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Proforma Date (sağ üst köşe) - 
-    const currentDate = new Date().toLocaleDateString('en-GB');
+    // Proforma Date (sağ üst köşe)
+    // Frontend'den gelen tarih varsa kullan: 'PROFORMA DATE' veya 'INVOICE DATE' (YYYY-MM-DD)
+    const proformaDateInput = (formData && (formData['PROFORMA DATE'] || formData['INVOICE DATE'] || formData.proformaDate || formData.invoiceDate)) || null;
+    let currentDate = new Date().toLocaleDateString('en-GB');
+    if (proformaDateInput && typeof proformaDateInput === 'string') {
+      const parts = proformaDateInput.split('-');
+      if (parts.length === 3) {
+        const [yyyy, mm, dd] = parts;
+        if (yyyy && mm && dd) {
+          currentDate = `${dd}/${mm}/${yyyy}`;
+        }
+      }
+    }
     const proformaDateLabel = this.languageService.getText('proformaDate', this.language);
     page.drawText(`${proformaDateLabel}: ${currentDate}`, {
       x: pageWidth - 183,
@@ -575,11 +629,11 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
           });
         });
 
-        // Toplam hesaplamaları
-        const amount = parseFloat((good['AMOUNT'] || '0').replace(',', '.'));
+        // Toplam hesaplamaları - parseAndCalculate kullan
+        const amount = this.parseAndCalculate(good['AMOUNT'] || '0');
         totalAmount += amount;
         
-        const quantity = parseFloat((good['QUANTITY (METERS)'] || '0').replace(',', '.'));
+        const quantity = this.parseAndCalculate(good['QUANTITY (METERS)'] || '0');
         totalQuantity += quantity;
         
         // Currency bilgisini al (ilk ürünün currency'sini kullan)

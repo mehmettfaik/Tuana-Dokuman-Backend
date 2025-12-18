@@ -96,7 +96,18 @@ class PackingListTemplate extends BasePdfTemplate {
     });
 
     // Packing List Date (sağ üst köşe)
-    const currentDate = new Date().toLocaleDateString('en-GB');
+    // Frontend'den gelen 'INVOICE DATE' (YYYY-MM-DD) değeri varsa onu kullan
+    const invoiceDateInput = formData['INVOICE DATE'] || formData.invoiceDate || null;
+    let currentDate = new Date().toLocaleDateString('en-GB');
+    if (invoiceDateInput && typeof invoiceDateInput === 'string') {
+      const parts = invoiceDateInput.split('-');
+      if (parts.length === 3) {
+        const [yyyy, mm, dd] = parts;
+        if (yyyy && mm && dd) {
+          currentDate = `${dd}/${mm}/${yyyy}`;
+        }
+      }
+    }
     const invoiceDateLabel = this.languageService.getText('invoiceDate', this.language);
     page.drawText(`${invoiceDateLabel}: ${currentDate}`, {
       x: pageWidth - 185,
