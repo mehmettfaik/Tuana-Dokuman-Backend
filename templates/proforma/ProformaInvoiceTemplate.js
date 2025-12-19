@@ -630,10 +630,14 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         });
 
         // Toplam hesaplamaları - parseAndCalculate kullan
-        const amount = this.parseAndCalculate(good['AMOUNT'] || '0');
+        // Önce quantity ve price'ı parse et
+        const quantity = this.parseAndCalculate(good['QUANTITY (METERS)'] || '0');
+        const price = this.parseAndCalculate(good['PRICE'] || '0');
+        
+        // AMOUNT'u hesapla (quantity * price)
+        const amount = quantity * price;
         totalAmount += amount;
         
-        const quantity = this.parseAndCalculate(good['QUANTITY (METERS)'] || '0');
         totalQuantity += quantity;
         
         // Currency bilgisini al (ilk ürünün currency'sini kullan)
