@@ -778,7 +778,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       });
 
       // KDV yazısı ve oranı - QUANTITY sütununda - dil desteği ile
-      const vatLabel = this.languageService.getText('vatTax', this.language);
+      const vatLabel = this.language === 'tr' ? 'KDV' : 'VAT';
       currentPage.drawText(`% ${kdvOrani} ${vatLabel}`, {
         x: 355,
         y: currentY - 10,

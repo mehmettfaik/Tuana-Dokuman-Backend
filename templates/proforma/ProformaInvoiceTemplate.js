@@ -705,7 +705,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
 
     // Discount hesaplama (KDV'den önce)
     let discountedAmount = totalAmount; // İndirimli tutar
-    const discountEnabled = formData['Discount Ekle Enabled'];
+    const discountEnabled = formData['Discount Enabled'] || formData['Discount Ekle Enabled'];
     const discountOrani = parseFloat(formData['Discount'] || 0);
     
     if (discountEnabled && discountOrani > 0) {
