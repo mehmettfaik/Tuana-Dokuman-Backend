@@ -132,6 +132,7 @@ module.exports = {
   bankInformations: 'BANKA BİLGİLERİ',
   currencyInfo: 'KUR BİLGİSİ',
   vatTax: 'VD',
+  vat: 'KDV',
   generalTotalVatIncluded: 'GENEL TOPLAM (KDV DAHİL)',
   countryOfOrigin: 'MENŞE ÜLKESİ',
   grossWeight: 'BRÜT AĞIRLIK',

@@ -40,6 +40,48 @@ class InvoiceTemplate extends BasePdfTemplate {
     });
   }
 
+  /**
+   * String içindeki matematiksel ifadeyi hesapla (ör: "3.390,00 + 170,00")
+   * @param {string} expression - Hesaplanacak ifade
+   * @returns {number} - Hesaplanan sonuç
+   */
+  parseAndCalculate(expression) {
+    if (!expression) return 0;
+    
+    // String'i string olarak tut
+    const str = String(expression).trim();
+    
+    // Eğer + işareti varsa, parçalara ayır ve topla
+    if (str.includes('+')) {
+      return str.split('+').reduce((sum, part) => {
+        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        return sum + (isNaN(num) ? 0 : num);
+      }, 0);
+    }
+    
+    // Eğer - işareti varsa, parçalara ayır ve çıkar
+    if (str.includes('-') && !str.startsWith('-')) {
+      const parts = str.split('-');
+      let result = 0;
+      parts.forEach((part, index) => {
+        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        if (index === 0) {
+          result = isNaN(num) ? 0 : num;
+        } else {
+          result -= isNaN(num) ? 0 : num;
+        }
+      });
+      return result;
+    }
+    
+    // Tek sayı ise direkt parse et
+    const cleaned = str.replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? 0 : num;
+  }
+
   async createInvoice(formData = {}, language = null) {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
@@ -596,11 +638,11 @@ class InvoiceTemplate extends BasePdfTemplate {
           });
         });
 
-        // Toplam hesaplamaları
-        const amount = parseFloat((good['AMOUNT'] || '0').replace(',', '.'));
+        // Toplam hesaplamaları - parseAndCalculate kullan
+        const amount = this.parseAndCalculate(good['AMOUNT'] || '0');
         totalAmount += amount;
         
-        const quantity = parseFloat((good['QUANTITY (METERS)'] || '0').replace(',', '.'));
+        const quantity = this.parseAndCalculate(good['QUANTITY (METERS)'] || '0');
         totalQuantity += quantity;
         
         // Currency bilgisini al (ilk ürünün currency'sini kullan)
