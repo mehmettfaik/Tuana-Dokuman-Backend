@@ -234,6 +234,6 @@ priceOfferNotes: [
   description: 'AÇIKLAMA',
   point: 'PUAN (1-4)',
   date: 'TARİH',
-  meters: 'METRE'
+  meters: 'MT'
 
 };
