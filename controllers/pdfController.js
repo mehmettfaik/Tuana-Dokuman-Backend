@@ -19,6 +19,7 @@ const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate'
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
+const CekiListesiTemplate = require('../templates/ceki-listesi/CekiListesiTemplate');
 
 // Service imports
 const LogoService = require('../services/logoService');
@@ -282,6 +283,27 @@ exports.generatePDF = async (req, res) => {
     } else if (documentType === 'debit-note') {
       template = new DebitNoteTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_BORC_DEKONTU' : 'TUANA_DEBIT_NOTE';
+    } else if (documentType === 'order-confirmation') {
+      template = new OrderConfirmationTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_SIPARIS_ONAY' : 'TUANA_ORDER_CONFIRMATION';
+    } else if (documentType === 'siparis') {
+      template = new SiparisTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = 'TUANA_SIPARIS';
+    } else if (documentType === 'price-offer') {
+      template = new PriceOfferTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_FIYAT_TEKLIFI' : 'TUANA_PRICE_OFFER';
+    } else if (documentType === 'hangers-shipment') {
+      template = new HangersShipmentTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_ASKILI_SEVKIYAT' : 'TUANA_HANGERS_SHIPMENT';
+    } else if (documentType === 'quality-control') {
+      template = new QualityControlTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_KALITE_KONTROL' : 'TUANA_QUALITY_CONTROL';
+    } else if (documentType === 'ceki-listesi') {
+      template = new CekiListesiTemplate(pdfDoc, logoImage, validatedLanguage);
+      // Firma adını al ve dosya adı için uygun hale getir
+      const firmaAdi = formData.musteriAdi || formData.formData?.musteriAdi || formData['MÜŞTERİ'] || 'FIRMA';
+      const safeFirmaAdi = firmaAdi.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ\s]/g, '').replace(/\s+/g, '_').toUpperCase();
+      pdfFileName = `${safeFirmaAdi}_CEKI_LISTESI`;
     } else {
       // Default: technical sheet
       template = new TechnicalSheetTemplate(pdfDoc, logoImage, validatedLanguage);
@@ -301,6 +323,18 @@ exports.generatePDF = async (req, res) => {
       await template.createCreditNote(formData, validatedLanguage);
     } else if (documentType === 'debit-note') {
       await template.createDebitNote(formData, validatedLanguage);
+    } else if (documentType === 'order-confirmation') {
+      await template.createOrderConfirmation(formData, validatedLanguage);
+    } else if (documentType === 'siparis') {
+      await template.createSiparis(formData, validatedLanguage);
+    } else if (documentType === 'price-offer') {
+      await template.createPriceOffer(formData, validatedLanguage);
+    } else if (documentType === 'hangers-shipment') {
+      await template.generate(formData, validatedLanguage);
+    } else if (documentType === 'quality-control') {
+      await template.generate(formData, validatedLanguage);
+    } else if (documentType === 'ceki-listesi') {
+      await template.generate(formData, validatedLanguage);
     } else {
       await template.createFabricTechnicalSheet(formData, validatedLanguage);
     }

@@ -17,6 +17,7 @@ const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate'
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
+const CekiListesiTemplate = require('../templates/ceki-listesi/CekiListesiTemplate');
 
 // Service imports
 const LogoService = require('./logoService');
@@ -52,7 +53,6 @@ class PdfGeneratorService {
 
   async generatePDF(jobId, docType, formData, language = 'en') {
     try {
-
 
       // Language validation
       const languageService = new LanguageService();
@@ -179,6 +179,14 @@ class PdfGeneratorService {
             pdfFileName = 'TUANA_KALITE_KONTROL';
           } else {
             pdfFileName = 'TUANA_QUALITY_CONTROL';
+          }
+          break;
+        case 'ceki-listesi':
+          template = new CekiListesiTemplate(pdfDoc, logoImage, validatedLanguage);
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_CEKI_LISTESI';
+          } else {
+            pdfFileName = '';
           }
           break;
         default:

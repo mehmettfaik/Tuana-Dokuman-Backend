@@ -229,9 +229,27 @@ module.exports = {
   rollNumber: 'ROLL NUMBER',
   batchNumber: 'BATCH NUMBER',
   rollLength: 'ROLL LENGTH',
-  meter: 'METER',
+  meter: 'MT',
   description: 'DESCRIPTION',
   point: 'POINT (1-4)',
   date: 'DATE',
-  metersLabel: 'METERS'
+  metersLabel: 'METERS',
+
+  // Çeki Listesi (Weight List) specific
+  cekiListesi: 'WEIGHT LIST',
+  tarih: 'DATE',
+  musteriLabel: 'CUSTOMER',
+  faturaNoLabel: 'INVOICE NO',
+  irsaliyeNoLabel: 'DISPATCH NO',
+  artikelKoduLabel: 'ARTICLE CODE',
+  karisimLabel: 'COMPOSITION',
+  renkNoLabel: 'COLOR NO',
+  desenNoLabel: 'PATTERN NO',
+  topNumarasi: 'ROLL NUMBER',
+  metre: 'METER',
+  lot: 'LOT',
+  genelToplam: 'GRAND TOTAL',
+  metreLabel: 'METER',
+  rolikLabel: 'ROLLS',
+  notlar: 'NOTES'
 };

@@ -234,6 +234,25 @@ priceOfferNotes: [
   description: 'AÇIKLAMA',
   point: 'PUAN (1-4)',
   date: 'TARİH',
-  meters: 'MT'
+  meters: 'MT',
+
+  // Çeki Listesi specific
+  cekiListesi: 'ÇEKİ LİSTESİ',
+  tarih: 'TARİH',
+  musteriLabel: 'MÜŞTERİ',
+  faturaNoLabel: 'FATURA NO',
+  irsaliyeNoLabel: 'İRSALİYE NO',
+  artikelKoduLabel: 'ARTİKEL KODU',
+  karisimLabel: 'KARIŞIM',
+  renkNoLabel: 'RENK NO',
+  desenNoLabel: 'DESEN NO',
+  topNumarasi: 'TOP NUMARASI',
+  metre: 'METRE',
+  lot: 'LOT',
+  genelToplam: 'GENEL TOPLAM',
+  metreLabel: 'METRE',
+  rolikLabel: 'ROLİK',
+  notlar: 'NOTLAR'
+
 
 };
