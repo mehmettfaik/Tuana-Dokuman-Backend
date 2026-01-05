@@ -24,13 +24,9 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
   async generate(formData = {}) {
     await this.initialize();
-    
-    // Debug: Gelen veriyi logla
-    console.log('CekiListesi RAW formData:', JSON.stringify(formData, null, 2));
-    
+        
     // Veri yapısını normalize et
     const normalizedData = this.normalizeFormData(formData);
-    console.log('CekiListesi NORMALIZED:', JSON.stringify(normalizedData, null, 2));
     
     return await this.createCekiListesi(normalizedData);
   }
@@ -370,9 +366,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     // Array değilse boş array yap
     if (!Array.isArray(metreler)) metreler = [];
     if (!Array.isArray(lotlar)) lotlar = [];
-
-    console.log('drawTopTables - Metreler:', metreler);
-    console.log('drawTopTables - Lotlar:', lotlar);
 
     // Sol tablo için veriler (1-24)
     const leftData = [];
