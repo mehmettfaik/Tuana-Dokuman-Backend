@@ -29,6 +29,7 @@ router.get('/', (req, res) => {
       { path: '/api/pdf/generate-product-label', method: 'POST', description: 'Generate Product Label PDF (legacy)' },
       { path: '/api/pdf/hangers-shipment', method: 'POST', description: 'Generate Hangers Shipment PDF' },
       { path: '/api/pdf/quality-control', method: 'POST', description: 'Generate Quality Control Report PDF' },
+      { path: '/api/pdf/ceki-listesi', method: 'POST', description: 'Generate Çeki Listesi PDF' },
       
       // Utility endpoints
       { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
@@ -153,6 +154,9 @@ router.post('/hangers-shipment', pdfController.generateHangersShipment);
 
 // Quality Control PDF oluşturma
 router.post('/quality-control', pdfController.generateQualityControl);
+
+// Çeki Listesi PDF oluşturma
+router.post('/ceki-listesi', pdfController.generateCekiListesi);
 
 // OCR-based Packing List PDF oluşturma
 router.post('/generate-packing-list-ocr', pdfController.generatePackingListWithOcr);

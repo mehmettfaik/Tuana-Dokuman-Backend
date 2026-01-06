@@ -24,9 +24,12 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
   async generate(formData = {}) {
     await this.initialize();
-        
+      
     // Veri yapısını normalize et
     const normalizedData = this.normalizeFormData(formData);
+    
+    // FormType'ı ekle (geçmiş belgeler için)
+    normalizedData.formType = 'ceki-listesi';
     
     return await this.createCekiListesi(normalizedData);
   }

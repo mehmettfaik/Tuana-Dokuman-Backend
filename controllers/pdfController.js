@@ -1572,10 +1572,7 @@ exports.generatePackingListWithOcr = generatePackingListWithOcr;
  * Quality Control Report PDF'i oluştur
  */
 const generateQualityControl = async (req, res) => {
-  try {
-    console.log('📋 formData keys:', req.body.formData ? Object.keys(req.body.formData) : 'undefined');
-    console.log('🎲 Rolls count:', req.body.rolls ? req.body.rolls.length : 0);
-    
+  try { 
     const formData = req.body;
     const language = req.body.language || 'en';
 
@@ -1630,4 +1627,77 @@ const generateQualityControl = async (req, res) => {
 };
 
 exports.generateQualityControl = generateQualityControl;
+
+/**
+ * POST /api/pdf/ceki-listesi
+ * Çeki Listesi PDF'i oluştur
+ */
+const generateCekiListesi = async (req, res) => {
+  try {
+    const formData = req.body;
+    const language = req.body.language || 'tr';
+
+    // Validation
+    if (!formData) {
+      console.error('❌ No form data provided');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Form data is required' 
+      });
+    }
+
+    // Language validation
+    const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'tr';
+
+    // PDF document oluştur
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    
+    // Logo yükleme
+    const logoService = new LogoService();
+    const logoImage = await logoService.loadLogo(pdfDoc);
+    
+    // Çeki Listesi template
+    const template = new CekiListesiTemplate(pdfDoc, logoImage, validatedLanguage);
+    await template.initialize();
+    
+    // PDF üretme
+    await template.generate(formData);
+    
+    // PDF'i byte array olarak al
+    const pdfBytes = await pdfDoc.save();
+
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `ceki-listesi-${Date.now()}.pdf`;
+    } else {
+      fileName = `weight-list-${Date.now()}.pdf`;
+    }
+
+    // Response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+
+    // PDF'i gönder
+    res.send(Buffer.from(pdfBytes));
+
+
+  } catch (error) {
+    console.error('❌ ============================================');
+    console.error('❌ Çeki Listesi PDF generation error:', error);
+    console.error('❌ Stack:', error.stack);
+    console.error('❌ ============================================');
+    res.status(500).json({ 
+      success: false, 
+      message: 'Çeki Listesi PDF generation failed',
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generateCekiListesi = generateCekiListesi;
 

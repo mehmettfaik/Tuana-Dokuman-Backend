@@ -5,13 +5,14 @@ const createForm = async (req, res) => {
   try {
     const db = getFirestore();
     
+    console.log('📋 Form kaydetme isteği:', JSON.stringify(req.body, null, 2).substring(0, 500));
     
     // Support goods sent either as top-level `goods` or nested in `formData.goods`
-    const { formData: rawFormData, goods: topGoods, formType, totals, rolls: topRolls } = req.body;
+    const { formData: rawFormData, goods: topGoods, formType, totals, rolls: topRolls, rows: topRows } = req.body;
     const formData = rawFormData || {};
     const goods = topGoods || formData.goods || [];
     const rolls = topRolls || formData.rolls || [];
-    
+    const rows = topRows || formData.rows || []; // Çeki listesi için rows desteği
     
 
     // Validation
@@ -34,12 +35,17 @@ const createForm = async (req, res) => {
       // keep a copy in formData for frontends that expect nested rolls
       normalizedFormData.rolls = rolls;
     }
+    if (!normalizedFormData.rows && rows.length > 0) {
+      // keep a copy in formData for frontends that expect nested rows (çeki listesi)
+      normalizedFormData.rows = rows;
+    }
 
     const newForm = {
       formType,
       formData: normalizedFormData,
       goods: goods,
       rolls: rolls,
+      rows: rows, // Çeki listesi için rows
       totals: totals || null,
       createdAt: new Date().toISOString()
     };
@@ -88,9 +94,11 @@ const getAllForms = async (req, res) => {
       // Normalize goods: support top-level goods or nested formData.goods
       const goods = data.goods || (data.formData && data.formData.goods) || [];
       const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
+      const rows = data.rows || (data.formData && data.formData.rows) || []; // Çeki listesi için rows
       const formData = { ...(data.formData || {}) };
       if (!formData.goods && goods.length > 0) formData.goods = goods;
       if (!formData.rolls && rolls.length > 0) formData.rolls = rolls;
+      if (!formData.rows && rows.length > 0) formData.rows = rows;
 
       forms.push({
         id: doc.id,
@@ -98,6 +106,7 @@ const getAllForms = async (req, res) => {
         formData,
         goods,
         rolls,
+        rows, // Çeki listesi için rows
         totals: data.totals || null,
         createdAt: data.createdAt || null,
         updatedAt: data.updatedAt || null
@@ -153,9 +162,11 @@ const getFormById = async (req, res) => {
     const data = doc.data() || {};    
     const goods = data.goods || (data.formData && data.formData.goods) || [];
     const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
+    const rows = data.rows || (data.formData && data.formData.rows) || []; // Çeki listesi için rows
     const formData = { ...(data.formData || {}) };
     if (!formData.goods && goods.length > 0) formData.goods = goods;
     if (!formData.rolls && rolls.length > 0) formData.rolls = rolls;
+    if (!formData.rows && rows.length > 0) formData.rows = rows;
 
     // Return normalized shape so frontend always receives goods and formData.goods
     const response = {
@@ -164,6 +175,7 @@ const getFormById = async (req, res) => {
       formData,
       goods,
       rolls,
+      rows, // Çeki listesi için rows
       totals: data.totals || null,
       createdAt: data.createdAt || null,
       updatedAt: data.updatedAt || null
