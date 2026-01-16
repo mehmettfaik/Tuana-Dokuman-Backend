@@ -251,5 +251,16 @@ module.exports = {
   genelToplam: 'GRAND TOTAL',
   metreLabel: 'METER',
   rolikLabel: 'ROLLS',
-  notlar: 'NOTES'
+  notlar: 'NOTES',
+
+  // Çeki Listesi Label specific
+  cekiListesiEtiket: 'WEIGHT LIST LABEL',
+  tuanaArtikelKod: 'TUANA ARTICLE CODE',
+  siparisNumarasi: 'ORDER NUMBER',
+  topNumarasiLabel: 'ROLL NUMBER',
+  lotNumarasiLabel: 'LOT NUMBER',
+  uzunlukLabel: 'LENGTH',
+  tarihLabel: 'DATE',
+  musteriEtiketLabel: 'CUSTOMER',
+  cekiListesiWarning: 'ATTENTION! NO CLAIMS WILL BE ACCEPTED AFTER THE FABRIC HAS BEEN CUT.'
 };

@@ -20,6 +20,7 @@ const ProductLabelTemplate = require('../templates/product-label/ProductLabelTem
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
 const CekiListesiTemplate = require('../templates/ceki-listesi/CekiListesiTemplate');
+const CekiListesiLabelTemplate = require('../templates/ceki-listesi/CekiListesiLabelTemplate');
 
 // Service imports
 const LogoService = require('../services/logoService');
@@ -1701,3 +1702,64 @@ const generateCekiListesi = async (req, res) => {
 
 exports.generateCekiListesi = generateCekiListesi;
 
+/**
+ * POST /api/pdf/ceki-listesi-labels
+ * Çeki Listesi Etiketleri PDF'i oluştur
+ */
+const generateCekiListesiLabels = async (req, res) => {
+  try {
+    const formData = req.body;
+    const language = req.body.language || 'tr';
+
+    // Validation
+    if (!formData) {
+      console.error('❌ No form data provided for labels');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Form data is required' 
+      });
+    }
+
+    // Language validation
+    const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'tr';
+
+    // Çeki Listesi Label template'i kullanarak PDF oluştur
+    const template = new CekiListesiLabelTemplate();
+    const pdfDoc = await template.generateDocument(formData, validatedLanguage);
+    
+    // PDF'i byte array'e çevir
+    const pdfBytes = await pdfDoc.save();
+
+    // Dil seçimine göre dosya adı
+    let fileName;
+    if (validatedLanguage === 'tr') {
+      fileName = `ceki-listesi-etiketleri-${Date.now()}.pdf`;
+    } else {
+      fileName = `weight-list-labels-${Date.now()}.pdf`;
+    }
+
+    // Response headers ayarla
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    
+    // PDF'i gönder
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    console.error('❌ ============================================');
+    console.error('❌ Çeki Listesi Labels PDF generation error:', error);
+    console.error('❌ Stack:', error.stack);
+    console.error('❌ ============================================');
+    res.status(500).json({ 
+      success: false, 
+      message: 'Çeki Listesi Labels PDF generation failed',
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generateCekiListesiLabels = generateCekiListesiLabels;

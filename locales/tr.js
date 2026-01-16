@@ -252,7 +252,17 @@ priceOfferNotes: [
   genelToplam: 'GENEL TOPLAM',
   metreLabel: 'METRE',
   rolikLabel: 'ROLİK',
-  notlar: 'NOTLAR'
+  notlar: 'NOTLAR',
 
+  // Çeki Listesi Etiket specific
+  cekiListesiEtiket: 'ÇEKİ LİSTESİ ETİKETİ',
+  tuanaArtikelKod: 'TUANA ARTİKEL KOD',
+  siparisNumarasi: 'SİPARİŞ NUMARASI',
+  topNumarasiLabel: 'TOP NUMARASI',
+  lotNumarasiLabel: 'LOT NUMARASI',
+  uzunlukLabel: 'UZUNLUK',
+  tarihLabel: 'TARİH',
+  musteriEtiketLabel: 'MÜŞTERİ',
+  cekiListesiWarning: 'DİKKAT! KUMAŞ KESİLDİKTEN SONRA HİÇBİR SORUMLULUK KABUL EDİLMEYECEKTİR.'
 
 };
