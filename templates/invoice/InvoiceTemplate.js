@@ -51,12 +51,31 @@ class InvoiceTemplate extends BasePdfTemplate {
     // String'i string olarak tut
     const str = String(expression).trim();
     
+    /**
+     * Bir sayıyı parse eder - hem İngilizce (277.2) hem Türkçe (1.250,23) formatları destekler
+     */
+    const parseNumber = (numStr) => {
+      const trimmed = numStr.trim();
+      let cleaned = trimmed;
+      
+      // Eğer hem nokta hem virgül varsa, Türkçe format (nokta binlik ayracı, virgül ondalık)
+      if (trimmed.includes('.') && trimmed.includes(',')) {
+        cleaned = trimmed.replace(/\./g, '').replace(',', '.');
+      } 
+      // Sadece virgül varsa, Türkçe ondalık ayracı
+      else if (trimmed.includes(',')) {
+        cleaned = trimmed.replace(',', '.');
+      }
+      // Sadece nokta varsa, İngilizce format olarak bırak (277.2 gibi)
+      
+      const num = parseFloat(cleaned);
+      return isNaN(num) ? 0 : num;
+    };
+    
     // Eğer + işareti varsa, parçalara ayır ve topla
     if (str.includes('+')) {
       return str.split('+').reduce((sum, part) => {
-        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(cleaned);
-        return sum + (isNaN(num) ? 0 : num);
+        return sum + parseNumber(part);
       }, 0);
     }
     
@@ -65,21 +84,17 @@ class InvoiceTemplate extends BasePdfTemplate {
       const parts = str.split('-');
       let result = 0;
       parts.forEach((part, index) => {
-        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
-        const num = parseFloat(cleaned);
         if (index === 0) {
-          result = isNaN(num) ? 0 : num;
+          result = parseNumber(part);
         } else {
-          result -= isNaN(num) ? 0 : num;
+          result -= parseNumber(part);
         }
       });
       return result;
     }
     
     // Tek sayı ise direkt parse et
-    const cleaned = str.replace(/\./g, '').replace(',', '.');
-    const num = parseFloat(cleaned);
-    return isNaN(num) ? 0 : num;
+    return parseNumber(str);
   }
 
   async createInvoice(formData = {}, language = null) {
@@ -479,7 +494,7 @@ class InvoiceTemplate extends BasePdfTemplate {
     
     while (processedItems < goods.length) {
       // İlk sayfa için 7 ürün, diğer sayfalar için 27 ürün
-      const itemsPerPage = pageIndex === 0 ? 6 : 27;
+      const itemsPerPage = pageIndex === 0 ? 7 : 27;
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);
