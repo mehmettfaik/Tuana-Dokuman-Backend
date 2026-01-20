@@ -42,20 +42,40 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
   }
 
   /**
-   * String içindeki matematiksel ifadeyi hesapla (ör: "3.390,00 + 170,00")
    * @param {string} expression - Hesaplanacak ifade
    * @returns {number} - Hesaplanan sonuç
    */
   parseAndCalculate(expression) {
     if (!expression) return 0;
     
-    // String'i string olarak tut
-    const str = String(expression).trim();
+    // String'e çevir, currency kodlarını temizle (EUR, USD, TRY vb.)
+    let str = String(expression).trim().replace(/[A-Z]{3}$/g, '').trim();
+    
+    // Sayı formatını akıllıca algıla
+    const hasComma = str.includes(',');
+    const hasDot = str.includes('.');
+    
+    if (hasComma && hasDot) {
+      // Hem virgül hem nokta var - hangisi sonra geliyorsa o ondalık ayraç
+      const lastCommaIndex = str.lastIndexOf(',');
+      const lastDotIndex = str.lastIndexOf('.');
+      
+      if (lastCommaIndex > lastDotIndex) {
+        // Virgül sonra geliyor → Türkçe format (3.390,00)
+        str = str.replace(/\./g, '').replace(',', '.');
+      } else {
+        // Nokta sonra geliyor → İngilizce format (1,234.56)
+        str = str.replace(/,/g, '');
+      }
+    } else if (hasComma) {
+      // Sadece virgül var → ondalık ayraç (139,32)
+      str = str.replace(',', '.');
+    }
     
     // Eğer + işareti varsa, parçalara ayır ve topla
     if (str.includes('+')) {
       return str.split('+').reduce((sum, part) => {
-        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const cleaned = part.trim();
         const num = parseFloat(cleaned);
         return sum + (isNaN(num) ? 0 : num);
       }, 0);
@@ -66,7 +86,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       const parts = str.split('-');
       let result = 0;
       parts.forEach((part, index) => {
-        const cleaned = part.trim().replace(/\./g, '').replace(',', '.');
+        const cleaned = part.trim();
         const num = parseFloat(cleaned);
         if (index === 0) {
           result = isNaN(num) ? 0 : num;
@@ -77,9 +97,8 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       return result;
     }
     
-    // Tek sayı ise direkt parse et
-    const cleaned = str.replace(/\./g, '').replace(',', '.');
-    const num = parseFloat(cleaned);
+    // Tek sayı parse et
+    const num = parseFloat(str);
     return isNaN(num) ? 0 : num;
   }
 
