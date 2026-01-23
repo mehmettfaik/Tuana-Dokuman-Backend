@@ -3,6 +3,7 @@ const BasePdfTemplate = require('../BasePdfTemplate');
 const WashingIconsService = require('../../services/washingIconsService');
 const FontService = require('../../services/fontService');
 const LanguageService = require('../../services/languageService');
+const SignatureService = require('../../services/signatureService');
 
 class TechnicalSheetTemplate extends BasePdfTemplate {
   constructor(pdfDoc, logoImage = null, language = 'en') {
@@ -10,6 +11,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     this.washingIconsService = new WashingIconsService();
     this.fontService = new FontService();
     this.languageService = new LanguageService();
+    this.signatureService = new SignatureService();
     this.language = language;
   }
 
@@ -28,6 +30,16 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
+    }
+    
+    // Load signature and stamp images if checkbox is enabled
+    let signatureImage = null;
+    let stampImage = null;
+    const includeSignatureStamp = formData['İmza ve Kaşe'] || formData.imzaVeKase || false;
+    
+    if (includeSignatureStamp) {
+      signatureImage = await this.signatureService.loadSignature(this.pdfDoc);
+      stampImage = await this.signatureService.loadStamp(this.pdfDoc);
     }
     
     const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
@@ -63,7 +75,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     y = this.drawNotesSection(page, pageWidth, y, formData);
 
     // FOOTER - formData ile
-    this.drawFooter(page, pageWidth, formData);
+    this.drawFooter(page, pageWidth, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
   }
@@ -479,7 +491,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
   }
 
   // TechnicalSheet için özel footer - sabit değerler yerine formData kullan
-  drawFooter(page, pageWidth, formData = {}) {
+  drawFooter(page, pageWidth, formData = {}, signatureImage = null, stampImage = null) {
     let y = 130;
     
     // 2 çizgi
@@ -558,6 +570,16 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
+    // Draw signature image if available (left side)
+    if (signatureImage) {
+      page.drawImage(signatureImage, {
+        x: 55,
+        y: y - 115,
+        width: 130,
+        height: 50,
+      });
+    }
+
     // Sağ alt - STAMP alanı - BOLD
     const stampLabel = this.languageService.getText('stamp', this.language);
     page.drawText(stampLabel, {
@@ -567,6 +589,16 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       font: this.fontBold,
       color: rgb(0, 0, 0),
     });
+
+    // Draw stamp image if available (right side)
+    if (stampImage) {
+      page.drawImage(stampImage, {
+        x: pageWidth / 2 + 40,
+        y: y - 85,
+        width: 130,
+        height: 50,
+      });
+    }
 
     // İmza kaşe arasında çizgi
     page.drawLine({

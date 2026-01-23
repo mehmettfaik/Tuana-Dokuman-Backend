@@ -2,12 +2,14 @@ const { StandardFonts, rgb } = require('pdf-lib');
 const BasePdfTemplate = require('../BasePdfTemplate');
 const FontService = require('../../services/fontService');
 const LanguageService = require('../../services/languageService');
+const SignatureService = require('../../services/signatureService');
 
 class PackingListTemplate extends BasePdfTemplate {
   constructor(pdfDoc, logoImage = null, language = 'en') {
     super(pdfDoc, logoImage);
     this.fontService = new FontService();
     this.languageService = new LanguageService();
+    this.signatureService = new SignatureService();
     this.language = language;
   }
 
@@ -27,6 +29,16 @@ class PackingListTemplate extends BasePdfTemplate {
     // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
+    }
+    
+    // Load signature and stamp images if checkbox is enabled
+    let signatureImage = null;
+    let stampImage = null;
+    const includeSignatureStamp = formData['İmza ve Kaşe'] || formData.imzaVeKase || false;
+    
+    if (includeSignatureStamp) {
+      signatureImage = await this.signatureService.loadSignature(this.pdfDoc);
+      stampImage = await this.signatureService.loadStamp(this.pdfDoc);
     }
     
     const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
@@ -60,7 +72,7 @@ class PackingListTemplate extends BasePdfTemplate {
     y -= 10;
 
     // FOOTER (Payment terms, notes, stamp) - dinamik pozisyon
-    this.drawPackingListFooter(page, pageWidth, y, formData);
+    this.drawPackingListFooter(page, pageWidth, y, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
   }
@@ -791,7 +803,7 @@ class PackingListTemplate extends BasePdfTemplate {
     return (lineCount + 1) * lineHeight;
   }
 
-  drawPackingListFooter(page, pageWidth, startY = null, formData = {}) {
+  drawPackingListFooter(page, pageWidth, startY = null, formData = {}, signatureImage = null, stampImage = null) {
     // Dinamik pozisyon kullan veya varsayılan değer - 50px aşağı kaydırıldı
     let y = startY ? Math.min(startY - 30, 130) : 130;
     
@@ -923,6 +935,16 @@ class PackingListTemplate extends BasePdfTemplate {
       font: this.fontBold,
       color: rgb(0, 0, 0),
     });
+
+    // Draw stamp image if available
+    if (stampImage) {
+      page.drawImage(stampImage, {
+        x: 405,
+        y: y - 55,
+        width: 130,
+        height: 50,
+      });
+    }
 
     // Dikey çizgiler
     page.drawLine({

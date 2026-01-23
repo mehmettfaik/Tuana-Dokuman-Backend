@@ -2,12 +2,14 @@ const { StandardFonts, rgb } = require('pdf-lib');
 const BasePdfTemplate = require('../BasePdfTemplate');
 const FontService = require('../../services/fontService');
 const LanguageService = require('../../services/languageService');
+const SignatureService = require('../../services/signatureService');
 
 class ProformaInvoiceTemplate extends BasePdfTemplate {
   constructor(pdfDoc, logoImage = null, language = 'en') {
     super(pdfDoc, logoImage);
     this.fontService = new FontService();
     this.languageService = new LanguageService();
+    this.signatureService = new SignatureService();
     this.language = language;
   }
 
@@ -108,6 +110,16 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       this.language = language;
     }
     
+    // Load signature and stamp images if checkbox is enabled
+    let signatureImage = null;
+    let stampImage = null;
+    const includeSignatureStamp = formData['İmza ve Kaşe'] || formData.imzaVeKase || false;
+    
+    if (includeSignatureStamp) {
+      signatureImage = await this.signatureService.loadSignature(this.pdfDoc);
+      stampImage = await this.signatureService.loadStamp(this.pdfDoc);
+    }
+    
     const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
@@ -147,7 +159,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     y -= 30;
 
     // FOOTER (Payment terms, signature, stamp) - dinamik pozisyon
-    this.drawProformaFooter(page, pageWidth, y, formData);
+    this.drawProformaFooter(page, pageWidth, y, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
   }
@@ -1202,7 +1214,7 @@ SWIFT: TEBUTRIS 032`
     return lineY - 12;
   }
 
-  drawProformaFooter(page, pageWidth, startY = null, formData = {}) {
+  drawProformaFooter(page, pageWidth, startY = null, formData = {}, signatureImage = null, stampImage = null) {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
@@ -1296,6 +1308,26 @@ SWIFT: TEBUTRIS 032`
       font: this.fontBold,
       color: rgb(0, 0, 0),
     });
+
+    // Draw signature image if available
+    if (signatureImage) {
+      page.drawImage(signatureImage, {
+        x: 215,
+        y: y - 70,
+        width: 160,
+        height: 60,
+      });
+    }
+
+    // Draw stamp image if available
+    if (stampImage) {
+      page.drawImage(stampImage, {
+        x: 395,
+        y: y - 70,
+        width: 160,
+        height: 60,
+      });
+    }
 
     // Dikey çizgiler
     page.drawLine({
