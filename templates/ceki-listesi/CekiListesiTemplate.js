@@ -91,12 +91,26 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   async createCekiListesi(formData = {}) {
-    // Tek sayfa oluştur (tüm veriler normalize edildi)
-    await this.createProductPage(formData, formData, 1, 1);
+    // Ürün sayısını belirle
+    const metreler = formData.metreler || [];
+    const totalProducts = metreler.length;
+    const productsPerPage = 48;
+    
+    // Toplam sayfa sayısını hesapla
+    const totalPages = Math.max(1, Math.ceil(totalProducts / productsPerPage));
+    
+    // Her sayfa için ürünleri grupla ve sayfa oluştur
+    for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+      const startIndex = (pageNum - 1) * productsPerPage;
+      const endIndex = Math.min(startIndex + productsPerPage, totalProducts);
+      
+      await this.createProductPage(formData, formData, pageNum, totalPages, startIndex, endIndex);
+    }
+    
     return this.pdfDoc;
   }
 
-  async createProductPage(productData, formData, pageNum, totalPages) {
+  async createProductPage(productData, formData, pageNum, totalPages, startIndex = 0, endIndex = 48) {
     const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
@@ -132,11 +146,11 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
     // Top tabloları
     y -= 8;
-    y = this.drawTopTables(page, pageWidth, y, productData);
+    y = this.drawTopTables(page, pageWidth, y, productData, startIndex, endIndex);
 
-    // Genel Toplam bölümü
+    // Genel Toplam bölümü (tüm sayfalar için aynı toplam)
     y -= 25;
-    y = this.drawTotalSection(page, pageWidth, y, productData);
+    y = this.drawTotalSection(page, pageWidth, y, productData, true);
 
     // Notlar bölümü
     y -= 10;
@@ -361,7 +375,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     return currentY;
   }
 
-  drawTopTables(page, pageWidth, y, productData) {
+  drawTopTables(page, pageWidth, y, productData, startIndex = 0, endIndex = 48) {
     // Normalize edilmiş veriden metreler ve lotları al
     let metreler = productData.metreler || [];
     let lotlar = productData.lotlar || [];
@@ -370,23 +384,27 @@ class CekiListesiTemplate extends BasePdfTemplate {
     if (!Array.isArray(metreler)) metreler = [];
     if (!Array.isArray(lotlar)) lotlar = [];
 
-    // Sol tablo için veriler (1-24)
+    // Bu sayfa için gösterilecek ürün aralığını belirle
+    const pageMetreler = metreler.slice(startIndex, endIndex);
+    const pageLotlar = lotlar.slice(startIndex, endIndex);
+
+    // Sol tablo için veriler (bu sayfanın ilk 24 ürünü)
     const leftData = [];
     for (let i = 0; i < 24; i++) {
       leftData.push({
-        topNo: i + 1,
-        metre: metreler[i] || '',
-        lot: lotlar[i] || ''
+        topNo: startIndex + i + 1,
+        metre: pageMetreler[i] || '',
+        lot: pageLotlar[i] || ''
       });
     }
 
-    // Sağ tablo için veriler (25-48)
+    // Sağ tablo için veriler (bu sayfanın 25-48 arası ürünleri)
     const rightData = [];
     for (let i = 24; i < 48; i++) {
       rightData.push({
-        topNo: i + 1,
-        metre: metreler[i] || '',
-        lot: lotlar[i] || ''
+        topNo: startIndex + i + 1,
+        metre: pageMetreler[i] || '',
+        lot: pageLotlar[i] || ''
       });
     }
 
@@ -564,7 +582,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     return currentY;
   }
 
-  drawTotalSection(page, pageWidth, y, productData) {
+  drawTotalSection(page, pageWidth, y, productData, showGrandTotal = true) {
     const startX = 55;
     const sectionWidth = pageWidth - 110;
     
@@ -572,7 +590,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     let metreler = productData.metreler || [];
     if (!Array.isArray(metreler)) metreler = [];
 
-    // Toplam metreleri hesapla
+    // Toplam metreleri hesapla (TÜM ürünler için - her sayfada aynı)
     let totalMetre = 0;
     metreler.forEach(metre => {
       if (metre !== undefined && metre !== null && metre !== '') {
@@ -583,7 +601,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       }
     });
 
-    // Top sayısı (boş olmayanları say)
+    // Top sayısı (boş olmayanları say - TÜM ürünler için)
     const rolikCount = metreler.filter(m => m !== undefined && m !== null && String(m).trim() !== '').length;
 
     // Üst çizgi
