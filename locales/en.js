@@ -235,8 +235,8 @@ module.exports = {
   date: 'DATE',
   metersLabel: 'METERS',
 
-  // Çeki Listesi (Weight List) specific
-  cekiListesi: 'WEIGHT LIST',
+  // Çeki Listesi (PACKING List) specific
+  cekiListesi: 'PACKING LIST',
   tarih: 'DATE',
   musteriLabel: 'CUSTOMER',
   faturaNoLabel: 'INVOICE NO',
@@ -248,13 +248,13 @@ module.exports = {
   topNumarasi: 'ROLL NUMBER',
   metre: 'METER',
   lot: 'LOT',
-  genelToplam: 'GRAND TOTAL',
+  genelToplam: 'TOTAL',
   metreLabel: 'METER',
   rolikLabel: 'ROLLS',
   notlar: 'NOTES',
 
   // Çeki Listesi Label specific
-  cekiListesiEtiket: 'WEIGHT LIST LABEL',
+  cekiListesiEtiket: 'PACKING LIST LABEL',
   tuanaArtikelKod: 'TUANA ARTICLE CODE',
   siparisNumarasi: 'ORDER NUMBER',
   topNumarasiLabel: 'ROLL NUMBER',
