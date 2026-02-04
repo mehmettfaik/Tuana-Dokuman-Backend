@@ -246,7 +246,7 @@ priceOfferNotes: [
   karisimLabel: 'KARIŞIM',
   renkNoLabel: 'RENK NO',
   desenNoLabel: 'DESEN NO',
-  topNumarasi: 'TOP NUMARASI',
+  topNumarasi: 'TOP NO',
   metre: 'METRE',
   lot: 'LOT',
   brutKg: 'BRUT KG',
