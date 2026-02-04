@@ -248,6 +248,8 @@ module.exports = {
   topNumarasi: 'ROLL NUMBER',
   metre: 'METER',
   lot: 'LOT',
+  brutKg: 'GROSS KG',
+  netKg: 'NET KG',
   genelToplam: 'TOTAL',
   metreLabel: 'METER',
   rolikLabel: 'ROLLS',

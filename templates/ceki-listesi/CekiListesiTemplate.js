@@ -44,15 +44,19 @@ class CekiListesiTemplate extends BasePdfTemplate {
       baseData = { ...rawData, ...rawData.formData };
     }
     
-    // rows array'inden metreler ve lotlar'ı çıkar
+    // rows array'inden metreler, lotlar, brutKg ve netKg'yi çıkar
     let rows = rawData.rows || baseData.rows || [];
     let metreler = [];
     let lotlar = [];
+    let brutKgValues = [];
+    let netKgValues = [];
     
     if (Array.isArray(rows) && rows.length > 0) {
       rows.forEach(row => {
         metreler.push(row.metre || row.meter || row.METRE || '');
         lotlar.push(row.lot || row.LOT || '');
+        brutKgValues.push(row.brutKg || row.BRUT_KG || '');
+        netKgValues.push(row.netKg || row.NET_KG || '');
       });
     }
     
@@ -86,7 +90,13 @@ class CekiListesiTemplate extends BasePdfTemplate {
       
       // Tablo verileri
       metreler: metreler,
-      lotlar: lotlar
+      lotlar: lotlar,
+      brutKgValues: brutKgValues,
+      netKgValues: netKgValues,
+      
+      // Görünürlük ayarları
+      showBrutKg: baseData.showBrutKg !== undefined ? baseData.showBrutKg : false,
+      showNetKg: baseData.showNetKg !== undefined ? baseData.showNetKg : false
     };
   }
 
@@ -138,7 +148,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     // Müşteri bilgileri ile top tabloları arasına ayırıcı çizgi
     y -= 10;
     page.drawLine({
-      start: { x: 50, y: y },
+      start: { x: 45, y: y },
       end: { x: pageWidth - 50, y: y },
       thickness: 0.7,
       color: rgb(0, 0, 0),
@@ -186,7 +196,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
     // Ana çizgi
     page.drawLine({
-      start: { x: 50, y: y - 15 },
+      start: { x: 45, y: y - 15 },
       end: { x: pageWidth - 50, y: y - 15 },
       thickness: 0.7,
       color: rgb(0, 0, 0),
@@ -216,11 +226,11 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   drawCustomerInfoSection(page, pageWidth, y, formData, productData) {
-    const startX = 60;
+    const startX = 55;
     const labelWidth = 90;
     const valueX = startX + labelWidth;
     const lineHeight = 16;
-    const sectionWidth = pageWidth - 110;
+    const sectionWidth = pageWidth - 105;
 
     // Bilgi kutusu çerçevesi
     const boxHeight = 7 * lineHeight;
@@ -376,17 +386,25 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   drawTopTables(page, pageWidth, y, productData, startIndex = 0, endIndex = 48) {
-    // Normalize edilmiş veriden metreler ve lotları al
+    // Normalize edilmiş veriden metreler, lotlar, brutKg ve netKg'yi al
     let metreler = productData.metreler || [];
     let lotlar = productData.lotlar || [];
+    let brutKgValues = productData.brutKgValues || [];
+    let netKgValues = productData.netKgValues || [];
+    const showBrutKg = productData.showBrutKg || false;
+    const showNetKg = productData.showNetKg || false;
     
     // Array değilse boş array yap
     if (!Array.isArray(metreler)) metreler = [];
     if (!Array.isArray(lotlar)) lotlar = [];
+    if (!Array.isArray(brutKgValues)) brutKgValues = [];
+    if (!Array.isArray(netKgValues)) netKgValues = [];
 
     // Bu sayfa için gösterilecek ürün aralığını belirle
     const pageMetreler = metreler.slice(startIndex, endIndex);
     const pageLotlar = lotlar.slice(startIndex, endIndex);
+    const pageBrutKg = brutKgValues.slice(startIndex, endIndex);
+    const pageNetKg = netKgValues.slice(startIndex, endIndex);
 
     // Sol tablo için veriler (bu sayfanın ilk 24 ürünü)
     const leftData = [];
@@ -394,7 +412,9 @@ class CekiListesiTemplate extends BasePdfTemplate {
       leftData.push({
         topNo: startIndex + i + 1,
         metre: pageMetreler[i] || '',
-        lot: pageLotlar[i] || ''
+        lot: pageLotlar[i] || '',
+        brutKg: pageBrutKg[i] || '',
+        netKg: pageNetKg[i] || ''
       });
     }
 
@@ -404,22 +424,79 @@ class CekiListesiTemplate extends BasePdfTemplate {
       rightData.push({
         topNo: startIndex + i + 1,
         metre: pageMetreler[i] || '',
-        lot: pageLotlar[i] || ''
+        lot: pageLotlar[i] || '',
+        brutKg: pageBrutKg[i] || '',
+        netKg: pageNetKg[i] || ''
       });
     }
 
-    // Tablo boyutları
-    const tableStartX = 55;
-    const colWidths = { topNo: 75, metre: 55, lot: 55 };
+    // Tablo boyutları - dinamik genişlik hesaplama
+    const leftMargin = 50;
+    const rightMargin = 50;
+    const tablePadding = 10; // Tablolar arası boşluk
+    const availableWidth = pageWidth - leftMargin - rightMargin - tablePadding;
+    const singleTableWidth = availableWidth / 2;
+    
+    let colWidths = {};
+    
+    // showBrutKg veya showNetKg aktifse sütun genişliklerini ayarla
+    if (showBrutKg || showNetKg) {
+      if (showBrutKg && showNetKg) {
+        // 5 sütun - toplam genişliği singleTableWidth'e sığdır
+        const totalCols = 5;
+        const baseWidth = Math.floor(singleTableWidth / totalCols);
+        colWidths = { 
+          topNo: baseWidth, 
+          metre: baseWidth, 
+          lot: baseWidth, 
+          brutKg: baseWidth, 
+          netKg: baseWidth 
+        };
+      } else if (showBrutKg) {
+        // 4 sütun
+        const totalCols = 4;
+        const baseWidth = Math.floor(singleTableWidth / totalCols);
+        colWidths = { 
+          topNo: baseWidth, 
+          metre: baseWidth, 
+          lot: baseWidth, 
+          brutKg: baseWidth 
+        };
+      } else {
+        // 4 sütun (showNetKg)
+        const totalCols = 4;
+        const baseWidth = Math.floor(singleTableWidth / totalCols);
+        colWidths = { 
+          topNo: baseWidth, 
+          metre: baseWidth, 
+          lot: baseWidth, 
+          netKg: baseWidth 
+        };
+      }
+    } else {
+      // 3 sütun - varsayılan durum (TOP NO, METRE, LOT)
+      const totalCols = 3;
+      const baseWidth = Math.floor(singleTableWidth / totalCols);
+      colWidths = { 
+        topNo: baseWidth, 
+        metre: baseWidth, 
+        lot: baseWidth 
+      };
+    }
+    
     const rowHeight = 14;
     const headerHeight = 16;
 
     // Sol tablo
-    this.drawSingleTable(page, tableStartX, y, leftData, colWidths, rowHeight, headerHeight);
+    const leftTableX = leftMargin;
+    this.drawSingleTable(page, leftTableX, y, leftData, colWidths, rowHeight, headerHeight, showBrutKg, showNetKg);
 
-    // Sağ tablo
-    const rightTableX = pageWidth / 2 + 55;
-    this.drawSingleTable(page, rightTableX, y, rightData, colWidths, rowHeight, headerHeight);
+    // Sağ tablo - sol tablo genişliği + padding sonrası başlasın
+    const leftTableWidth = Object.values(colWidths).reduce((sum, width) => {
+      return sum + width;
+    }, 0);
+    const rightTableX = leftTableX + leftTableWidth + tablePadding;
+    this.drawSingleTable(page, rightTableX, y, rightData, colWidths, rowHeight, headerHeight, showBrutKg, showNetKg);
 
     // Tablo yüksekliğini hesapla
     const tableHeight = headerHeight + (24 * rowHeight);
@@ -427,8 +504,11 @@ class CekiListesiTemplate extends BasePdfTemplate {
     return y - tableHeight;
   }
 
-  drawSingleTable(page, startX, startY, data, colWidths, rowHeight, headerHeight) {
-    const totalWidth = colWidths.topNo + colWidths.metre + colWidths.lot;
+  drawSingleTable(page, startX, startY, data, colWidths, rowHeight, headerHeight, showBrutKg = false, showNetKg = false) {
+    let totalWidth = colWidths.topNo + colWidths.metre + colWidths.lot;
+    if (showBrutKg) totalWidth += colWidths.brutKg || 0;
+    if (showNetKg) totalWidth += colWidths.netKg || 0;
+    
     const tableHeight = headerHeight + (data.length * rowHeight);
     const tableBottom = startY - tableHeight;
     const lineThickness = 0.5;
@@ -524,6 +604,46 @@ class CekiListesiTemplate extends BasePdfTemplate {
       font: this.font,
       color: rgb(0, 0, 0),
     });
+    headerX += colWidths.lot;
+
+    // BRUT KG sütunu
+    if (showBrutKg) {
+      // Dikey çizgi
+      page.drawLine({
+        start: { x: headerX, y: startY },
+        end: { x: headerX, y: tableBottom },
+        thickness: lineThickness,
+        color: rgb(0, 0, 0),
+      });
+      
+      this.drawSafeText(page, this.languageService.getText('brutKg', this.language), {
+        x: headerX + 3,
+        y: startY - 11,
+        size: 7,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      headerX += colWidths.brutKg;
+    }
+
+    // NET KG sütunu
+    if (showNetKg) {
+      // Dikey çizgi
+      page.drawLine({
+        start: { x: headerX, y: startY },
+        end: { x: headerX, y: tableBottom },
+        thickness: lineThickness,
+        color: rgb(0, 0, 0),
+      });
+      
+      this.drawSafeText(page, this.languageService.getText('netKg', this.language), {
+        x: headerX + 3,
+        y: startY - 11,
+        size: 7,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+    }
 
     // Data satırları
     let currentY = startY - headerHeight;
@@ -575,6 +695,34 @@ class CekiListesiTemplate extends BasePdfTemplate {
         font: this.font,
         color: rgb(0, 0, 0),
       });
+      cellX += colWidths.lot;
+
+      // BRUT KG
+      if (showBrutKg) {
+        const brutKgStr = row.brutKg !== undefined && row.brutKg !== null && row.brutKg !== '' 
+          ? String(row.brutKg) : '';
+        this.drawSafeText(page, brutKgStr, {
+          x: cellX + 3,
+          y: currentY - 10,
+          size: 7,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        cellX += colWidths.brutKg;
+      }
+
+      // NET KG
+      if (showNetKg) {
+        const netKgStr = row.netKg !== undefined && row.netKg !== null && row.netKg !== '' 
+          ? String(row.netKg) : '';
+        this.drawSafeText(page, netKgStr, {
+          x: cellX + 3,
+          y: currentY - 10,
+          size: 7,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+      }
 
       currentY -= rowHeight;
     }
@@ -726,7 +874,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
   drawCekiListesiFooter(page, pageWidth, pageNum, totalPages) {
     const y = 50;
     
-    // Alt çizgi - iki çizgi (Invoice tarzında)
+    // Alt çizgi - iki çizgi
     page.drawLine({
       start: { x: 50, y: y + 17 },
       end: { x: pageWidth - 50, y: y + 17 },

@@ -18,7 +18,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      this.tuanaFont = this.fontItalic; // Fallback
+      this.tuanaFont = this.fontItalic;
     }
   }
 
@@ -46,11 +46,11 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       this.language = language;
     }
     
-    const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
+    const page = this.pdfDoc.addPage([595, 842]); 
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60; 
 
     // HANGERS SHIPMENT HEADER (Invoice stil)
     this.drawHangersShipmentHeader(page, pageWidth, y, formData);
@@ -75,7 +75,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     // HANGERS ITEMS tablosu
     const tableResult = this.drawHangersTable(page, pageWidth, y, formData);
     
-    // NOTES bölümü - sadece ilk sayfada ve sabit pozisyonda
+    // NOTES bölümü 
     this.drawNotesSection(page, pageWidth, formData);
 
     // FOOTER - dinamik pozisyon (ilk sayfada)
@@ -85,7 +85,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   }
 
   drawHangersShipmentHeader(page, pageWidth, y, formData) {
-    // TUANA TEKSTIL başlığı (Invoice ile aynı stil)
+    // TUANA TEKSTIL başlığı
     this.drawSafeText(page, 'TUANA TEKSTIL', {
       x: 55,
       y: y - 5,
@@ -94,7 +94,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Logo (Invoice ile aynı pozisyon ve boyut)
+    // Logo 
     if (this.logoImage) {
       const logoWidth = 25;
       const logoHeight = 25;
@@ -106,7 +106,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       });
     }
 
-    // Ana çizgi (Invoice ile aynı)
+    // Ana çizgi 
     page.drawLine({
       start: { x: 50, y: y - 15 },
       end: { x: pageWidth - 50, y: y - 15 },
@@ -114,14 +114,14 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Date, Tracking Code ve Courier bilgileri (Invoice number pozisyonunda)
+    // Date, Tracking Code ve Courier bilgileri 
     const currentDate = formData['DATE'] || new Date().toLocaleDateString('en-GB');
     const trackingCode = formData['TRACKING CODE'] || '';
     const courier = formData['COURIER'] || '';
     
-    let rightY = y + 15; // Başlangıç pozisyonu daha yukarıda
+    let rightY = y + 15; 
     
-    // DATE bilgisi (en üstte)
+    // DATE bilgisi
     const dateLabel = this.language === 'tr' ? 'TARİH' : 'DATE';
     page.drawText(`${dateLabel}: ${currentDate}`, {
       x: pageWidth - 185,
@@ -155,7 +155,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       });
     }
 
-    // Dikey çizgi (DATE alanını da kapsayacak şekilde genişletildi)
+    // Dikey çizgi 
     page.drawLine({
       start: { x: pageWidth - 190, y: y + 35 },
       end: { x: pageWidth - 190, y: y - 15 },
@@ -167,7 +167,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi) - Invoice ile aynı stil
+    // ISSUER bölümü (üstte tek başına - merkezi)
     const issuerLabel = this.language === 'tr' ? 'GÖNDEREN' : 'ISSUER';
     page.drawText(issuerLabel, {
       x: 55,
@@ -177,7 +177,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // ISSUER bilgileri (Invoice ile aynı)
+    // ISSUER bilgileri
     const issuerInfo = [
       'TUANA TEKSTIL SANAYI VE TICARET LIMITED SIRKETI',
       'A3 BLOK NUMARA 53 TEKSTILKENT ESENLER',
@@ -202,7 +202,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
     const nextSectionY = issuerY - 10;
 
-    // RECIPIENT bölümü (sol tarafta) - Invoice ile aynı stil
+    // RECIPIENT bölümü (sol tarafta)
     const recipientLabel = this.language === 'tr' ? 'ALICI' : 'RECIPIENT';
     page.drawText(recipientLabel, {
       x: 55,
@@ -233,12 +233,12 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // RECIPIENT için maksimum genişlik
+      maxWidth: 250,
       lineHeight: 12
     });
     recipientY -= recipientAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri 
     const recipientLocationInfo = formData['RECIPIENT İlçe İl Ülke'] || formData.recipientLocation || '---';
     this.drawSafeText(page, recipientLocationInfo, {
       x: 55,
@@ -268,7 +268,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede) - dil desteği ile
+    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede)
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -299,12 +299,12 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri 
     const deliveryLocationInfo = formData['DELIVERY ADDRESS İlçe İl Ülke'] || formData.deliveryLocation || '---';
     this.drawSafeText(page, deliveryLocationInfo, {
       x: 320,
@@ -361,7 +361,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     // Hangers items array'ini al
     const hangersItems = formData.hangersItems || [];
     
-    // Tablo başlıkları - Invoice stilinde
+    // Tablo başlıkları
     const tableHeaders = [
       { text: this.language === 'tr' ? 'ÜRÜN KODU' : 'ARTICLE NUMBER', x: 55, width: 130 },
       { text: this.language === 'tr' ? 'TİP' : 'TYPE', x: 120, width: 80 },
@@ -371,7 +371,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       { text: this.language === 'tr' ? 'GTİP KODU' : 'HS CODE', x: 450, width: 55 }
     ];
 
-    // Başlık satırı arka planı (Invoice stilinde)
+    // Başlık satırı arka planı
     page.drawRectangle({
       x: 50,
       y: y - 15,
@@ -379,7 +379,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      // Arka plan rengi yok - beyaz
     });
 
     // Başlık metinleri
@@ -393,7 +392,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       });
     });
 
-    // Dikey çizgiler başlık satırında (Invoice stilinde)
+    // Dikey çizgiler başlık satırında
     const verticalLines = [115, 145, 345, 415, 445];
     verticalLines.forEach(x => {
       page.drawLine({
@@ -429,7 +428,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750; 
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -439,7 +438,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        // Yeni sayfada tablo başlığı - devamı
+        // Yeni sayfada tablo başlığı
         const hangersItemsContinuedLabel = this.language === 'tr' ? 'ASKI SİPARİŞİ KALEMLERI' : 'CONTENTS';
         currentPage.drawText(hangersItemsContinuedLabel, {
           x: 50,
@@ -500,7 +499,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
           if (textWidth > 55 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break; // Maksimum 2 satır
+            if (lineCount >= 2) break; 
           } else {
             currentLine = testLine;
           }
@@ -509,7 +508,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
         // Dinamik satır yüksekliği (minimum 20, uzun metinler için daha fazla)
         const rowHeight = Math.max(20, lineCount * 10 + 8);
         
-        // Satır arka planı (Invoice stilinde)
+        // Satır arka planı
         currentPage.drawRectangle({
           x: 50,
           y: currentY - rowHeight + 5,
@@ -570,7 +569,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        // Dikey çizgiler (Invoice stilinde)
+        // Dikey çizgiler
         verticalLines.forEach(lineX => {
           currentPage.drawLine({
             start: { x: lineX, y: currentY + 5 },
@@ -627,7 +626,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     });
 
     // Son dikey çizgiler toplam satırında
-    const totalVerticalLines = [115, 145, 345, 415, 445]; // Sadece PIECES kolonu öncesi
+    const totalVerticalLines = [115, 145, 345, 415, 445]; 
     totalVerticalLines.forEach(x => {
       currentPage.drawLine({
         start: { x: x, y: currentY + 5 },
@@ -641,10 +640,10 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   }
 
   drawNotesSection(page, pageWidth, formData) {
-    // NOTES sabit pozisyonu - sayfa altından 180px yukarıda
+    // NOTES sabit pozisyonu
     const notesStartY = 140;
     
-    // NOTES üstünde çizgi (Invoice stilinde)
+    // NOTES üstünde çizgi
     page.drawLine({
       start: { x: 50, y: notesStartY + 20 },
       end: { x: pageWidth - 50, y: notesStartY + 20 },
@@ -652,9 +651,9 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    let noteY = notesStartY + 10; // NOTES başlığı pozisyonu
+    let noteY = notesStartY + 10; 
 
-    // NOTES başlığı - küçük font (Invoice stilinde)
+    // NOTES başlığı - küçük font
     const notesLabel = this.languageService.getText('note', this.language);
     page.drawText(notesLabel, {
       x: 55,
@@ -664,7 +663,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    noteY -= 15; // NOTES içeriği başlangıcı
+    noteY -= 15; 
     
     // Notes içeriği - frontend'den gelen Notlar alanını kullan
     if (formData['NOTLAR'] && formData['NOTLAR'].trim()) {
@@ -690,18 +689,18 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       noteY -= 12;
     }
 
-    // NOTES altında çizgi (Invoice stilinde)
+    // NOTES altında çizgi 
     const lineY = noteY - 8;
 
 
-    return lineY - 10; // Return pozisyonu
+    return lineY - 10; 
   }
 
   drawHangersShipmentFooter(page, pageWidth, startY = null, formData = {}) {
-    // Sabit footer pozisyonu - sayfa altından 120px yukarıda
+    // Sabit footer pozisyonu 
     let y = 120;
     
-    // Ana çizgi (Invoice stilinde)
+    // Ana çizgi 
     page.drawLine({
       start: { x: 50, y: y + 5 },
       end: { x: pageWidth - 50, y: y + 5 },
@@ -709,7 +708,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Alt çizgi (Invoice stilinde)
+    // Alt çizgi 
     page.drawLine({
       start: { x: 50, y: y - 5 },
       end: { x: pageWidth - 50, y: y - 5 },
@@ -717,7 +716,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // İki çizgi arasına TUANA yazısı - normal ve ters (Invoice stilinde)
+    // İki çizgi arasına TUANA yazısı - normal ve ters 
     const tuanaText = 'TUANA';
     const tuanaFont = this.tuanaFont || this.fontItalic;
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
@@ -744,7 +743,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Payment & Shipping Details - Dinamik yapı (Invoice stilinde)
+    // Payment & Shipping Details - Dinamik yapı 
     const paymentShippingDetails = this.buildPaymentShippingDetails(formData);
     
     let footerY = y;
@@ -759,7 +758,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       footerY -= 12;
     });
 
-    // Signature ve Stamp bölümleri (Invoice stilinde)
+    // Signature ve Stamp bölümleri 
     const signatureLabel = this.languageService.getText('signature', this.language);
     page.drawText(signatureLabel, {
       x: 215,
@@ -778,7 +777,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Dikey çizgiler (Invoice stilinde)
+    // Dikey çizgiler 
     page.drawLine({
       start: { x: 210, y: y + 15 },
       end: { x: 210, y: y - 80 },
@@ -793,7 +792,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Sayfa numarası (Invoice stilinde)
+    // Sayfa numarası 
     page.drawText('1', {
       x: pageWidth / 2,
       y: 30,
@@ -883,7 +882,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
   // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12; 
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
     const words = text.split(' ');

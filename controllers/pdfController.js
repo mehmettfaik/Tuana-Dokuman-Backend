@@ -1650,6 +1650,10 @@ const generateCekiListesi = async (req, res) => {
     // Language validation
     const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'tr';
 
+    // showBrutKg ve showNetKg parametrelerini al
+    const showBrutKg = formData.showBrutKg !== undefined ? formData.showBrutKg : false;
+    const showNetKg = formData.showNetKg !== undefined ? formData.showNetKg : false;
+
     // PDF document oluştur
     const pdfDoc = await PDFDocument.create();
     pdfDoc.registerFontkit(fontkit);
@@ -1662,7 +1666,7 @@ const generateCekiListesi = async (req, res) => {
     const template = new CekiListesiTemplate(pdfDoc, logoImage, validatedLanguage);
     await template.initialize();
     
-    // PDF üretme
+    // PDF üretme (showBrutKg ve showNetKg parametreleri formData'da zaten var)
     await template.generate(formData);
     
     // PDF'i byte array olarak al
@@ -1722,6 +1726,10 @@ const generateCekiListesiLabels = async (req, res) => {
 
     // Language validation
     const validatedLanguage = ['tr', 'en'].includes(language) ? language : 'tr';
+
+    // showBrutKg ve showNetKg parametrelerini al
+    const showBrutKg = formData.showBrutKg !== undefined ? formData.showBrutKg : false;
+    const showNetKg = formData.showNetKg !== undefined ? formData.showNetKg : false;
 
     // Çeki Listesi Label template'i kullanarak PDF oluştur
     const template = new CekiListesiLabelTemplate();

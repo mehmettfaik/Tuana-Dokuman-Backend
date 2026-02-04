@@ -12,13 +12,11 @@ class CreditNoteTemplate extends BasePdfTemplate {
   }
 
   async initialize() {
-    // Base sınıftan font yükleme metodunu kullan
     await this.loadFonts();
     
-    // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
+
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      //console.log('HelveticaNeueLightItalic font not found, using default italic font');
       this.tuanaFont = this.fontItalic; // Fallback
     }
   }
@@ -79,7 +77,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
-    y -= 40; // NOTES'tan sonra daha fazla boşluk
+    y -= 40; 
 
     // KUR BİLGİSİ ve BANKA BİLGİLERİ bölümü (varsa)
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
@@ -121,7 +119,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Credit Note Date ve Numbers (sağ üst köşe)
+    // Credit Note Date ve Numbers 
     const currentDate = new Date().toLocaleDateString('en-GB');
     const creditNoteDateLabel = this.languageService.getText('creditNoteDate', this.language);
     page.drawText(`${creditNoteDateLabel}: ${currentDate}`, {
@@ -163,7 +161,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi)
+    // ISSUER bölümü 
     const issuerLabel = this.languageService.getText('issuer', this.language);
     page.drawText(issuerLabel, {
       x: 55,
@@ -201,10 +199,10 @@ class CreditNoteTemplate extends BasePdfTemplate {
       issuerY -= 12;
     });
 
-    // ISSUER'dan sonra boşluk bırak
+    // ISSUER'dan sonra boşluk 
     let nextSectionY = issuerY - 15;
 
-    // RECIPIENT bölümü (sol tarafta)
+    // RECIPIENT bölümü
     const recipientLabel = this.languageService.getText('recipient', this.language);
     page.drawText(recipientLabel, {
       x: 55,
@@ -235,12 +233,12 @@ class CreditNoteTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // RECIPIENT için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     recipientY -= recipientAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri 
     const recipientLocationInfo = formData['RECIPIENT İlçe İl Ülke'] || formData.recipientLocation || '---';
     this.drawSafeText(page, recipientLocationInfo, {
       x: 55,
@@ -270,7 +268,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede)
+    // DELIVERY ADDRESS bölümü
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -280,7 +278,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // DELIVERY ADDRESS bilgilerini dinamik olarak çiz
+    // DELIVERY ADDRESS bilgilerini dinamik
     let deliveryY = nextSectionY - 15;
     
     // Şirket adı
@@ -301,12 +299,12 @@ class CreditNoteTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri 
     const deliveryLocationInfo = formData['DELIVERY ADDRESS İlçe İl Ülke'] || formData.deliveryLocation || '---';
     this.drawSafeText(page, deliveryLocationInfo, {
       x: 320,
@@ -378,11 +376,10 @@ class CreditNoteTemplate extends BasePdfTemplate {
     page.drawRectangle({
       x: 50,
       y: y - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık (20px daha dar)
+      width: pageWidth - 105, 
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      // Arka plan rengi yok - beyaz
     });
 
     // Başlık metinleri
@@ -409,7 +406,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Ürün satırları - Frontend'den gelen goods array'ini kullan
+    // Ürün satırları - Frontend'den gelen goods array'i
     const goods = formData.goods || [
       {
         id: 1,
@@ -429,21 +426,18 @@ class CreditNoteTemplate extends BasePdfTemplate {
       }
     ];
 
-    //console.log('Drawing goods table with data:', goods);
-
     let totalAmount = 0;
     let totalQuantity = 0;
-    let totalCurrency = 'EUR'; // Default currency
+    let totalCurrency = 'EUR'; 
     let currentPage = page;
     let currentY = y;
     let pageNumber = 1;
 
-    // İlk sayfada 8 ürün, diğer sayfalarda 25 ürün
     let processedItems = 0;
     let pageIndex = 0;
     
     while (processedItems < goods.length) {
-      // İlk sayfa için 8 ürün, diğer sayfalar için 30 ürün
+      // İlk sayfa için 8 ürün, diğer sayfalar için 32 ürün
       const itemsPerPage = pageIndex === 0 ? 8 : 32
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
@@ -455,7 +449,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750; 
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -482,7 +476,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - 15,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105,
           height: 20,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -527,7 +521,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
           if (textWidth > 195 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break; // Maksimum 2 satır
+            if (lineCount >= 2) break; 
           } else {
             currentLine = testLine;
           }
@@ -540,7 +534,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - rowHeight + 5,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105,
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -635,7 +629,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
     currentPage.drawRectangle({
       x: 50,
       y: currentY - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık
+      width: pageWidth - 105, 
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
@@ -686,7 +680,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105, 
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -712,8 +706,8 @@ class CreditNoteTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Sadece gerekli dikey çizgiler (ARTICLE NUMBER ve WEIGHT/WIDTH arasını kaldır)
-      const kdvVerticalLines = [350, 475]; // İlk iki sütun arası çizgiyi kaldırdık
+     
+      const kdvVerticalLines = [350, 475]; 
       kdvVerticalLines.forEach(x => {
         currentPage.drawLine({
           start: { x: x, y: currentY + 5 },
@@ -729,7 +723,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105, 
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -766,10 +760,9 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
       currentY -= 20;
 
-      // KUR BİLGİSİ'ni son sayfada GENEL TOPLAM ile aynı seviyede
+
       this.drawCurrencyInfo(currentPage, currentY + 10, formData);
     } else {
-      // KDV yoksa da KUR BİLGİSİ'ni son sayfada TOTAL AMOUNT'un altında
       this.drawCurrencyInfo(currentPage, currentY - 10, formData);
     }
 
@@ -831,7 +824,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
   // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12; 
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
     const words = text.split(' ');
@@ -888,11 +881,11 @@ class CreditNoteTemplate extends BasePdfTemplate {
   // Kur bilgisi ve banka bilgileri bölümü
   drawCurrencyAndBankInfoSection(page, pageWidth, y, formData) {
     // Sadece BANKA BİLGİLERİ için sabit pozisyon
-    let currentY = 215; // Sabit Y pozisyonu
+    let currentY = 215;
     const leftColumnX = 55;
     const bankaBilgileri = formData['Banka Bilgileri'];
     
-    // Sadece BANKA BİLGİLERİ'ni çiz - sabit pozisyonda
+    // Sadece BANKA BİLGİLERİ - sabit pozisyonda
     if (bankaBilgileri) {
       // BANKA BİLGİLERİ başlığı
       const bankInformationsLabel = this.languageService.getText('bankInformations', this.language);
@@ -925,8 +918,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
         });
       }
     }
-
-    // Sabit pozisyon döndür
     return 170;
   }
 
@@ -939,8 +930,8 @@ class CreditNoteTemplate extends BasePdfTemplate {
       // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
       const currencyInfoLabel = this.languageService.getText('currencyInfo', this.language);
       targetPage.drawText(`${currencyInfoLabel}:`, {
-        x: 55, // Sol başlangıç
-        y: y, // GENEL TOPLAM ile aynı seviyede
+        x: 55, 
+        y: y, 
         size: 8,
         font: this.fontBold,
         color: rgb(0, 0, 0),
@@ -948,7 +939,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
       // Kur bilgisi değeri - yanında
       this.drawSafeText(targetPage, kurBilgisi, {
-        x: 135, // KUR BİLGİSİ: yazısından sonra
+        x: 135, 
         y: y,
         size: 8,
         font: this.font,
@@ -1016,7 +1007,7 @@ SWIFT: TEBUTRIS 032`
     
     // Notes içeriği - frontend'den gelen Notlar alanını kullan
     if (formData['Notlar'] && formData['Notlar'].trim()) {
-      // Credit Note için özel mesaj ekle
+
       const creditNoteMessage = `${formData['Notlar'].trim()}`;
       
       // Notları çok satırlı olarak ekle
@@ -1034,7 +1025,7 @@ SWIFT: TEBUTRIS 032`
         }
       });
     } else if (formData.notes && Array.isArray(formData.notes)) {
-      // Fallback: eski array formatını da destekle
+ 
       formData.notes.forEach(note => {
         if (note && note.trim()) {
           this.drawSafeText(page, note, {
@@ -1048,36 +1039,15 @@ SWIFT: TEBUTRIS 032`
         }
       });
     } else {
-      // Default credit note mesajı
-    //   const defaultMessage = `This credit note is issued for cancellation of invoice ${formData['INVOICE NUMBER'] || ''}.`;
-    //   this.drawSafeText(page, defaultMessage, {
-    //     x: 55,
-    //     y: noteY,
-    //     size: 8,
-    //     font: this.font,
-    //     color: rgb(0, 0, 0),
-    //   });
       noteY -= 12;
     }
-
-    // NOTES altında çizgi - sabit pozisyon
-    // const lineY = noteY - 8;
-    // page.drawLine({
-    //   start: { x: 50, y: lineY  },
-    //   end: { x: pageWidth - 50, y: lineY },
-    //   thickness: 1,
-    //   color: rgb(0, 0, 0),
-    // });
-
-    // Sabit pozisyon döndür
-    return 240; // Sabit return değeri
+    return 240;
   }
 
   drawCreditNoteFooter(page, pageWidth, startY = null, formData = {}) {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -1101,11 +1071,11 @@ SWIFT: TEBUTRIS 032`
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
-    // Normal TUANA yazısı (sol taraf)
+    // Normal TUANA yazısı
     page.drawText(tuanaText, {
       x: centerX - textWidth + 222,
       y: y - 3,
@@ -1114,7 +1084,7 @@ SWIFT: TEBUTRIS 032`
       color: rgb(0, 0, 0),
     });
     
-    // Ters TUANA yazısı (sağ taraf) - 180 derece döndürülmüş
+    // Ters TUANA yazısı - 180 derece döndürülmüş
     page.drawText(tuanaText, {
       x: centerX + textWidth + 220,
       y: y + 3,

@@ -52,6 +52,8 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
       if (rows.length === 0 && normalizedData.metreler && normalizedData.metreler.length > 0) {
         const metreler = normalizedData.metreler;
         const lotlar = normalizedData.lotlar || [];
+        const brutKgValues = normalizedData.brutKgValues || [];
+        const netKgValues = normalizedData.netKgValues || [];
         
         for (let i = 0; i < metreler.length; i++) {
           const metre = metreler[i];
@@ -60,7 +62,9 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
             rows.push({
               topNo: i + 1,
               metre: metre,
-              lot: lotlar[i] || ''
+              lot: lotlar[i] || '',
+              brutKg: brutKgValues[i] || '',
+              netKg: netKgValues[i] || ''
             });
           }
         }
@@ -78,8 +82,12 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
           topNo: row.topNo || row.topNumarasi || (i + 1),
           lotNo: row.lot || row.lotNo || '',
           uzunluk: row.metre || row.uzunluk || '',
+          brutKg: row.brutKg || '',
+          netKg: row.netKg || '',
           tarih: normalizedData.tarih || '',
-          musteri: normalizedData.musteriAdi || ''
+          musteri: normalizedData.musteriAdi || '',
+          showBrutKg: normalizedData.showBrutKg,
+          showNetKg: normalizedData.showNetKg
         };
         
         await this.createLabelPage(doc, labelData, language);
@@ -106,11 +114,15 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
     let rows = rawData.rows || baseData.rows || [];
     let metreler = [];
     let lotlar = [];
+    let brutKgValues = [];
+    let netKgValues = [];
     
     if (Array.isArray(rows) && rows.length > 0) {
       rows.forEach(row => {
         metreler.push(row.metre || row.meter || row.METRE || '');
         lotlar.push(row.lot || row.LOT || '');
+        brutKgValues.push(row.brutKg || row.BRUT_KG || '');
+        netKgValues.push(row.netKg || row.NET_KG || '');
       });
     }
     
@@ -144,7 +156,13 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
       // Tablo verileri
       metreler: metreler,
       lotlar: lotlar,
-      rows: rows
+      brutKgValues: brutKgValues,
+      netKgValues: netKgValues,
+      rows: rows,
+      
+      // Görünürlük ayarları
+      showBrutKg: baseData.showBrutKg !== undefined ? baseData.showBrutKg : false,
+      showNetKg: baseData.showNetKg !== undefined ? baseData.showNetKg : false
     };
   }
 
@@ -309,16 +327,44 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
       currentY -= lineHeight;
     }
 
+    // BRUT KG
+    if (labelData.showBrutKg) {
+      const brutKgLabel = this.languageService.getText('brutKg', language);
+      const brutKgValue = labelData.brutKg || '';
+      page.drawText(`${brutKgLabel}: ${brutKgValue} KG`, {
+        x: this.margin,
+        y: currentY,
+        size: fontSize,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      currentY -= lineHeight;
+    }
+
+    // NET KG
+    if (labelData.showNetKg) {
+      const netKgLabel = this.languageService.getText('netKg', language);
+      const netKgValue = labelData.netKg || '';
+      page.drawText(`${netKgLabel}: ${netKgValue} KG`, {
+        x: this.margin,
+        y: currentY,
+        size: fontSize,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      currentY -= lineHeight;
+    }
+
     // TARİH
     const tarihLabel = this.languageService.getText('tarihLabel', language);
     const formattedDate = this.formatDate(labelData.tarih);
-    page.drawText(`${tarihLabel}: ${formattedDate}`, {
-      x: this.margin,
-      y: currentY,
-      size: fontSize,
-      font: this.font,
-      color: rgb(0, 0, 0),
-    });
+    // page.drawText(`${tarihLabel}: ${formattedDate}`, {
+    //   x: this.margin,
+    //   y: currentY,
+    //   size: fontSize,
+    //   font: this.font,
+    //   color: rgb(0, 0, 0),
+    // });
   }
 
   /**
