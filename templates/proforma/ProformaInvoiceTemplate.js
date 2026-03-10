@@ -491,7 +491,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
 
     let totalAmount = 0;
     let totalQuantity = 0;
-    let totalCurrency = 'EUR'; // Default currency
+    let totalCurrency = formData.currency || formData['CURRENCY'] || formData['Banka Bilgileri'] || 'EUR'; // Default currency
     let currentPage = page;
     let currentY = y;
     let pageNumber = 1;
@@ -638,7 +638,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         });
 
         // AMOUNT (currency ile birlikte)
-        const currency = good['CURRENCY'] || 'EUR';
+        const currency = good['CURRENCY'] || formData.currency || formData['CURRENCY'] || formData['Banka Bilgileri'] || 'EUR';
         const amountValue = good['AMOUNT'] || '';
         const displayAmount = amountValue ? `${amountValue} ${currency}` : '';
         
@@ -669,7 +669,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         
         // Currency bilgisini al (ilk ürünün currency'sini kullan)
         if (!totalCurrency || totalCurrency === 'EUR') {
-          totalCurrency = good['CURRENCY'] || 'EUR';
+          totalCurrency = good['CURRENCY'] || formData.currency || formData['CURRENCY'] || formData['Banka Bilgileri'] || 'EUR';
         }
         
         currentY -= rowHeight;
