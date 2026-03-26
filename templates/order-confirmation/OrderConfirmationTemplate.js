@@ -904,7 +904,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     });
 
     // NOTES içeriği - SABİT POZİSYON - uzun metinleri sararak çiz
-    let noteContentY = startY - 25;
+    let noteContentY = startY - 20;
     const notLines = formData['Notlar'].split('\n');
     let totalLineCount = 0;
     
