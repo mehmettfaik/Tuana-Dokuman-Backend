@@ -903,24 +903,85 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // NOTES içeriği - SABİT POZİSYON
+    // NOTES içeriği - SABİT POZİSYON - uzun metinleri sararak çiz
     let noteContentY = startY - 25;
     const notLines = formData['Notlar'].split('\n');
-    let lineCount = 0;
+    let totalLineCount = 0;
     
     notLines.forEach(line => {
-      if (line.trim() && lineCount < 4 && noteContentY > 240) { // Maksimum 4 satır, minimum Y=240
-        this.drawSafeText(page, line.trim(), {
+      if (line.trim() && totalLineCount < 8 && noteContentY > 240) { // Maksimum 8 toplam satır (sarılmış dahil)
+        // Her bir satırı sarmalı metin olarak çiz
+        const beforeY = noteContentY;
+        this.drawWrappedNotesText(page, line.trim(), {
           x: 55,
           y: noteContentY,
           size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
+          maxWidth: pageWidth - 110, // Sağ ve sol margin
+          lineHeight: 10,
+          maxLines: 8 - totalLineCount // Kalan satır sayısı
         });
-        noteContentY -= 12;
-        lineCount++;
+        
+        // Kullanılan satır sayısını hesapla
+        const usedLines = Math.ceil((beforeY - noteContentY + 10) / 10);
+        totalLineCount += usedLines;
+        noteContentY -= (usedLines * 10) + 2; // Satırlar arası ekstra boşluk
       }
     });
+  }
+
+  // Notlar için özel sarma metodu - maksimum satır sayısını dikkate alır
+  drawWrappedNotesText(page, text, options) {
+    if (!text) return;
+    
+    const { x, y, size, font, color, maxWidth, lineHeight = 10, maxLines = 8 } = options;
+    const words = text.split(' ');
+    let currentLine = '';
+    let currentY = y;
+    let lineCount = 0;
+    
+    for (let i = 0; i < words.length; i++) {
+      const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+      const textWidth = font.widthOfTextAtSize(testLine, size);
+      
+      if (textWidth > maxWidth && currentLine) {
+        // Mevcut satırı çiz
+        page.drawText(currentLine, {
+          x: x,
+          y: currentY,
+          size: size,
+          font: font,
+          color: color,
+        });
+        
+        // Yeni satıra geç
+        currentLine = words[i];
+        currentY -= lineHeight;
+        lineCount++;
+        
+        // Maksimum satır sayısını aş
+        if (lineCount >= maxLines) {
+          if (i < words.length - 1) {
+            currentLine += '...';
+          }
+          break;
+        }
+      } else {
+        currentLine = testLine;
+      }
+    }
+    
+    // Son satırı çiz
+    if (currentLine && lineCount < maxLines) {
+      page.drawText(currentLine, {
+        x: x,
+        y: currentY,
+        size: size,
+        font: font,
+        color: color,
+      });
+    }
   }
 
   // Kur bilgisi ve banka bilgileri bölümü
