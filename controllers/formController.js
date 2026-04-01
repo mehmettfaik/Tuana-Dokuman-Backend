@@ -1,5 +1,22 @@
 const { getFirestore } = require('../config/firebase');
 
+// In-memory cache for forms
+let formsCache = null;
+let formsCacheTimestamp = null;
+const formsCacheTTL = 5 * 60 * 1000; // 5 dakika cache süresi
+
+// Cache helper functions
+const invalidateFormsCache = () => {
+  formsCache = null;
+  formsCacheTimestamp = null;
+  console.log('📦 Forms cache invalidated');
+};
+
+const isFormsCacheValid = () => {
+  if (!formsCache || !formsCacheTimestamp) return false;
+  return (Date.now() - formsCacheTimestamp) < formsCacheTTL;
+};
+
 // POST /api/forms - Yeni form kaydı oluştur
 const createForm = async (req, res) => {
   try {
@@ -52,6 +69,9 @@ const createForm = async (req, res) => {
 
     // Firestore'a kaydet
     const docRef = await db.collection('forms').add(newForm);
+    
+    // Cache'i invalidate et
+    invalidateFormsCache();
 
     // Response - ID ile birlikte tüm veriyi döndür
     const response = {
@@ -77,7 +97,20 @@ const getAllForms = async (req, res) => {
     const db = getFirestore();
     
     // Query parametreleri
-    const { formType } = req.query;
+    const { formType, forceRefresh } = req.query;
+
+    // Cache varsa ve geçerliyse, cache'den dön
+    if (!forceRefresh && isFormsCacheValid()) {
+      console.log('📦 Returning forms from cache');
+      let forms = [...formsCache];
+      
+      // formType filter varsa client-side filtering yap
+      if (formType) {
+        forms = forms.filter(form => form.formType === formType);
+      }
+      
+      return res.json(forms);
+    }
 
     // Sadece createdAt'e göre sırala (index gerektirmez)
     let query = db.collection('forms').orderBy('createdAt', 'desc');
@@ -85,6 +118,8 @@ const getAllForms = async (req, res) => {
     const snapshot = await query.get();
 
     if (snapshot.empty) {
+      formsCache = [];
+      formsCacheTimestamp = Date.now();
       return res.json([]);
     }
 
@@ -112,6 +147,11 @@ const getAllForms = async (req, res) => {
         updatedAt: data.updatedAt || null
       });
     });
+
+    // Cache'e kaydet
+    formsCache = forms;
+    formsCacheTimestamp = Date.now();
+    console.log(`📦 Forms cached: ${forms.length} items`);
 
     // formType filter varsa client-side filtering yap
     if (formType) {
@@ -221,6 +261,9 @@ const deleteForm = async (req, res) => {
 
     // Form'u sil
     await docRef.delete();
+    
+    // Cache'i invalidate et
+    invalidateFormsCache();
 
     console.log(` Deleted form ${formId} from Firestore`);
 
@@ -263,6 +306,9 @@ const bulkDeleteForms = async (req, res) => {
     }
 
     await batch.commit();
+    
+    // Cache'i invalidate et
+    invalidateFormsCache();
 
     console.log(` Bulk deleted ${deletedIds.length} forms from Firestore`);
 
@@ -283,9 +329,39 @@ const bulkDeleteForms = async (req, res) => {
   }
 };
 
-// Statistics endpoint - Bonus feature
+// Statistics endpoint - Bonus feature (cache kullanır)
 const getFormsStats = async (req, res) => {
   try {
+    // Cache varsa ve geçerliyse, cache'den istatistik hesapla
+    if (isFormsCacheValid()) {
+      console.log('📦 Calculating stats from cache');
+      const allForms = formsCache;
+      
+      const stats = {
+        totalForms: allForms.length,
+        byDocumentType: {},
+        recent: []
+      };
+
+      allForms.forEach(form => {
+        const docType = form.documentType || form.formType || 'Unknown';
+        stats.byDocumentType[docType] = (stats.byDocumentType[docType] || 0) + 1;
+      });
+
+      stats.recent = allForms
+        .slice(0, 10)
+        .map(form => ({
+          id: form.id,
+          documentType: form.documentType || form.formType,
+          createdAt: form.createdAt
+        }));
+
+      return res.json({
+        success: true,
+        stats
+      });
+    }
+
     const db = getFirestore();
     
     const snapshot = await db.collection('forms').get();

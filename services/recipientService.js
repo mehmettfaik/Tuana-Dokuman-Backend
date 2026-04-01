@@ -3,10 +3,33 @@ const { getFirestore } = require('../config/firebase');
 class RecipientService {
   constructor() {
     this.collection = 'recipients';
+    // In-memory cache to reduce Firebase reads
+    this.cache = null;
+    this.cacheTimestamp = null;
+    this.cacheTTL = 5 * 60 * 1000; // 5 dakika cache süresi
   }
 
-  async getAllRecipients() {
+  // Cache'i temizle
+  invalidateCache() {
+    this.cache = null;
+    this.cacheTimestamp = null;
+    console.log('📦 Recipients cache invalidated');
+  }
+
+  // Cache geçerli mi kontrol et
+  isCacheValid() {
+    if (!this.cache || !this.cacheTimestamp) return false;
+    return (Date.now() - this.cacheTimestamp) < this.cacheTTL;
+  }
+
+  async getAllRecipients(forceRefresh = false) {
     try {
+      // Cache varsa ve geçerliyse, cache'den dön
+      if (!forceRefresh && this.isCacheValid()) {
+        console.log('📦 Returning recipients from cache');
+        return this.cache;
+      }
+
       const db = getFirestore();
       if (!db) {
         throw new Error('Firebase is not initialized. Please check your Firebase configuration.');
@@ -27,6 +50,11 @@ class RecipientService {
         const dateB = b.updatedDate ? new Date(b.updatedDate) : new Date(0);
         return dateB - dateA;
       });
+
+      // Cache'e kaydet
+      this.cache = recipients;
+      this.cacheTimestamp = Date.now();
+      console.log(`📦 Recipients cached: ${recipients.length} items`);
 
       return recipients;
     } catch (error) {
@@ -73,6 +101,9 @@ class RecipientService {
 
       const docRef = await db.collection(this.collection).add(newRecipient);
       
+      // Cache'i invalidate et
+      this.invalidateCache();
+      
       return {
         id: docRef.id,
         ...newRecipient
@@ -106,6 +137,9 @@ class RecipientService {
 
       await docRef.update(updatedData);
       
+      // Cache'i invalidate et
+      this.invalidateCache();
+      
       // Return updated recipient
       return await this.getRecipientById(id);
     } catch (error) {
@@ -130,6 +164,10 @@ class RecipientService {
       }
       
       await docRef.delete();
+      
+      // Cache'i invalidate et
+      this.invalidateCache();
+      
       return true;
     } catch (error) {
       console.error('Error deleting recipient:', error);
@@ -213,6 +251,8 @@ class RecipientService {
       
       if (results.some(r => r.success)) {
         await batch.commit();
+        // Cache'i invalidate et
+        this.invalidateCache();
       }
       
       return results;
@@ -249,6 +289,8 @@ class RecipientService {
       
       if (results.some(r => r.success)) {
         await batch.commit();
+        // Cache'i invalidate et
+        this.invalidateCache();
       }
       
       return results;
