@@ -34,10 +34,6 @@ class ExcelExportService {
 
     let currentRow = 1;
 
-    // ============================================================================
-    // HEADER SECTION
-    // ============================================================================
-    
     // TUANA TEKSTIL başlığı
     worksheet.mergeCells(`A${currentRow}:C${currentRow}`);
     const titleCell = worksheet.getCell(`A${currentRow}`);

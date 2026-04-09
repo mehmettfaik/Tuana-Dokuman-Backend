@@ -17,7 +17,6 @@ class InvoiceTemplate extends BasePdfTemplate {
     // Base sınıftan font yükleme metodunu kullan
     await this.loadFonts();
     
-    // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
       this.tuanaFont = this.fontItalic; // Fallback
@@ -35,7 +34,7 @@ class InvoiceTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
-    // Türkçe locale ile formatla (binlik ayraçları ile)
+    // Türkçe locale ile formatla
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -43,9 +42,9 @@ class InvoiceTemplate extends BasePdfTemplate {
   }
 
   /**
-   * String içindeki matematiksel ifadeyi hesapla (ör: "3.390,00 + 170,00")
-   * @param {string} expression - Hesaplanacak ifade
-   * @returns {number} - Hesaplanan sonuç
+   * String içindeki matematiksel ifadeyi hesapla
+   * @param {string} expression 
+   * @returns {number} 
    */
   parseAndCalculate(expression) {
     if (!expression) return 0;
@@ -54,34 +53,29 @@ class InvoiceTemplate extends BasePdfTemplate {
     const str = String(expression).trim();
     
     /**
-     * Bir sayıyı parse eder - hem İngilizce (277.2) hem Türkçe (1.250,23) formatları destekler
+     * Bir 
      */
     const parseNumber = (numStr) => {
       const trimmed = numStr.trim();
       let cleaned = trimmed;
       
-      // Eğer hem nokta hem virgül varsa, Türkçe format (nokta binlik ayracı, virgül ondalık)
       if (trimmed.includes('.') && trimmed.includes(',')) {
         cleaned = trimmed.replace(/\./g, '').replace(',', '.');
       } 
-      // Sadece virgül varsa, Türkçe ondalık ayracı
       else if (trimmed.includes(',')) {
         cleaned = trimmed.replace(',', '.');
       }
-      // Sadece nokta varsa, İngilizce format olarak bırak (277.2 gibi)
       
       const num = parseFloat(cleaned);
       return isNaN(num) ? 0 : num;
     };
     
-    // Eğer + işareti varsa, parçalara ayır ve topla
     if (str.includes('+')) {
       return str.split('+').reduce((sum, part) => {
         return sum + parseNumber(part);
       }, 0);
     }
     
-    // Eğer - işareti varsa, parçalara ayır ve çıkar
     if (str.includes('-') && !str.startsWith('-')) {
       const parts = str.split('-');
       let result = 0;
@@ -105,7 +99,6 @@ class InvoiceTemplate extends BasePdfTemplate {
       this.language = language;
     }
     
-    // Load signature and stamp images if checkbox is enabled
     let signatureImage = null;
     let stampImage = null;
     const includeSignatureStamp = formData['İmza ve Kaşe'] || formData.imzaVeKase || false;
@@ -115,17 +108,15 @@ class InvoiceTemplate extends BasePdfTemplate {
       stampImage = await this.signatureService.loadStamp(this.pdfDoc);
     }
     
-    const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
+    const page = this.pdfDoc.addPage([595, 842]); 
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60; 
 
-    // INVOICE IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Invoice Date + Invoice Number)
     this.drawInvoiceHeader(page, pageWidth, y, formData);
     y -= 70;
 
-    // INVOICE başlığı - dil desteği ile
     const invoiceTitle = this.languageService.getText('invoice', this.language);
     page.drawText(invoiceTitle, {
       x: 55,
@@ -143,11 +134,11 @@ class InvoiceTemplate extends BasePdfTemplate {
 
     // DESCRIPTION OF GOODS tablosu
     y = this.drawGoodsTable(page, pageWidth, y, formData);
-    y -= 10; // KDV sonrası minimal boşluk
+    y -= 10; 
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
-    y -= 40; // NOTES'tan sonra daha fazla boşluk
+    y -= 40; 
 
     // KUR BİLGİSİ ve BANKA BİLGİLERİ bölümü (varsa)
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
@@ -189,8 +180,6 @@ class InvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Invoice Date (sağ üst köşe) - dil desteği ile
-    // Frontend'den gelen 'INVOICE DATE' (YYYY-MM-DD) değeri varsa onu kullan
     const invoiceDateInput = formData['INVOICE DATE'] || formData.invoiceDate || null;
     let currentDate = new Date().toLocaleDateString('en-GB');
     if (invoiceDateInput && typeof invoiceDateInput === 'string') {
@@ -211,7 +200,6 @@ class InvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Invoice Number (sağ üst köşe - tarihten bir satır yukarı) - dil desteği ile
     const invoiceNumber = formData['INVOICE NUMBER'] || 'INV-2025-001';
     const invoiceNumberLabel = this.languageService.getText('invoiceNumber', this.language);
     page.drawText(`${invoiceNumberLabel}: ${invoiceNumber}`, {
@@ -234,7 +222,6 @@ class InvoiceTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi) - dil desteği ile
     const issuerLabel = this.languageService.getText('issuer', this.language);
     page.drawText(issuerLabel, {
       x: 55,
@@ -267,10 +254,10 @@ class InvoiceTemplate extends BasePdfTemplate {
       issuerY -= 12;
     });
 
-    // ISSUER'dan sonra boşluk bırak
+    // ISSUER'dan sonra boşluk 
     let nextSectionY = issuerY - 15;
 
-    // RECIPIENT bölümü (sol tarafta) - dil desteği ile
+    // RECIPIENT bölümü
     const recipientLabel = this.languageService.getText('recipient', this.language);
     page.drawText(recipientLabel, {
       x: 55,
@@ -280,7 +267,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // RECIPIENT bilgilerini dinamik olarak çiz
+    // RECIPIENT bilgilerini dinamik olarak
     let recipientY = nextSectionY - 15;
     
     // Şirket adı
@@ -293,7 +280,7 @@ class InvoiceTemplate extends BasePdfTemplate {
     });
     recipientY -= 12;
 
-    // Adres - dinamik sarma ile
+    // Adres
     const recipientAddress = formData['RECIPIENT Adres'] || formData.recipientAddress || '---';
     const recipientAddressHeight = this.drawWrappedAddress(page, recipientAddress, {
       x: 55,
@@ -301,12 +288,12 @@ class InvoiceTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // RECIPIENT için maksimum genişlik
+      maxWidth: 250,
       lineHeight: 12
     });
     recipientY -= recipientAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri
     const recipientLocationInfo = formData['RECIPIENT İlçe İl Ülke'] || formData.recipientLocation || '---';
     this.drawSafeText(page, recipientLocationInfo, {
       x: 55,
@@ -336,7 +323,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede) - dil desteği ile
+    // DELIVERY ADDRESS bölümü
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -367,7 +354,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250,
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
@@ -414,7 +401,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // DESCRIPTION OF GOODS başlığı - dil desteği ile
+    // DESCRIPTION OF GOODS başlığı 
     const descriptionOfGoodsLabel = this.languageService.getText('descriptionOfGoods', this.language);
     page.drawText(descriptionOfGoodsLabel, {
       x: 50,
@@ -442,11 +429,10 @@ class InvoiceTemplate extends BasePdfTemplate {
     page.drawRectangle({
       x: 50,
       y: y - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık (20px daha dar)
+      width: pageWidth - 105,
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      // Arka plan rengi yok - beyaz
     });
 
     // Başlık metinleri
@@ -473,7 +459,7 @@ class InvoiceTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Ürün satırları - Frontend'den gelen goods array'ini kullan
+    // Ürün satırları 
     const goods = formData.goods || [
       // {
       //   id: 1,
@@ -495,7 +481,7 @@ class InvoiceTemplate extends BasePdfTemplate {
 
     let totalAmount = 0;
     let totalQuantity = 0;
-    let totalCurrency = 'EUR'; // Default currency
+    let totalCurrency = 'EUR'; 
     let currentPage = page;
     let currentY = y;
     let pageNumber = 1;
@@ -517,7 +503,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750;
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -527,7 +513,7 @@ class InvoiceTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        // Yeni sayfada tablo başlığı - dil desteği ile
+        // Yeni sayfada tablo başlığı 
         const descriptionOfGoodsContinuedLabel = this.languageService.getText('descriptionOfGoodsContinued', this.language);
         currentPage.drawText(descriptionOfGoodsContinuedLabel, {
           x: 55,
@@ -543,7 +529,7 @@ class InvoiceTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - 15,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105, 
           height: 20,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -575,7 +561,6 @@ class InvoiceTemplate extends BasePdfTemplate {
 
       // Bu sayfadaki ürünleri çiz
       pageGoods.forEach((good, index) => {
-        // ARTICLE NUMBER için gerekli satır sayısını hesapla
         const articleText = good['ARTICLE NUMBER'] || '';
         const words = articleText.split(' ');
         let lineCount = 1;
@@ -588,7 +573,7 @@ class InvoiceTemplate extends BasePdfTemplate {
           if (textWidth > 195 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break; // Maksimum 2 satır
+            if (lineCount >= 2) break; 
           } else {
             currentLine = testLine;
           }
@@ -601,7 +586,7 @@ class InvoiceTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - rowHeight + 5,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105,
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -692,11 +677,11 @@ class InvoiceTemplate extends BasePdfTemplate {
       pageIndex++;
     }
 
-    // TOTAL AMOUNT - sadece son sayfada - dil desteği ile
+    // TOTAL AMOUNT 
     currentPage.drawRectangle({
       x: 50,
       y: currentY - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık
+      width: pageWidth - 105, 
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
@@ -798,13 +783,13 @@ class InvoiceTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105, 
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
       });
 
-      // KDV yazısı ve oranı - QUANTITY sütununda - dil desteği ile
+      // KDV yazısı ve oranı - QUANTITY sütununda 
       const vatLabel = this.language === 'tr' ? 'KDV' : 'VAT';
       currentPage.drawText(`% ${kdvOrani} ${vatLabel}`, {
         x: 355,
@@ -824,8 +809,8 @@ class InvoiceTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Sadece gerekli dikey çizgiler (ARTICLE NUMBER ve WEIGHT/WIDTH arasını kaldır)
-      const kdvVerticalLines = [350, 475]; // İlk iki sütun arası çizgiyi kaldırdık
+      // Sadece gerekli dikey çizgiler 
+      const kdvVerticalLines = [350, 475]; 
       kdvVerticalLines.forEach(x => {
         currentPage.drawLine({
           start: { x: x, y: currentY + 5 },
@@ -841,7 +826,7 @@ class InvoiceTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105, 
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -987,7 +972,7 @@ class InvoiceTemplate extends BasePdfTemplate {
 
   // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12; 
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
     const words = text.split(' ');
@@ -1044,7 +1029,7 @@ class InvoiceTemplate extends BasePdfTemplate {
   // Kur bilgisi ve banka bilgileri bölümü
   drawCurrencyAndBankInfoSection(page, pageWidth, y, formData) {
     // Sadece BANKA BİLGİLERİ için sabit pozisyon
-    let currentY = 215; // Sabit Y pozisyonu
+    let currentY = 215; 
     const leftColumnX = 55;
     const bankaBilgileri = formData['Banka Bilgileri'];
     
@@ -1092,11 +1077,11 @@ class InvoiceTemplate extends BasePdfTemplate {
     const kurBilgisi = formData['Kur Bilgisi'];
     
     if (kurBilgisiEnabled && kurBilgisi) {
-      // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
+      // KUR BİLGİSİ başlığı ve değeri yan yana 
       const currencyInfoLabel = this.languageService.getText('currencyInfo', this.language);
       targetPage.drawText(`${currencyInfoLabel}:`, {
-        x: 55, // Sol başlangıç
-        y: y, // GENEL TOPLAM ile aynı seviyede
+        x: 55, 
+        y: y, 
         size: 8,
         font: this.fontBold,
         color: rgb(0, 0, 0),
@@ -1212,14 +1197,14 @@ SWIFT: TEBUTRIS 032`
     });
 
     // Sabit pozisyon döndür
-    return 240; // Sabit return değeri
+    return 240; 
   }
 
   drawInvoiceFooter(page, pageWidth, startY = null, formData = {}, signatureImage = null, stampImage = null) {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
+    // Minimum footer pozisyonu 
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -1243,11 +1228,11 @@ SWIFT: TEBUTRIS 032`
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
-    // Normal TUANA yazısı (sol taraf)
+    // Normal TUANA yazısı
     page.drawText(tuanaText, {
       x: centerX - textWidth + 222,
       y: y - 3,
@@ -1359,7 +1344,7 @@ SWIFT: TEBUTRIS 032`
   /**
    * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
    * @param {Object} formData - Form verileri
-   * @returns {Array} Dolu olan alanlar
+   * @returns {Array} 
    */
   buildPaymentShippingDetails(formData) {
     const fields = [];
