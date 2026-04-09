@@ -21,7 +21,7 @@ class DebitNoteTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
+   * Türkçe sayı formatlaması
    * @param {number} number - Formatlanacak sayı
    * @returns {string} - Türkçe formatlanmış sayı
    */
@@ -39,7 +39,6 @@ class DebitNoteTemplate extends BasePdfTemplate {
   }
 
   async createDebitNote(formData = {}, language = null) {
-    // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
     }
@@ -48,9 +47,8 @@ class DebitNoteTemplate extends BasePdfTemplate {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60;
 
-    // DEBIT NOTE IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Debit Note Date)
     this.drawDebitNoteHeader(page, pageWidth, y, formData);
     y -= 70;
 
@@ -405,7 +403,7 @@ class DebitNoteTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Ürün satırları - Frontend'den gelen goods array'ini kullan
+  
     const goods = formData.goods || [
       {
         id: 1,
@@ -568,7 +566,7 @@ class DebitNoteTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
 
-        // AMOUNT (currency ile birlikte)
+        // AMOUNT 
         const currency = good['CURRENCY'] || 'EUR';
         const amountValue = good['AMOUNT'] || '';
         const displayAmount = amountValue ? `${amountValue} ${currency}` : '';
@@ -827,7 +825,6 @@ class DebitNoteTemplate extends BasePdfTemplate {
       const textWidth = font.widthOfTextAtSize(testLine, size);
       
       if (textWidth > maxWidth && currentLine) {
-        // Mevcut satırı çiz
         page.drawText(currentLine, {
           x: x,
           y: currentY,
@@ -917,7 +914,7 @@ class DebitNoteTemplate extends BasePdfTemplate {
     const kurBilgisi = formData['Kur Bilgisi'];
     
     if (kurBilgisiEnabled && kurBilgisi) {
-      // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
+      // KUR BİLGİSİ başlığı ve değeri yan yana
       targetPage.drawText('KUR BİLGİSİ:', {
         x: 55, 
         y: y, 
@@ -968,7 +965,7 @@ SWIFT: TEBUTRIS 032`
     // BANKA BİLGİLERİ varlığını kontrol et
     const bankaBilgileri = formData['Banka Bilgileri'];
     
-    // BANKA BİLGİLERİ varsa normal pozisyon, yoksa daha aşağı
+    // BANKA BİLGİLERİ varsa normal pozisyon,
     const notesLineY = bankaBilgileri ? 265 : 173;
     const notesTitleY = bankaBilgileri ? 255 : 160;
     

@@ -31,22 +31,18 @@ class BasePdfTemplate {
     const helveticaNeueBold = await this.fontService.loadCustomFont(this.pdfDoc, "helvetica-neue-5/HelveticaNeueBold.otf");
     
     if (helveticaNeueLight) {
-      // Helvetica Neue Light başarıyla yüklendi
       this.font = helveticaNeueLight;
-      this.fontBold = helveticaNeueBold || helveticaNeueLight; // Bold varsa kullan
+      this.fontBold = helveticaNeueBold || helveticaNeueLight; 
       this.fontItalic = helveticaNeueLightItalic || helveticaNeueLight;
     } else {
-      // Helvetica Neue UltraLight fontlarını yüklemeyi dene
       const helveticaNeueUltraLight = await this.fontService.loadHelveticaNeueUltraLight(this.pdfDoc);
       const helveticaNeueUltraLightItalic = await this.fontService.loadHelveticaNeueUltraLightItalic(this.pdfDoc);
       
       if (helveticaNeueUltraLight) {
-        // Helvetica Neue UltraLight başarıyla yüklendi
-        this.font = helveticaNeueUltraLight;        // Normal text için UltraLight
-        this.fontBold = helveticaNeueUltraLight;    // Bold yerine yine UltraLight
-        this.fontItalic = helveticaNeueUltraLightItalic || helveticaNeueUltraLight; // İtalik varsa kullan
+        this.font = helveticaNeueUltraLight;
+        this.fontBold = helveticaNeueUltraLight;   
+        this.fontItalic = helveticaNeueUltraLightItalic || helveticaNeueUltraLight;
       } else {
-        // Fallback olarak standart fontları kullan
         this.font = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
         this.fontBold = await this.pdfDoc.embedFont(StandardFonts.Helvetica);
         this.fontItalic = await this.pdfDoc.embedFont(StandardFonts.HelveticaOblique);
@@ -74,7 +70,6 @@ class BasePdfTemplate {
     try {
       page.drawText(text, options);
     } catch (error) {
-      //console.log('Font does not support Turkish characters, converting:', error.message);
       const convertedText = this.replaceTurkishChars(text);
       page.drawText(convertedText, options);
     }

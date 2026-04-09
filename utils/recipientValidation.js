@@ -1,6 +1,5 @@
 // Recipient veri doğrulama ve temizleme fonksiyonları
 
-// Bu fonksiyonu artık kullanmıyoruz - direkt field name'leri kullanacağız
 
 /**
  * Recipient verisini doğrula
@@ -55,7 +54,7 @@ function validateRecipient(data, isUpdate = false) {
     }
   }
 
-  // Sorumlu kişi kontrolü (contactPerson field'ı)
+  // Sorumlu kişi kontrolü 
   if (data.contactPerson) {
     if (typeof data.contactPerson !== 'string') {
       errors.push('Contact person must be a string');
@@ -118,10 +117,10 @@ function sanitizeRecipient(data) {
 
   // VAT
   if (data.vat) {
-    sanitized.vat = data.vat.toString().trim().replace(/\s+/g, ''); // Boşlukları kaldır
+    sanitized.vat = data.vat.toString().trim().replace(/\s+/g, '');
   }
 
-  // Sorumlu kişi (contactPerson field'ı)
+  // Sorumlu kişi
   if (data.contactPerson) {
     sanitized.contactPerson = data.contactPerson.toString().trim();
   }
@@ -131,7 +130,6 @@ function sanitizeRecipient(data) {
     sanitized.phone = data.phone.toString().trim();
   }
 
-  // Email - preserve original casing; only trim whitespace
   if (data.email) {
     sanitized.email = data.email.toString().trim();
   }

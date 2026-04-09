@@ -18,8 +18,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
     // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      //console.log('HelveticaNeueLightItalic font not found, using default italic font');
-      this.tuanaFont = this.fontItalic; // Fallback
+      this.tuanaFont = this.fontItalic; 
     }
   }
 
@@ -33,9 +32,9 @@ class PriceOfferTemplate extends BasePdfTemplate {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60; 
 
-    // PRICE OFFER IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Issue Date + Price Offer Number)
+    // PRICE OFFER IÇIN ÖZEL HEADER 
     this.drawPriceOfferHeader(page, pageWidth, y, formData);
     y -= 70;
 
@@ -57,11 +56,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
     // PRICE ITEMS tablosu
     y = this.drawPriceItemsTable(page, pageWidth, y, formData);
-    y -= 10; // Tablonun sonrası minimal boşluk
+    y -= 10; 
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
-    y -= 40; // NOTES'tan sonra daha fazla boşluk
+    y -= 40; 
 
     // FOOTER (Payment terms, transport type, signature, stamp) - dinamik pozisyon
     this.drawPriceOfferFooter(page, pageWidth, y, formData);
@@ -99,7 +98,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Issue Date (sağ üst köşe) - Tarih formatını dd/mm/yyyy olarak dönüştür - dil desteği ile
+    // Issue Date (sağ üst köşe) - Tarih formatını dd/mm/yyyy olarak dönüştür 
     let issueDate = formData['ISSUE DATE'] || formData['issueDate'] || new Date().toLocaleDateString('en-GB');
     
     // Eğer tarih yyyy-mm-dd formatındaysa dd/mm/yyyy formatına çevir
@@ -119,7 +118,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Price Offer Number (sağ üst köşe, Issue Date'in altında) - dil desteği ile
+    // Price Offer Number (sağ üst köşe, Issue Date'in altında) 
     const priceOfferNumber = formData['PRICE OFFER NUMBER'] || formData['priceOfferNumber'] || '';
     const priceOfferNumberLabel = this.languageService.getText('priceOfferNumber', this.language);
     page.drawText(`${priceOfferNumberLabel}: ${priceOfferNumber}`, {
@@ -140,14 +139,14 @@ class PriceOfferTemplate extends BasePdfTemplate {
   }
 
   drawCompanyInfoSection(page, pageWidth, y, formData) {
-    // FROM ve TO tek satırda, görüntüdeki gibi - dil desteği ile
+    // FROM ve TO tek satırda, görüntüdeki gibi 
     const fromCompanyName = formData['FROM'] || ' ';
     const toCompanyName = formData['TO'] || ' ';
     
     const fromLabel = this.languageService.getText('from', this.language);
     const toLabel = this.languageService.getText('to', this.language);
     
-    // FROM Company - HelveticaNeueLightItalic font kullan
+    // FROM Company 
     page.drawText(`${fromLabel}:`, {
       x: 55,
       y: y + 20,
@@ -160,11 +159,11 @@ class PriceOfferTemplate extends BasePdfTemplate {
       x: 115,
       y: y + 20,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.tuanaFont || this.fontItalic, 
       color: rgb(0, 0, 0),
     });
 
-    // TO Company - HelveticaNeueLightItalic font kullan
+    // TO Company 
     page.drawText(`${toLabel}:`, {
       x: 55,
       y: y + 10,
@@ -177,7 +176,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       x: 115,
       y: y + 10,
       size: 9,
-      font: this.tuanaFont || this.fontItalic, // HelveticaNeueLightItalic kullan
+      font: this.tuanaFont || this.fontItalic, 
       color: rgb(0, 0, 0),
     });
 
@@ -193,7 +192,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-        // PRICE ITEMS başlığı - dil desteği ile
+        // PRICE ITEMS başlığı 
     const priceItemsTitle = this.languageService.getText('priceItems', this.language);
     page.drawText(priceItemsTitle, {
       x: 50,
@@ -205,7 +204,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
     y += 25;
 
-    // Price Offer için özel tablo başlıkları - dil desteği ile
+    // Price Offer için özel tablo başlıkları
     const tableHeaders = [
       { text: this.languageService.getText('articleNumber', this.language), x: 55, width: 80 },
       { text: this.languageService.getText('pricePerMeter', this.language), x: 140, width: 60 },
@@ -262,8 +261,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
         certifiable: 'OEKO-TEX'
       }
     ];
-
-    //console.log('Drawing price items table with data:', priceItems);
 
     let currentPage = page;
     let currentY = y;
@@ -513,7 +510,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
     let noteY = notesTitleY; // NOTES başlığı pozisyonu
 
-        // NOTES başlığı - dil desteği ile
+        // NOTES başlığı
     const notesTitle = this.languageService.getText('notes', this.language);
     page.drawText(notesTitle, {
       x: 55,
@@ -525,14 +522,14 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
     noteY -= 15; // NOTES içeriği başlangıcı
     
-    // Price Offer için özel notes içeriği - dil desteği ile
+    // Price Offer için özel notes içeriği 
     const priceOfferNotes = this.languageService.getText('priceOfferNotes', this.language);
 
     priceOfferNotes.forEach((line, index) => {
       // Eğer satır rakamla başlıyorsa (yeni madde), ekstra boşluk ekle
       if (line.match(/^\d+\./)) {
-        if (index > 0) { // İlk madde için ekstra boşluk ekleme
-          noteY -= 5; // Maddeler arası ekstra boşluk
+        if (index > 0) { 
+          noteY -= 5; 
         }
       }
       
@@ -546,7 +543,6 @@ class PriceOfferTemplate extends BasePdfTemplate {
       noteY -= 10;
     });
 
-    // Sabit pozisyon döndür - NOTES aşağıya kaydırıldığı için daha düşük değer
     return 170;
   }
 
@@ -554,7 +550,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
+    // Minimum footer pozisyonu 
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -569,7 +565,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
     
     // VALIDITY OF THE PRICE OFFER yazısı - NOTES'tan sonra, TUANA'dan önce
     const validityText = this.languageService.getText('validityOfPriceOffer', this.language);
-    const validityFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const validityFont = this.tuanaFont || this.fontItalic; 
     
     page.drawText(validityText, {
       x: 55,
@@ -597,7 +593,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
@@ -641,7 +637,7 @@ class PriceOfferTemplate extends BasePdfTemplate {
       footerY -= 12;
     });
 
-    // Signature ve Stamp bölümleri - dil desteği ile
+    // Signature ve Stamp bölümleri
     const signatureLabel = this.languageService.getText('signature', this.language);
     const stampLabel = this.languageService.getText('stamp', this.language);
     

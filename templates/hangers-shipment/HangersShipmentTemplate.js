@@ -12,10 +12,8 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   }
 
   async initialize() {
-    // Base sınıftan font yükleme metodunu kullan
     await this.loadFonts();
     
-    // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
       this.tuanaFont = this.fontItalic;
@@ -23,7 +21,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
+   * Türkçe sayı formatlaması 
    * @param {number} number - Formatlanacak sayı
    * @returns {string} - Türkçe formatlanmış sayı
    */
@@ -33,7 +31,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
-    // Türkçe locale ile formatla (binlik ayraçları ile)
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -41,7 +38,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   }
 
   async createHangersShipment(formData = {}, language = null) {
-    // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
     }
@@ -52,11 +48,11 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     
     let y = pageHeight - 60; 
 
-    // HANGERS SHIPMENT HEADER (Invoice stil)
+    // HANGERS SHIPMENT HEADER 
     this.drawHangersShipmentHeader(page, pageWidth, y, formData);
     y -= 70;
 
-    // HANGERS SHIPMENT başlığı - Invoice ile aynı stil
+    // HANGERS SHIPMENT başlığı 
     const title = this.language === 'tr' ? 'ASKILI SEVKİYAT' : 'HANGERS SHIPMENT';
     page.drawText(title, {
       x: 55,
@@ -167,7 +163,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi)
+    // ISSUER bölümü 
     const issuerLabel = this.language === 'tr' ? 'GÖNDEREN' : 'ISSUER';
     page.drawText(issuerLabel, {
       x: 55,
@@ -268,7 +264,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede)
+    // DELIVERY ADDRESS bölümü 
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -278,7 +274,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // DELIVERY ADDRESS bilgilerini dinamik olarak çiz
+    // DELIVERY ADDRESS 
     let deliveryY = nextSectionY - 15;
     
     // Şirket adı
@@ -358,7 +354,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
     y += 25;
 
-    // Hangers items array'ini al
     const hangersItems = formData.hangersItems || [];
     
     // Tablo başlıkları
@@ -424,7 +419,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       
       processedItems = endIndex;
       
-      // Yeni sayfa gerekiyorsa oluştur (ilk sayfa hariç)
+      // Yeni sayfa gerekiyorsa oluştur 
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
@@ -505,7 +500,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
           }
         }
         
-        // Dinamik satır yüksekliği (minimum 20, uzun metinler için daha fazla)
+        // Dinamik satır yüksekliği 
         const rowHeight = Math.max(20, lineCount * 10 + 8);
         
         // Satır arka planı
@@ -586,7 +581,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
         currentY -= rowHeight;
       });
 
-      // Sayfa numarası ekle (her sayfaya)
       currentPage.drawText(pageNumber.toString(), {
         x: pageWidth / 2,
         y: 30,
@@ -665,7 +659,7 @@ class HangersShipmentTemplate extends BasePdfTemplate {
 
     noteY -= 15; 
     
-    // Notes içeriği - frontend'den gelen Notlar alanını kullan
+    // Notes içeriği 
     if (formData['NOTLAR'] && formData['NOTLAR'].trim()) {
       const notesLines = formData['NOTLAR'].split('\n');
       notesLines.forEach(line => {
@@ -824,14 +818,14 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       'COUNTRY OF ORIGIN': formData['COUNTRY OF ORIGIN']
     });
     
-    // PAYMENT TERMS - Multiple field name support
+    // PAYMENT TERMS
     const paymentTermsValue = formData.paymentTerms || formData['Payment Terms'] || '';
     if (paymentTermsValue.trim()) {
       const label = this.language === 'tr' ? 'ÖDEME KOŞULLARI:' : 'PAYMENT TERMS:';
       fields.push(`${label} ${paymentTermsValue.trim()}`);
     }
 
-    // TRANSPORT TYPE - Multiple field name support (daha fazla varyasyon)
+    // TRANSPORT TYPE 
     const transportTypeValue = formData.transportType || formData['Transport Type'] || formData['TRANSPORT TYPE'] || '';
     if (transportTypeValue.trim()) {
       const label = this.language === 'tr' ? 'TAŞIMA TİPİ:' : 'TRANSPORT TYPE:';
@@ -840,23 +834,22 @@ class HangersShipmentTemplate extends BasePdfTemplate {
       // TEST: Boş olsa bile göster
     }
 
-    // COUNTRY OF ORIGIN - Multiple field name support (daha fazla varyasyon)
+    // COUNTRY OF ORIGIN 
     const countryOfOriginValue = formData.countryOfOrigin || formData['Country of Origin'] || formData['COUNTRY OF ORIGIN'] || '';
     if (countryOfOriginValue.trim()) {
       const label = this.language === 'tr' ? 'MENŞE ÜLKESİ:' : 'COUNTRY OF ORIGIN:';
       fields.push(`${label} ${countryOfOriginValue.trim()}`);
     } else {
-      // TEST: Boş olsa bile göster
     }
 
-    // GROSS WEIGHT - Multiple field name support
+    // GROSS WEIGHT 
     const grossWeightValue = formData.grossWeight || formData['Gross Weight'] || '';
     if (grossWeightValue.trim()) {
       const label = this.language === 'tr' ? 'BRÜT AĞIRLIK:' : 'GROSS WEIGHT:';
       fields.push(`${label} ${grossWeightValue.trim()}`);
     }
 
-    // NET WEIGHT - Multiple field name support
+    // NET WEIGHT 
     const netWeightValue = formData.netWeight || formData['Net Weight'] || '';
     if (netWeightValue.trim()) {
       const label = this.language === 'tr' ? 'NET AĞIRLIK:' : 'NET WEIGHT:';
@@ -880,7 +873,6 @@ class HangersShipmentTemplate extends BasePdfTemplate {
     return fields;
   }
 
-  // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
     if (!text) return 12; 
     

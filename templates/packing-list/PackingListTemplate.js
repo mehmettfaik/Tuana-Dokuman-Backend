@@ -21,7 +21,7 @@ class PackingListTemplate extends BasePdfTemplate {
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
       //console.log('HelveticaNeueLightItalic font not found, using default italic font');
-      this.tuanaFont = this.fontItalic; // Fallback
+      this.tuanaFont = this.fontItalic;
     }
   }
 
@@ -41,13 +41,13 @@ class PackingListTemplate extends BasePdfTemplate {
       stampImage = await this.signatureService.loadStamp(this.pdfDoc);
     }
     
-    const page = this.pdfDoc.addPage([595, 842]); // A4 boyut
+    const page = this.pdfDoc.addPage([595, 842]);
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60; 
 
-    // PACKING LIST IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Invoice Date + Invoice Number)
+    // PACKING LIST IÇIN ÖZEL HEADER 
     this.drawPackingListHeader(page, pageWidth, y, formData);
     y -= 70;
 
@@ -71,7 +71,7 @@ class PackingListTemplate extends BasePdfTemplate {
     y = this.drawPackingTable(page, pageWidth, y, formData);
     y -= 10;
 
-    // FOOTER (Payment terms, notes, stamp) - dinamik pozisyon
+    // FOOTER 
     this.drawPackingListFooter(page, pageWidth, y, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
@@ -107,8 +107,7 @@ class PackingListTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Packing List Date (sağ üst köşe)
-    // Frontend'den gelen 'INVOICE DATE' (YYYY-MM-DD) değeri varsa onu kullan
+    // Packing List Date 
     const invoiceDateInput = formData['INVOICE DATE'] || formData.invoiceDate || null;
     let currentDate = new Date().toLocaleDateString('en-GB');
     if (invoiceDateInput && typeof invoiceDateInput === 'string') {
@@ -406,7 +405,6 @@ class PackingListTemplate extends BasePdfTemplate {
       }
     ];
 
-    //console.log('Drawing packing table with data:', packingItems);
 
     let totalGrossWeight = 0;
     let totalNetWeight = 0;
@@ -415,7 +413,6 @@ class PackingListTemplate extends BasePdfTemplate {
     let currentY = y;
     let pageNumber = 1;
 
-    // Items per page - ilk sayfa 11, sonraki sayfalar 22
     const firstPageItems = 11;
     const otherPagesItems = 22;
     
@@ -436,7 +433,7 @@ class PackingListTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750; 
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -471,7 +468,7 @@ class PackingListTemplate extends BasePdfTemplate {
         tableHeaders.forEach(header => {
           this.drawWrappedText(currentPage, header.text, {
             x: header.x,
-            y: currentY - 4, // Başlıkları yukarı çıkar
+            y: currentY - 4,
             size: 6,
             font: this.fontBold,
             color: rgb(0, 0, 0),
@@ -495,7 +492,7 @@ class PackingListTemplate extends BasePdfTemplate {
 
       // Bu sayfadaki items'ları çiz
       pageItems.forEach((item, index) => {
-        const rowHeight = 30; // Artırılmış satır yüksekliği - 4 satır metin için
+        const rowHeight = 30;
         
         // Satır arka planı
         currentPage.drawRectangle({
@@ -749,7 +746,7 @@ class PackingListTemplate extends BasePdfTemplate {
 
   // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12;
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
     const words = text.split(' ');
@@ -804,10 +801,9 @@ class PackingListTemplate extends BasePdfTemplate {
   }
 
   drawPackingListFooter(page, pageWidth, startY = null, formData = {}, signatureImage = null, stampImage = null) {
-    // Dinamik pozisyon kullan veya varsayılan değer - 50px aşağı kaydırıldı
+    // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 130) : 130;
     
-    // Minimum footer pozisyonu (sayfa altından 170px yukarıda) - 50px aşağı kaydırıldı
     const minFooterY = 30;
     if (y < minFooterY) {
       y = minFooterY;
@@ -831,7 +827,7 @@ class PackingListTemplate extends BasePdfTemplate {
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
@@ -896,9 +892,9 @@ class PackingListTemplate extends BasePdfTemplate {
         size: 8,
         font: this.font,
         color: rgb(0, 0, 0),
-        maxWidth: 170, // NOTES bölümünün genişliği (390 - 215 = 175, 5px margin)
+        maxWidth: 170, 
         lineHeight: 10,
-        maxLines: 4 // NOTES alanı için maksimum 4 satır
+        maxLines: 4 
       });
     } else if (formData.notes && Array.isArray(formData.notes)) {
       // Fallback: eski array formatını da destekle

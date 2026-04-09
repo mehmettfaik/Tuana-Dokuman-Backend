@@ -22,7 +22,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
+   * Türkçe sayı formatlaması 
    * @param {number} number - Formatlanacak sayı
    * @returns {string} - Türkçe formatlanmış sayı
    */
@@ -32,7 +32,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
-    // Türkçe locale ile formatla (binlik ayraçları ile)
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -40,7 +39,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
   }
 
   async createCreditNote(formData = {}, language = null) {
-    // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
     }
@@ -73,13 +71,12 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
     // DESCRIPTION OF GOODS tablosu
     y = this.drawGoodsTable(page, pageWidth, y, formData);
-    y -= 10; // KDV sonrası minimal boşluk
+    y -= 10; 
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
     y -= 40; 
 
-    // KUR BİLGİSİ ve BANKA BİLGİLERİ bölümü (varsa)
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
     y -= 30;
 
@@ -199,7 +196,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
       issuerY -= 12;
     });
 
-    // ISSUER'dan sonra boşluk 
     let nextSectionY = issuerY - 15;
 
     // RECIPIENT bölümü
@@ -225,7 +221,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
     });
     recipientY -= 12;
 
-    // Adres - dinamik sarma ile
+    // Adres
     const recipientAddress = formData['RECIPIENT Adres'] || formData.recipientAddress || '---';
     const recipientAddressHeight = this.drawWrappedAddress(page, recipientAddress, {
       x: 55,
@@ -291,7 +287,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
     });
     deliveryY -= 12;
 
-    // Adres - dinamik sarma ile
+    // Adres
     const deliveryAddress = formData['DELIVERY ADDRESS Adres'] || formData.deliveryAddress || '---';
     const deliveryAddressHeight = this.drawWrappedAddress(page, deliveryAddress, {
       x: 320,
@@ -346,7 +342,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // DESCRIPTION OF GOODS başlığı - Credit Note için özel format
+    // DESCRIPTION OF GOODS başlığı
     const invoiceNumber = formData['INVOICE NUMBER'] || '';
     const descriptionOfGoodsLabel = this.languageService.getText('descriptionOfGoodsRegardingOrder', this.language);
     const goodsTitle = `${descriptionOfGoodsLabel}: ${invoiceNumber}`;
@@ -406,7 +402,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Ürün satırları - Frontend'den gelen goods array'i
+    // Ürün satırları 
     const goods = formData.goods || [
       {
         id: 1,
@@ -527,7 +523,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
           }
         }
         
-        // Dinamik satır yüksekliği (minimum 20, uzun metinler için daha fazla)
         const rowHeight = Math.max(20, lineCount * 12 + 8);
         
         // Satır arka planı
@@ -605,7 +600,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
         const quantity = parseFloat((good['QUANTITY (METERS)'] || '0').replace(',', '.'));
         totalQuantity += quantity;
         
-        // Currency bilgisini al (ilk ürünün currency'sini kullan)
         if (!totalCurrency || totalCurrency === 'EUR') {
           totalCurrency = good['CURRENCY'] || 'EUR';
         }
@@ -851,7 +845,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
         currentY -= lineHeight;
         lineCount++;
         
-        // Maksimum 3 satır ile sınırla adresler için
         if (lineCount >= 3) {
           if (i < words.length - 1) {
             currentLine += '...';
@@ -880,7 +873,6 @@ class CreditNoteTemplate extends BasePdfTemplate {
 
   // Kur bilgisi ve banka bilgileri bölümü
   drawCurrencyAndBankInfoSection(page, pageWidth, y, formData) {
-    // Sadece BANKA BİLGİLERİ için sabit pozisyon
     let currentY = 215;
     const leftColumnX = 55;
     const bankaBilgileri = formData['Banka Bilgileri'];
@@ -927,7 +919,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
     const kurBilgisi = formData['Kur Bilgisi'];
     
     if (kurBilgisiEnabled && kurBilgisi) {
-      // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
+      // KUR BİLGİSİ başlığı ve değeri yan yana
       const currencyInfoLabel = this.languageService.getText('currencyInfo', this.language);
       targetPage.drawText(`${currencyInfoLabel}:`, {
         x: 55, 
@@ -937,7 +929,7 @@ class CreditNoteTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Kur bilgisi değeri - yanında
+      // Kur bilgisi değeri 
       this.drawSafeText(targetPage, kurBilgisi, {
         x: 135, 
         y: y,
@@ -991,7 +983,7 @@ SWIFT: TEBUTRIS 032`
       color: rgb(0, 0, 0),
     });
 
-    let noteY = notesTitleY; // NOTES başlığı pozisyonu - dinamik
+    let noteY = notesTitleY; 
 
     // NOTES başlığı - küçük font
     const creditNoteExplanationLabel = this.languageService.getText('creditNoteExplanation', this.language);
@@ -1005,7 +997,6 @@ SWIFT: TEBUTRIS 032`
 
     noteY -= 10; // NOTES içeriği başlangıcı
     
-    // Notes içeriği - frontend'den gelen Notlar alanını kullan
     if (formData['Notlar'] && formData['Notlar'].trim()) {
 
       const creditNoteMessage = `${formData['Notlar'].trim()}`;
@@ -1165,7 +1156,6 @@ SWIFT: TEBUTRIS 032`
   }
 
   /**
-   * Generate metodu - PDF oluşturmak için ana metod
    * @param {Object} formData - Form verileri
    * @returns {Promise}
    */
@@ -1174,7 +1164,6 @@ SWIFT: TEBUTRIS 032`
     await this.createCreditNote(formData, this.language);
   }
   /**
-   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
    * @param {Object} formData - Form verileri
    * @returns {Array} Dolu olan alanlar
    */

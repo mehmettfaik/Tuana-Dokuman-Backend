@@ -12,13 +12,11 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   async initialize() {
-    // Base sınıftan font yükleme metodunu kullan
     await this.loadFonts();
     
-    // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
-      this.tuanaFont = this.fontItalic; // Fallback
+      this.tuanaFont = this.fontItalic;
     }
   }
 
@@ -38,13 +36,11 @@ class CekiListesiTemplate extends BasePdfTemplate {
    * Frontend'den gelen farklı veri yapılarını normalize et
    */
   normalizeFormData(rawData = {}) {
-    // Eğer formData iç içe geldiyse düzelt
     let baseData = rawData;
     if (rawData.formData && typeof rawData.formData === 'object') {
       baseData = { ...rawData, ...rawData.formData };
     }
     
-    // rows array'inden metreler, lotlar, brutKg ve netKg'yi çıkar
     let rows = rawData.rows || baseData.rows || [];
     let metreler = [];
     let lotlar = [];
@@ -60,7 +56,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
       });
     }
     
-    // Eğer metreler hala boşsa, diğer kaynaklardan dene
     if (metreler.length === 0) {
       metreler = baseData.metreler || baseData['METRELER'] || baseData.meters || [];
       lotlar = baseData.lotlar || baseData['LOTLAR'] || baseData.lots || [];
@@ -127,7 +122,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     
     let y = pageHeight - 60; // Üst margin
 
-    // Header çiz (Invoice tarzında)
     y = this.drawCekiListesiHeader(page, pageWidth, y, formData);
 
     // ÇEKİ LİSTESİ başlığı
@@ -145,7 +139,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     y -= 10;
     y = this.drawCustomerInfoSection(page, pageWidth, y, formData, productData);
 
-    // Müşteri bilgileri ile top tabloları arasına ayırıcı çizgi
     y -= 10;
     page.drawLine({
       start: { x: 45, y: y },
@@ -158,7 +151,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     y -= 8;
     y = this.drawTopTables(page, pageWidth, y, productData, startIndex, endIndex);
 
-    // Genel Toplam bölümü (tüm sayfalar için aynı toplam)
     y -= 25;
     y = this.drawTotalSection(page, pageWidth, y, productData, true);
 
@@ -173,7 +165,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   drawCekiListesiHeader(page, pageWidth, y, formData) {
-    // TUANA TEKSTIL başlığı (Invoice tarzında)
+    // TUANA TEKSTIL başlığı
     this.drawSafeText(page, 'TUANA TEKSTIL', {
       x: 55,
       y: y - 5,
@@ -182,7 +174,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Logo (Invoice'daki pozisyonda)
+    // Logo
     if (this.logoImage) {
       const logoWidth = 25;
       const logoHeight = 25;
@@ -202,7 +194,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // TARİH (sağ üst köşe - Invoice tarzında) - normalize edilmiş veriden
+    // TARİH
     const dateLabel = this.languageService.getText('tarih', this.language);
     const dateValue = this.formatDate(formData.tarih || '');
     
@@ -214,7 +206,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Dikey çizgi (Invoice tarzında)
+    // Dikey çizgi
     page.drawLine({
       start: { x: pageWidth - 150, y: y + 25 },
       end: { x: pageWidth - 150, y: y - 15 },
@@ -263,7 +255,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
     let currentY = y;
 
-    // MÜŞTERİ (ilk satır - bold/highlight) - normalize edilmiş veriden
+    // MÜŞTERİ (ilk satır - bold/highlight) 
     this.drawSafeText(page, this.languageService.getText('musteriLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -280,7 +272,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // FATURA NO - normalize edilmiş veriden
+    // FATURA NO 
     this.drawSafeText(page, this.languageService.getText('faturaNoLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -297,7 +289,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // İRSALİYE NO - normalize edilmiş veriden
+    // İRSALİYE NO 
     this.drawSafeText(page, this.languageService.getText('irsaliyeNoLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -314,7 +306,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // ARTİKEL KODU - normalize edilmiş veriden
+    // ARTİKEL KODU 
     this.drawSafeText(page, this.languageService.getText('artikelKoduLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -331,7 +323,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // KARIŞIM - normalize edilmiş veriden
+    // KARIŞIM 
     this.drawSafeText(page, this.languageService.getText('karisimLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -348,7 +340,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // RENK NO - normalize edilmiş veriden
+    // RENK NO 
     this.drawSafeText(page, this.languageService.getText('renkNoLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -365,7 +357,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     currentY -= lineHeight;
 
-    // DESEN NO - normalize edilmiş veriden
+    // DESEN NO 
     this.drawSafeText(page, this.languageService.getText('desenNoLabel', this.language), {
       x: startX,
       y: currentY - 11,
@@ -386,7 +378,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
   }
 
   drawTopTables(page, pageWidth, y, productData, startIndex = 0, endIndex = 48) {
-    // Normalize edilmiş veriden metreler, lotlar, brutKg ve netKg'yi al
     let metreler = productData.metreler || [];
     let lotlar = productData.lotlar || [];
     let brutKgValues = productData.brutKgValues || [];
@@ -394,7 +385,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     const showBrutKg = productData.showBrutKg || false;
     const showNetKg = productData.showNetKg || false;
     
-    // Array değilse boş array yap
     if (!Array.isArray(metreler)) metreler = [];
     if (!Array.isArray(lotlar)) lotlar = [];
     if (!Array.isArray(brutKgValues)) brutKgValues = [];
@@ -433,7 +423,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     // Tablo boyutları - dinamik genişlik hesaplama
     const leftMargin = 50;
     const rightMargin = 50;
-    const tablePadding = 10; // Tablolar arası boşluk
+    const tablePadding = 10; 
     const availableWidth = pageWidth - leftMargin - rightMargin - tablePadding;
     const singleTableWidth = availableWidth / 2;
     
@@ -491,7 +481,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     const leftTableX = leftMargin;
     this.drawSingleTable(page, leftTableX, y, leftData, colWidths, rowHeight, headerHeight, showBrutKg, showNetKg);
 
-    // Sağ tablo - sol tablo genişliği + padding sonrası başlasın
     const leftTableWidth = Object.values(colWidths).reduce((sum, width) => {
       return sum + width;
     }, 0);
@@ -513,7 +502,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     const tableBottom = startY - tableHeight;
     const lineThickness = 0.5;
     
-    // Tablo dış çerçevesi - 4 ayrı çizgi ile çiz (eşit kalınlık için)
+    // Tablo dış çerçevesi
     // Üst çizgi
     page.drawLine({
       start: { x: startX, y: startY },
@@ -572,7 +561,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     headerX += colWidths.topNo;
 
-    // Dikey çizgi 1 (TOP NUMARASI | METRE arası)
+    // Dikey çizgi
     page.drawLine({
       start: { x: headerX, y: startY },
       end: { x: headerX, y: tableBottom },
@@ -589,7 +578,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     headerX += colWidths.metre;
 
-    // Dikey çizgi 2 (METRE | LOT arası)
+    // Dikey çizgi 2 
     page.drawLine({
       start: { x: headerX, y: startY },
       end: { x: headerX, y: tableBottom },
@@ -738,7 +727,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
     let metreler = productData.metreler || [];
     if (!Array.isArray(metreler)) metreler = [];
 
-    // Toplam metreleri hesapla (TÜM ürünler için - her sayfada aynı)
     let totalMetre = 0;
     metreler.forEach(metre => {
       if (metre !== undefined && metre !== null && metre !== '') {
@@ -749,7 +737,6 @@ class CekiListesiTemplate extends BasePdfTemplate {
       }
     });
 
-    // Top sayısı (boş olmayanları say - TÜM ürünler için)
     const rolikCount = metreler.filter(m => m !== undefined && m !== null && String(m).trim() !== '').length;
 
     // Üst çizgi
@@ -801,8 +788,8 @@ class CekiListesiTemplate extends BasePdfTemplate {
 
   drawNotesSection(page, pageWidth, y, formData) {
     const startX = 55;
-    const maxWidth = pageWidth - 110; // Maksimum genişlik
-    const lineHeight = 12; // Satır yüksekliği
+    const maxWidth = pageWidth - 110; 
+    const lineHeight = 12; 
     const fontSize = 8;
 
     // NOTLAR başlığı
@@ -814,7 +801,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Notlar içeriği - normalize edilmiş veriden (başlığın altından başla)
+    // Notlar içeriği 
     const notesText = formData.notlar || '';
     let linesUsed = 1;
     
@@ -832,7 +819,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
         });
       });
       
-      linesUsed = Math.max(1, lines.length) + 1; // +1 for the title line
+      linesUsed = Math.max(1, lines.length) + 1; 
     }
 
     return y - (linesUsed * lineHeight) - 8;
@@ -848,7 +835,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     const lines = [];
     let currentLine = '';
     
-    // Yaklaşık karakter genişliği (font bağımlı)
+    // Yaklaşık karakter genişliği
     const avgCharWidth = fontSize * 0.5;
     const maxCharsPerLine = Math.floor(maxWidth / avgCharWidth);
     
@@ -889,7 +876,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // İki çizgi arasına TUANA yazısı - normal ve ters (Invoice tarzında)
+    // İki çizgi arasına TUANA yazısı - normal ve ters 
     const tuanaText = 'TUANA';
     const tuanaFont = this.tuanaFont || this.fontItalic || this.font;
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);

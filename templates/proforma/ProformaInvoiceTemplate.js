@@ -26,7 +26,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
+   * Türkçe sayı formatlaması 
    * @param {number} number - Formatlanacak sayı
    * @returns {string} - Türkçe formatlanmış sayı
    */
@@ -36,7 +36,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
-    // Türkçe locale ile formatla (binlik ayraçları ile)
+    // Türkçe locale ile formatla 
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -63,14 +63,14 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       const lastDotIndex = str.lastIndexOf('.');
       
       if (lastCommaIndex > lastDotIndex) {
-        // Virgül sonra geliyor → Türkçe format (3.390,00)
+        // Virgül sonra geliyor 
         str = str.replace(/\./g, '').replace(',', '.');
       } else {
-        // Nokta sonra geliyor → İngilizce format (1,234.56)
+        // Nokta sonra geliyor
         str = str.replace(/,/g, '');
       }
     } else if (hasComma) {
-      // Sadece virgül var → ondalık ayraç (139,32)
+      // Sadece virgül var 
       str = str.replace(',', '.');
     }
     
@@ -130,7 +130,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     this.drawProformaHeader(page, pageWidth, y, formData);
     y -= 70;
 
-    // PROFORMA INVOICE başlığı - dil desteği ile
+    // PROFORMA INVOICE başlığı
     const proformaInvoiceTitle = this.languageService.getText('proformaInvoice', this.language);
     page.drawText(proformaInvoiceTitle, {
       x: 55,
@@ -158,7 +158,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
     y -= 30;
 
-    // FOOTER (Payment terms, signature, stamp) - dinamik pozisyon
+    // FOOTER (Payment terms, signature, stamp) 
     this.drawProformaFooter(page, pageWidth, y, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
@@ -194,7 +194,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Proforma Date (sağ üst köşe)
     // Frontend'den gelen tarih varsa kullan: 'PROFORMA DATE' veya 'INVOICE DATE' (YYYY-MM-DD)
     const proformaDateInput = (formData && (formData['PROFORMA DATE'] || formData['INVOICE DATE'] || formData.proformaDate || formData.invoiceDate)) || null;
     let currentDate = new Date().toLocaleDateString('en-GB');
@@ -228,7 +227,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi)
+    // ISSUER bölümü 
     const issuerLabel = this.languageService.getText('issuer', this.language);
     page.drawText(issuerLabel, {
       x: 55,
@@ -274,7 +273,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // RECIPIENT bilgilerini dinamik olarak çiz
+    // RECIPIENT bilgilerini dinamik olarak
     let recipientY = nextSectionY - 15;
     
     // Şirket adı
@@ -295,7 +294,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // RECIPIENT için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     recipientY -= recipientAddressHeight;
@@ -330,7 +329,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede)
+    // DELIVERY ADDRESS bölümü 
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -361,12 +360,12 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
 
-    // İlçe, İl, Ülke bilgileri - yeni satır
+    // İlçe, İl, Ülke bilgileri 
     const deliveryLocationInfo = formData['DELIVERY ADDRESS İlçe İl Ülke'] || formData.deliveryLocation || '---';
     this.drawSafeText(page, deliveryLocationInfo, {
       x: 320,
@@ -436,11 +435,10 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     page.drawRectangle({
       x: 50,
       y: y - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık (20px daha dar)
+      width: pageWidth - 105, 
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      // Arka plan rengi yok - beyaz
     });
 
     // Başlık metinleri
@@ -467,7 +465,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
 
     y -= 20;
 
-    // Ürün satırları - Frontend'den gelen goods array'ini kullan
+    // Ürün satırları 
     const goods = formData.goods || [
       {
         id: 1,
@@ -487,8 +485,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       }
     ];
 
-    //console.log('Drawing goods table with data:', goods);
-
     let totalAmount = 0;
     let totalQuantity = 0;
     let totalCurrency = formData.currency || formData['CURRENCY'] || formData['Banka Bilgileri'] || 'EUR'; // Default currency
@@ -496,12 +492,12 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     let currentY = y;
     let pageNumber = 1;
 
-    // İlk sayfada 7 ürün, diğer sayfalarda 27 ürün
+    // İlk sayfada 6 ürün, diğer sayfalarda 27 ürün
     let processedItems = 0;
     let pageIndex = 0;
     
     while (processedItems < goods.length) {
-      // İlk sayfa için 7 ürün, diğer sayfalar için 27 ürün
+      // İlk sayfa için 6 ürün, diğer sayfalar için 27 ürün
       const itemsPerPage = pageIndex === 0 ? 6 : 27;
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
@@ -513,7 +509,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750; 
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -538,7 +534,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - 15,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105, 
           height: 20,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -583,7 +579,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
           if (textWidth > 195 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break; // Maksimum 2 satır
+            if (lineCount >= 2) break;
           } else {
             currentLine = testLine;
           }
@@ -596,7 +592,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - rowHeight + 5,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105, 
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -691,7 +687,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     currentPage.drawRectangle({
       x: 50,
       y: currentY - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık
+      width: pageWidth - 105,
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
@@ -735,12 +731,12 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     currentY -= 20;
 
     // Discount hesaplama (KDV'den önce)
-    let discountedAmount = totalAmount; // İndirimli tutar
+    let discountedAmount = totalAmount; 
     const discountEnabled = formData['Discount Enabled'] || formData['Discount Ekle Enabled'];
     const discountOrani = parseFloat(formData['Discount'] || 0);
     
     if (discountEnabled && discountOrani > 0) {
-      // Discount satırı - tablo formatında
+      // Discount satırı 
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
@@ -793,7 +789,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105,
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -819,8 +815,8 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Sadece gerekli dikey çizgiler (ARTICLE NUMBER ve WEIGHT/WIDTH arasını kaldır)
-      const kdvVerticalLines = [350, 475]; // İlk iki sütun arası çizgiyi kaldırdık
+      // Sadece gerekli dikey çizgiler
+      const kdvVerticalLines = [350, 475];
       kdvVerticalLines.forEach(x => {
         currentPage.drawLine({
           start: { x: x, y: currentY + 5 },
@@ -919,7 +915,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentY -= 20;
         this.drawCurrencyInfo(currentPage, currentY + 10, formData);
       } else {
-        // Ne KDV ne de discount yoksa KUR BİLGİSİ'ni TOTAL AMOUNT'un altında
         this.drawCurrencyInfo(currentPage, currentY - 10, formData);
       }
     }
@@ -980,12 +975,11 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
     }
   }
 
-  // Adres alanları için özel sarma metodu - yükseklik döndürür
+  // Adres alanları için özel sarma metodu - yükseklik döndür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12;
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
-    // Allow caller to override maximum number of lines (default 3)
     const maxLines = options.maxLines || 3;
     const words = text.split(' ');
     let currentLine = '';
@@ -1011,7 +1005,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentY -= lineHeight;
         lineCount++;
         
-        // Maksimum satır sayısını caller belirtebilir (adresler için default 3)
+        // Maksimum satır sayısını caller belirtebilir
         if (lineCount >= maxLines) {
           if (i < words.length - 1) {
             currentLine += '...';
@@ -1041,7 +1035,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
   // Kur bilgisi ve banka bilgileri bölümü
   drawCurrencyAndBankInfoSection(page, pageWidth, y, formData) {
     // Sadece BANKA BİLGİLERİ için sabit pozisyon
-    let currentY = 215; // Sabit Y pozisyonu
+    let currentY = 215; 
     const leftColumnX = 55;
     const bankaBilgileri = formData['Banka Bilgileri'];
     
@@ -1078,8 +1072,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         });
       }
     }
-
-    // Sabit pozisyon döndür
     return 170;
   }
 
@@ -1092,8 +1084,8 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
       // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
       const currencyInfoLabel = this.languageService.getText('currencyInfo', this.language);
       targetPage.drawText(`${currencyInfoLabel}:`, {
-        x: 55, // Sol başlangıç
-        y: y, // GENEL TOPLAM ile aynı seviyede
+        x: 55,
+        y: y,
         size: 8,
         font: this.fontBold,
         color: rgb(0, 0, 0),
@@ -1101,7 +1093,7 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
 
       // Kur bilgisi değeri - yanında
       this.drawSafeText(targetPage, kurBilgisi, {
-        x: 135, // KUR BİLGİSİ: yazısından sonra
+        x: 135, 
         y: y,
         size: 8,
         font: this.font,
@@ -1170,7 +1162,6 @@ SWIFT: TEBUTRIS 032`
     // NOTES içeriği - frontend'den gelen Notlar alanını kullan
     // Use wrapped drawing so long notes move to next lines and push content below
     if (formData['Notlar'] && formData['Notlar'].trim()) {
-      // Allow longer notes; allow up to 10 wrapped lines before truncation
       const usedHeight = this.drawWrappedAddress(page, formData['Notlar'], {
         x: 55,
         y: noteY,
@@ -1209,8 +1200,6 @@ SWIFT: TEBUTRIS 032`
       color: rgb(0, 0, 0),
     });
 
-    // Return dynamic Y so sections below move down as notes grow
-    // Add a small padding of 12px
     return lineY - 12;
   }
 
@@ -1218,7 +1207,6 @@ SWIFT: TEBUTRIS 032`
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -1242,7 +1230,7 @@ SWIFT: TEBUTRIS 032`
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
@@ -1309,7 +1297,6 @@ SWIFT: TEBUTRIS 032`
       color: rgb(0, 0, 0),
     });
 
-    // Draw signature image if available
     if (signatureImage) {
       page.drawImage(signatureImage, {
         x: 215,
@@ -1319,7 +1306,6 @@ SWIFT: TEBUTRIS 032`
       });
     }
 
-    // Draw stamp image if available
     if (stampImage) {
       page.drawImage(stampImage, {
         x: 395,

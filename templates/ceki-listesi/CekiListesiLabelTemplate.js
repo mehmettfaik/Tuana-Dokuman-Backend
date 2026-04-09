@@ -48,7 +48,6 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
       // rows array'inden etiketleri oluştur
       let rows = normalizedData.rows || [];
       
-      // Eğer rows boşsa, metreler ve lotlar array'lerinden oluştur
       if (rows.length === 0 && normalizedData.metreler && normalizedData.metreler.length > 0) {
         const metreler = normalizedData.metreler;
         const lotlar = normalizedData.lotlar || [];
@@ -75,7 +74,7 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
         const row = rows[i];
         const labelData = {
           artikelKodu: normalizedData.artikelKodu || '',
-          siparisNo: normalizedData.faturaNo || '', // Fatura No = Sipariş Numarası
+          siparisNo: normalizedData.faturaNo || '', 
           karisim: normalizedData.karisim || '',
           renkKodu: normalizedData.renkKodu || '',
           desenNo: normalizedData.desenNo || '',
@@ -126,7 +125,6 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
       });
     }
     
-    // Eğer metreler hala boşsa, diğer kaynaklardan dene
     if (metreler.length === 0) {
       metreler = baseData.metreler || baseData['METRELER'] || baseData.meters || [];
       lotlar = baseData.lotlar || baseData['LOTLAR'] || baseData.lots || [];
@@ -178,13 +176,10 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
     await this.drawBottomInfo(page, labelData, language);
   }
 
-  /**
-   * Logo ve TUANA yazısını çiz
-   */
   async drawLogo(page) {
     try {
       if (this.logoImage) {
-        const logoSize = 30; // Kare olacak şekilde
+        const logoSize = 30; 
         
         page.drawImage(this.logoImage, {
           x: this.margin,
@@ -207,9 +202,6 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
     }
   }
 
-  /**
-   * Ürün bilgilerini çiz
-   */
   async drawProductInfo(page, labelData, language) {
     const startY = this.pageHeight - 55;
     let currentY = startY;
@@ -368,7 +360,7 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
   }
 
   /**
-   * Alt bilgileri çiz (Müşteri ve Uyarı)
+   * Alt bilgileri
    */
   async drawBottomInfo(page, labelData, language) {
     const bottomY = 40;
@@ -407,10 +399,9 @@ class CekiListesiLabelTemplate extends BasePdfTemplate {
     
     currentY -= 8;
 
-    // UYARI METNİ - HelveticaNeueThinItalic ile
     const warningText = this.languageService.getText('cekiListesiWarning', language);
     const words = warningText.split(' ');
-    const maxCharsPerLine = 45; // Daha uzun Türkçe metin için ayarlandı
+    const maxCharsPerLine = 45; 
     
     let currentLine = '';
     for (const word of words) {

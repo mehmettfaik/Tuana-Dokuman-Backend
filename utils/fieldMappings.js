@@ -27,7 +27,7 @@ const fieldMappings = {
       "Kalite-Lot": "LOT",
       "Metre": "QUANTITY (METERS)",
       "Gramaj": "GROSS WEIGHT (KG)",
-      "Net Weight": "NET WEIGHT (KG)" // Bu field boş kalacak TUANA için
+      "Net Weight": "NET WEIGHT (KG)" 
     }
   },
 
@@ -40,7 +40,7 @@ const fieldMappings = {
       "Top No": "ROLL NUMBER ROLL DIMENSIONS",
       "Parti No": "LOT", 
       "Miktar Kg": "GROSS WEIGHT (KG)",
-      "Net Weight": "NET WEIGHT (KG)" // Bu field boş kalacak TUANA için
+      "Net Weight": "NET WEIGHT (KG)"
     }
   },
 
@@ -79,10 +79,10 @@ const fieldMappings = {
       "Parti No": "LOT",
       "Brüt Kg.": "GROSS WEIGHT (KG)",
       "Net Kg.": "NET WEIGHT (KG)",
-      "Kalite No": "", // Boş bırak - weight field değil
-      "Gramaj": "", // Boş bırak - weight field değil
-      "Parça Ad.": "", // Boş bırak - weight field değil
-      "FABRIC WEIGHT / WIDTH": "", // Boş bırak
+      "Kalite No": "", 
+      "Gramaj": "", 
+      "Parça Ad.": "", 
+      "FABRIC WEIGHT / WIDTH": "", 
     }
   },
 
@@ -182,19 +182,17 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
   
   return ocrData.map(item => {
     const mappedItem = {};
-    const processedFields = new Set(); // Hangi field'ların işlendiğini takip et
+    const processedFields = new Set(); 
     
-    // OCR'dan gelen her field için mapping'e bak
+
     Object.keys(item).forEach(ocrField => {
-      if (processedFields.has(ocrField)) return; // Zaten işlendi
+      if (processedFields.has(ocrField)) return; 
       
       let standardField = null;
       
-      // Exact match ara
       if (mapping[ocrField]) {
         standardField = mapping[ocrField];
       } else {
-        // Fuzzy match ara (kısmi eşleşme)
         const fuzzyMatch = Object.keys(mapping).find(mappingKey => 
           ocrField.toLowerCase().includes(mappingKey.toLowerCase()) ||
           mappingKey.toLowerCase().includes(ocrField.toLowerCase())
@@ -205,7 +203,6 @@ function mapOcrFieldsToStandard(ocrData, companyName) {
         }
       }
       
-      // Mapping bulundu ise kullan
       if (standardField) {
         const targetField = standardField;
         

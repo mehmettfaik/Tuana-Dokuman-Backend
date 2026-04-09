@@ -61,7 +61,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
   async drawLogo(page, productData) {
     try {
       if (this.logoImage) {
-        const logoSize = 30; // Kare olacak şekilde
+        const logoSize = 30;
         
         page.drawImage(this.logoImage, {
           x: this.margin,
@@ -72,8 +72,8 @@ class ProductLabelTemplate extends BasePdfTemplate {
         
         // Logo yanına "TUANA" yazısı ekle
         page.drawText('TUANA', {
-          x: this.margin + logoSize + 8, // Logo'dan 8 point boşluk
-          y: this.pageHeight - this.margin - logoSize + 12, // Logo ortasında hizala
+          x: this.margin + logoSize + 8, 
+          y: this.pageHeight - this.margin - logoSize + 12, 
           size: 25,
           font: this.font,
           color: rgb(0, 0, 0),
@@ -361,7 +361,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     
     currentY -= 8;
 
-    // ATTENTION - HelveticaNeueThinItalic ile
+    // ATTENTION
     const warningText = "ATTENTION! NO CLAIMS WILL BE ACCEPTED AFTER THE FABRIC HAS BEEN CUT.";
     const words = warningText.split(' ');
     const maxWidth = this.pageWidth - (this.margin * 2);
@@ -370,7 +370,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
     for (const word of words) {
       const testLine = currentLine + (currentLine ? ' ' : '') + word;
       
-      if (testLine.length <= 40) { // Basit karakter sayısı kontrolü
+      if (testLine.length <= 40) { 
         currentLine = testLine;
       } else {
         if (currentLine) {
@@ -378,7 +378,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
             x: this.margin,
             y: currentY,
             size: fontSize,
-            font: this.fontItalic, // HelveticaNeueThinItalic
+            font: this.fontItalic,
             color: rgb(0, 0, 0),
           });
           currentY -= lineHeight;
@@ -392,7 +392,7 @@ class ProductLabelTemplate extends BasePdfTemplate {
         x: this.margin,
         y: currentY,
         size: fontSize,
-        font: this.fontItalic, // HelveticaNeueThinItalic
+        font: this.fontItalic,
         color: rgb(0, 0, 0),
       });
     }

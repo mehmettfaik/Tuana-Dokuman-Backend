@@ -23,7 +23,6 @@ class SiparisTemplate extends BasePdfTemplate {
   }
 
   async createSiparis(formData = {}, language = null) {
-    // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
     }
@@ -56,11 +55,11 @@ class SiparisTemplate extends BasePdfTemplate {
 
     // DESCRIPTION OF GOODS tablosu
     y = this.drawGoodsTable(page, pageWidth, y, formData);
-    y -= 10; // Tablonun sonrası minimal boşluk
+    y -= 10; 
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
-    y -= 40; // NOTES'tan sonra daha fazla boşluk
+    y -= 40;
 
     // FOOTER (Payment terms, signature, stamp) - dinamik pozisyon
     this.drawSiparisFooter(page, pageWidth, y, formData);
@@ -191,7 +190,7 @@ class SiparisTemplate extends BasePdfTemplate {
       issuerY -= 12;
     });
 
-    // ISSUER'dan sonra boşluk bırak
+    // ISSUER'dan sonra boşluk
     let nextSectionY = issuerY - 15;
 
     // RECIPIENT bölümü (sol tarafta)
@@ -291,7 +290,7 @@ class SiparisTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250,
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
@@ -350,7 +349,7 @@ class SiparisTemplate extends BasePdfTemplate {
 
     y += 25;
 
-    // Sipariş için özel tablo başlıkları - yeniden düzenlenmiş genişlikler
+    // Sipariş için özel tablo başlıkları 
     const tableHeaders = [
       { text: this.languageService.getText('artikelNumber', this.language), x: 55, width: 90 },      // 110'dan 90'a düşürüldü
       { text: this.languageService.getText('gramajEn', this.language), x: 150, width: 50 },          // x: 170'den 150'ye
@@ -386,7 +385,7 @@ class SiparisTemplate extends BasePdfTemplate {
       });
     });
 
-    // Dikey çizgiler başlık satırında - yeniden düzenlenmiş pozisyonlar
+    // Dikey çizgiler başlık satırında 
     const verticalLines = [145, 210, 300, 335, 375, 470, 510];
     verticalLines.forEach(x => {
       page.drawLine({
@@ -415,8 +414,6 @@ class SiparisTemplate extends BasePdfTemplate {
       }
     ];
 
-    //console.log('Drawing siparis goods table with data:', goods);
-
     let totalAmount = 0;
     let totalQuantity = 0;
     let currentPage = page;
@@ -440,7 +437,7 @@ class SiparisTemplate extends BasePdfTemplate {
       if (pageIndex > 0) {
         currentPage = this.pdfDoc.addPage([595, 842]);
         pageNumber++;
-        currentY = 750; // Yeni sayfa başlangıcı
+        currentY = 750;
         
         // Yeni sayfada tablo başlığı
         currentPage.drawLine({
@@ -460,7 +457,6 @@ class SiparisTemplate extends BasePdfTemplate {
 
         currentY += 25;
 
-        // Başlık satırı arka planı
         currentPage.drawRectangle({
           x: 50,
           y: currentY - 15,
@@ -496,7 +492,6 @@ class SiparisTemplate extends BasePdfTemplate {
 
       // Bu sayfadaki ürünleri çiz
       pageGoods.forEach((good, index) => {
-        // Tüm alanlar için gerekli satır sayısını hesapla
         let maxLineCount = 1;
         
         // ARTIKEL NUMARASI için satır sayısı
@@ -528,7 +523,7 @@ class SiparisTemplate extends BasePdfTemplate {
         });
 
         // Ürün bilgileri - yeniden düzenlenmiş pozisyonlar (metinleri satır ortasına yerleştir)
-        const textBaseY = currentY - (rowHeight / 2) + 9; // Satırın ortasına yakın pozisyon
+        const textBaseY = currentY - (rowHeight / 2) + 9;
         
         this.drawWrappedText(currentPage, good['ARTIKEL NUMARASI'] || '', {
           x: 55,
@@ -567,14 +562,11 @@ class SiparisTemplate extends BasePdfTemplate {
           color: rgb(0, 0, 0),
         });
         
-        // TERMİN bilgisini date formatından string'e çevir
         let terminText = '';
         const terminValue = good['TERMIN'];
         if (terminValue) {
           try {
-            //console.log('TERMİN değeri:', terminValue, 'Tipi:', typeof terminValue);
             
-            // Eğer zaten string formatındaysa direkt kullan
             if (typeof terminValue === 'string' && terminValue.includes('-')) {
               // ISO date format (YYYY-MM-DD) kontrolü
               const dateMatch = terminValue.match(/(\d{4})-(\d{2})-(\d{2})/);
@@ -649,7 +641,6 @@ class SiparisTemplate extends BasePdfTemplate {
           });
         });
 
-        // Toplam hesaplamaları - sadece quantity hesapla, amount hesaplama kaldırıldı
         const quantity = parseFloat((good['ADET (METRE)'] || '0').replace(',', '.'));
         totalQuantity += quantity;
         
@@ -738,7 +729,7 @@ class SiparisTemplate extends BasePdfTemplate {
     return lineCount;
   }
 
-  // Uzun metinleri sarma metodu - ortalanmış hizalama ile
+  // Uzun metinleri sarma metodu
   drawWrappedText(page, text, options) {
     if (!text) return;
     
@@ -790,7 +781,7 @@ class SiparisTemplate extends BasePdfTemplate {
 
   // Adres alanları için özel sarma metodu - yükseklik döndürür
   drawWrappedAddress(page, text, options) {
-    if (!text) return 12; // Varsayılan tek satır yüksekliği
+    if (!text) return 12;
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
     const words = text.split(' ');
@@ -845,7 +836,7 @@ class SiparisTemplate extends BasePdfTemplate {
   }
 
   drawNotesSection(page, pageWidth, y, formData) {
-    // NOTES üstünde çizgi - sabit pozisyon (Invoice template'de olduğu gibi)
+    // NOTES üstünde çizgi 
     const notesLineY = 180;
     const notesTitleY = 170;
     
@@ -897,7 +888,7 @@ class SiparisTemplate extends BasePdfTemplate {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
+    // Minimum footer pozisyonu
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -921,7 +912,7 @@ class SiparisTemplate extends BasePdfTemplate {
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic;
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     
@@ -1020,7 +1011,6 @@ class SiparisTemplate extends BasePdfTemplate {
     await this.createSiparis(formData, this.language);
   }
   /**
-   * PAYMENT & SHIPPING DETAILS alanlarını dinamik olarak oluştur
    * @param {Object} formData - Form verileri
    * @returns {Array} Dolu olan alanlar
    */

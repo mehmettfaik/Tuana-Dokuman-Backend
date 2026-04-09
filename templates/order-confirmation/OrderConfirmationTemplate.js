@@ -19,12 +19,11 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
       //console.log('HelveticaNeueLightItalic font not found, using default italic font');
-      this.tuanaFont = this.fontItalic; // Fallback
+      this.tuanaFont = this.fontItalic; 
     }
   }
 
   /**
-   * Türkçe sayı formatlaması - binlik ayraçlı (1.250,23)
    * @param {number} number - Formatlanacak sayı
    * @returns {string} - Türkçe formatlanmış sayı
    */
@@ -34,7 +33,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     const numericValue = typeof number === 'string' ? parseFloat(number.replace(',', '.')) : number;
     if (isNaN(numericValue)) return '';
     
-    // Türkçe locale ile formatla (binlik ayraçları ile)
+    // Türkçe locale ile formatla
     return numericValue.toLocaleString('tr-TR', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
@@ -51,7 +50,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     const pageWidth = page.getWidth();
     const pageHeight = page.getHeight();
     
-    let y = pageHeight - 60; // Üst margin
+    let y = pageHeight - 60; 
 
     // ORDER CONFIRMATION IÇIN ÖZEL HEADER (TUANA TEKSTIL + Logo + Order Confirmation Date + Order Confirmation Number)
     this.drawOrderConfirmationHeader(page, pageWidth, y, formData);
@@ -77,7 +76,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     y = this.drawGoodsTable(page, pageWidth, y, formData);
     
     // SABİT POZİSYONLAR - Dinamik hesaplama yok
-    // Frontend NOTES bölümü (Notlar alanı) - SABİT POZİSYON
     this.drawFrontendNotesSection(page, pageWidth, 300, formData);
 
     // NOTES AND GENERAL CONDITIONS bölümü - SABİT POZİSYON  
@@ -90,7 +88,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     y = this.drawCurrencyAndBankInfoSection(page, pageWidth, y, formData);
     y -= 30;
 
-    // FOOTER (Payment terms, signature, stamp) - dinamik pozisyon
+    // FOOTER (Payment terms, signature, stamp) 
     this.drawOrderConfirmationFooter(page, pageWidth, y, formData);
 
     return this.pdfDoc;
@@ -126,7 +124,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Order Confirmation Date (sağ üst köşe)
+    // Order Confirmation Date
     const currentDate = new Date().toLocaleDateString('en-GB');
     const orderConfirmationDateLabel = this.languageService.getText('orderConfirmationDate', this.language);
     page.drawText(`${orderConfirmationDateLabel}: ${currentDate}`, {
@@ -137,7 +135,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Order Confirmation Number (sağ üst köşe - tarihten bir satır yukarı)
+    // Order Confirmation Number
     const orderConfirmationNumber = formData['ORDER CONFIRMATION NUMBER'] || 'OC-2025-001';
     const orderConfirmationNumberLabel = this.languageService.getText('orderConfirmationNumber', this.language);
     page.drawText(`${orderConfirmationNumberLabel}: ${orderConfirmationNumber}`, {
@@ -160,7 +158,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
   drawCompanyInfoSection(page, pageWidth, y, formData) {
     const startY = y;
     
-    // ISSUER bölümü (üstte tek başına - merkezi)
+    // ISSUER bölümü
     const issuerLabel = this.languageService.getText('issuer', this.language);
     page.drawText(issuerLabel, {
       x: 55,
@@ -193,10 +191,10 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       issuerY -= 12;
     });
 
-    // ISSUER'dan sonra boşluk bırak
+    // ISSUER'dan sonra boşluk
     let nextSectionY = issuerY - 15;
 
-    // RECIPIENT bölümü (sol tarafta)
+    // RECIPIENT bölümü
     const recipientLabel = this.languageService.getText('recipient', this.language);
     page.drawText(recipientLabel, {
       x: 55,
@@ -206,7 +204,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // RECIPIENT bilgilerini dinamik olarak çiz
+    // RECIPIENT bilgilerini dinamik
     let recipientY = nextSectionY - 15;
     
     // Şirket adı
@@ -227,7 +225,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // RECIPIENT için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     recipientY -= recipientAddressHeight;
@@ -262,7 +260,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       recipientY -= 12;
     });
 
-    // DELIVERY ADDRESS bölümü (sağ tarafta - RECIPIENT ile aynı seviyede)
+    // DELIVERY ADDRESS bölümü
     const deliveryAddressLabel = this.languageService.getText('deliveryAddress', this.language);
     page.drawText(deliveryAddressLabel, {
       x: 320,
@@ -272,7 +270,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // DELIVERY ADDRESS bilgilerini dinamik olarak çiz
+    // DELIVERY ADDRESS bilgilerini dinamik
     let deliveryY = nextSectionY - 15;
     
     // Şirket adı
@@ -293,7 +291,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       size: 8,
       font: this.font,
       color: rgb(0, 0, 0),
-      maxWidth: 250, // DELIVERY ADDRESS için maksimum genişlik
+      maxWidth: 250, 
       lineHeight: 12
     });
     deliveryY -= deliveryAddressHeight;
@@ -368,11 +366,10 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     page.drawRectangle({
       x: 50,
       y: y - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık (20px daha dar)
+      width: pageWidth - 105,
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      // Arka plan rengi yok - beyaz
     });
 
     // Başlık metinleri
@@ -419,11 +416,9 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       }
     ];
 
-    //console.log('Drawing goods table with data:', goods);
-
     let totalAmount = 0;
     let totalQuantity = 0;
-    let totalCurrency = 'EUR'; // Default currency
+    let totalCurrency = 'EUR'; 
     let currentPage = page;
     let currentY = y;
     let pageNumber = 1;
@@ -470,7 +465,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - 15,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105, 
           height: 20,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -515,7 +510,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
           if (textWidth > 195 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break; // Maksimum 2 satır
+            if (lineCount >= 2) break;
           } else {
             currentLine = testLine;
           }
@@ -528,7 +523,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         currentPage.drawRectangle({
           x: 50,
           y: currentY - rowHeight + 5,
-          width: pageWidth - 105, // 100'den 120'ye çıkardık
+          width: pageWidth - 105,
           height: rowHeight,
           borderColor: rgb(0, 0, 0),
           borderWidth: 1,
@@ -623,7 +618,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     currentPage.drawRectangle({
       x: 50,
       y: currentY - 15,
-      width: pageWidth - 105, // 100'den 120'ye çıkardık
+      width: pageWidth - 105, 
       height: 20,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
@@ -674,7 +669,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105,
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -700,8 +695,8 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Sadece gerekli dikey çizgiler (ARTICLE NUMBER ve WEIGHT/WIDTH arasını kaldır)
-      const kdvVerticalLines = [350, 475]; // İlk iki sütun arası çizgiyi kaldırdık
+      // Sadece gerekli dikey çizgiler
+      const kdvVerticalLines = [350, 475]; 
       kdvVerticalLines.forEach(x => {
         currentPage.drawLine({
           start: { x: x, y: currentY + 5 },
@@ -717,7 +712,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       currentPage.drawRectangle({
         x: 50,
         y: currentY - 15,
-        width: pageWidth - 105, // 100'den 120'ye çıkardık
+        width: pageWidth - 105, 
         height: 20,
         borderColor: rgb(0, 0, 0),
         borderWidth: 1,
@@ -822,7 +817,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     if (!text) return 12; // Varsayılan tek satır yüksekliği
     
     const { x, y, size, font, color, maxWidth, lineHeight = 12 } = options;
-    // Allow caller to override maximum number of lines (default 3)
     const maxLines = options.maxLines || 3;
     const words = text.split(' ');
     let currentLine = '';
@@ -879,10 +873,10 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
   drawFrontendNotesSection(page, pageWidth, fixedY, formData) {
     // Frontend'den gelen Notlar alanı varsa çiz
     if (!formData['Notlar'] || !formData['Notlar'].trim()) {
-      return; // Not yoksa çıkış
+      return; 
     }
 
-    // SABİT POZİSYON: 300'den başla
+    // SABİT POZİSYON
     const startY = 340;
 
     // NOTES üstünde çizgi - SABİT POZİSYON
@@ -903,7 +897,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // NOTES içeriği - SABİT POZİSYON - uzun metinleri sararak çiz
+    // NOTES içeriği - SABİT POZİSYON
     let noteContentY = startY - 20;
     const notLines = formData['Notlar'].split('\n');
     let totalLineCount = 0;
@@ -918,15 +912,15 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
           size: 7,
           font: this.font,
           color: rgb(0, 0, 0),
-          maxWidth: pageWidth - 110, // Sağ ve sol margin
+          maxWidth: pageWidth - 110,
           lineHeight: 10,
-          maxLines: 8 - totalLineCount // Kalan satır sayısı
+          maxLines: 8 - totalLineCount 
         });
         
         // Kullanılan satır sayısını hesapla
         const usedLines = Math.ceil((beforeY - noteContentY + 10) / 10);
         totalLineCount += usedLines;
-        noteContentY -= (usedLines * 10) + 2; // Satırlar arası ekstra boşluk
+        noteContentY -= (usedLines * 10) + 2;
       }
     });
   }
@@ -987,7 +981,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
   // Kur bilgisi ve banka bilgileri bölümü
   drawCurrencyAndBankInfoSection(page, pageWidth, y, formData) {
     // Sadece BANKA BİLGİLERİ için sabit pozisyon
-    let currentY = 215; // Sabit Y pozisyonu
+    let currentY = 215;
     const leftColumnX = 55;
     const bankaBilgileri = formData['Banka Bilgileri'];
     
@@ -1025,7 +1019,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       }
     }
 
-    // Sabit pozisyon döndür
     return 170;
   }
 
@@ -1038,8 +1031,8 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       // KUR BİLGİSİ başlığı ve değeri yan yana - sol başlangıçta
       const currencyInfoLabel = this.languageService.getText('currencyInfo', this.language);
       targetPage.drawText(`${currencyInfoLabel}:`, {
-        x: 55, // Sol başlangıç
-        y: y, // GENEL TOPLAM ile aynı seviyede
+        x: 55, 
+        y: y, 
         size: 8,
         font: this.fontBold,
         color: rgb(0, 0, 0),
@@ -1047,7 +1040,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
 
       // Kur bilgisi değeri - yanında
       this.drawSafeText(targetPage, kurBilgisi, {
-        x: 135, // KUR BİLGİSİ: yazısından sonra
+        x: 135,
         y: y,
         size: 8,
         font: this.font,
@@ -1084,7 +1077,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
 //   }
 
   drawNotesSection(page, pageWidth, fixedY, formData) {
-    // SABİT POZİSYON: 220'den başla
     const startY = 310;
     
     // NOTES AND GENERAL CONDITIONS üstünde çizgi - SABİT POZİSYON
@@ -1105,7 +1097,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    let noteY = startY - 30; // İçerik başlangıcı - SABİT POZİSYON
+    let noteY = startY - 30;
     
     // Order Confirmation notes içeriği - dil desteği ile
     const orderConfirmationNotes = this.languageService.getText('orderConfirmationNotes', this.language) || [];
@@ -1136,7 +1128,6 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
     // Dinamik pozisyon kullan veya varsayılan değer
     let y = startY ? Math.min(startY - 30, 200) : 200;
     
-    // Minimum footer pozisyonu (sayfa altından 120px yukarıda)
     const minFooterY = 120;
     if (y < minFooterY) {
       y = minFooterY;
@@ -1160,7 +1151,7 @@ class OrderConfirmationTemplate extends BasePdfTemplate {
 
     // İki çizgi arasına TUANA yazısı - normal ve ters
     const tuanaText = 'TUANA';
-    const tuanaFont = this.tuanaFont || this.fontItalic; // HelveticaNeueLightItalic kullan
+    const tuanaFont = this.tuanaFont || this.fontItalic; 
     const textWidth = tuanaFont.widthOfTextAtSize(tuanaText, 8);
     const centerX = pageWidth / 2;
     

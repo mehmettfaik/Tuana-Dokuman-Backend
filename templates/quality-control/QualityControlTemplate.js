@@ -103,7 +103,7 @@ class QualityControlTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Dikey çizgi (date kutusunu ayıran)
+    // Dikey çizgi date kutusunu ayıran
     page.drawLine({
       start: { x: pageWidth - 150, y: y + 19 },
       end: { x: pageWidth - 150, y: y - 15 },
@@ -195,7 +195,7 @@ class QualityControlTemplate extends BasePdfTemplate {
   drawRollInfo(page, pageWidth, y, roll) {
     let currentY = y;
 
-    // Roll başlığı - border-only kutu: explicit beyaz dolgu ile çiz
+    // Roll başlığı 
     page.drawRectangle({
       x: 50,
       y: currentY - 2,
@@ -203,7 +203,7 @@ class QualityControlTemplate extends BasePdfTemplate {
       height: 45,
       borderColor: rgb(0, 0, 0),
       borderWidth: 1,
-      color: rgb(1, 1, 1), // açıkça beyaz dolgu — siyah oluşmasını önler
+      color: rgb(1, 1, 1), 
     });
 
     const rollNumberLabel = this.languageService.getText('rollNumber', this.language);
@@ -312,7 +312,6 @@ class QualityControlTemplate extends BasePdfTemplate {
     const rowHeight = 12;
 
     measurements.forEach((measurement, index) => {
-      // Zebra arka plan: açık gri dolgu (beyaz yerine açık gri okunabilirlik sağlar)
       if (index % 2 === 0) {
         page.drawRectangle({
           x: startX,
@@ -324,7 +323,6 @@ class QualityControlTemplate extends BasePdfTemplate {
         });
       }
 
-      // Satır çerçevesi: beyaz dolgu + border (beyaz doldurma siyah dolgu riskini keser)
       page.drawRectangle({
         x: startX,
         y: currentY,
@@ -335,7 +333,7 @@ class QualityControlTemplate extends BasePdfTemplate {
         color: rgb(1, 1, 1),
       });
 
-      // METER değeri (yazı baseline currentY + 4)
+      // METER değeri
       this.drawSafeText(page, String(measurement['Meter'] || ''), {
         x: startX + 5,
         y: currentY + 4,
@@ -385,7 +383,7 @@ class QualityControlTemplate extends BasePdfTemplate {
   }
 
   drawFooter(page, pageWidth, currentPage, totalPages) {
-    const y = 30; // Footer pozisyonu (sayfanın altından 30px yukarıda)
+    const y = 30; // Footer pozisyonu
     
     // Sayfa numarası (sol alt köşe)
     page.drawText(`Page ${currentPage} of ${totalPages}`, {

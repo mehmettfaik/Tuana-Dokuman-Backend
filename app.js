@@ -17,7 +17,7 @@ try {
 
 // CORS middleware - EN ÜSTTE OLMALI
 app.use(cors({
-  origin: '*', // Geçici olarak hepsine izin ver
+  origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   exposedHeaders: ['Content-Type', 'Content-Length'],
@@ -26,7 +26,6 @@ app.use(cors({
   optionsSuccessStatus: 200
 }));
 
-// Manual CORS headers - extra güvenlik için
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
@@ -173,7 +172,6 @@ app.get('/api/forms/test', (req, res) => {
   });
 });
 
-// Global health endpoint (for render.com and general monitoring)
 app.get('/api/health', (req, res) => {
   try {
     res.json({

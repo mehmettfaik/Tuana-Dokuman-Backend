@@ -19,7 +19,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     // Base sınıftan font yükleme metodunu kullan
     await this.loadFonts();
     
-    // TUANA yazısı için özel HelveticaNeueLightItalic fontunu yükle
     this.tuanaFont = await this.fontService.loadHelveticaNeueLightItalic(this.pdfDoc);
     if (!this.tuanaFont) {
       this.tuanaFont = this.fontItalic; // Fallback
@@ -27,12 +26,10 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
   }
 
   async createFabricTechnicalSheet(formData = {}, language = null) {
-    // Language parametresi varsa kullan, yoksa constructor'dan al
     if (language) {
       this.language = language;
     }
     
-    // Load signature and stamp images if checkbox is enabled
     let signatureImage = null;
     let stampImage = null;
     const includeSignatureStamp = formData['İmza ve Kaşe'] || formData.imzaVeKase || false;
@@ -52,7 +49,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     this.drawHeader(page, pageWidth, y);
     y -= 70;
 
-    // FABRIC TECHNICAL SHEET başlığı - dil desteği ile
+    // FABRIC TECHNICAL SHEET başlığı
     const technicalSheetTitle = this.languageService.getText('fabricTechnicalSheet', this.language);
     page.drawText(technicalSheetTitle, {
       x: 55,
@@ -67,14 +64,14 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     y = this.drawFormTable(page, pageWidth, y, formData);
     y -= 40;
 
-    // WASH AND CARE INSTRUCTIONS - tek resim ile
+    // WASH AND CARE INSTRUCTIONS 
     y = await this.drawWashCareSection(page, pageWidth, y, formData);
-    y -= 80; // Resim için daha fazla alan
+    y -= 80;
 
     // NOTES bölümü
     y = this.drawNotesSection(page, pageWidth, y, formData);
 
-    // FOOTER - formData ile
+    // FOOTER 
     this.drawFooter(page, pageWidth, formData, signatureImage, stampImage);
 
     return this.pdfDoc;
@@ -82,7 +79,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
 
   // Ultra ince metin çizimi
   drawUltraLightText(page, text, options) {
-    // Normal metni çiz (ince görünüm için)
+    // Normal metni çiz
     page.drawText(text, {
       x: options.x,
       y: options.y,
@@ -90,9 +87,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       font: options.font,
       color: options.color,
     });
-    
-    // Ekstra ince görünüm için hafif gri ton overlay (opsiyonel)
-    // Bu, metni daha ince gösterir
   }
 
   drawFormTable(page, pageWidth, y, formData) {
@@ -140,15 +134,15 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       
       // WEAVE TYPE için özel mapping
       if (fieldKey === 'WEAVE TYPE') {
-        fieldKey = 'WEAW TYPE'; // frontend'den gelen key format
+        fieldKey = 'WEAW TYPE';
       }
       
-      // Yeni alanlar için mapping (gerekirse)
+      // Yeni alanlar için mapping
       if (fieldKey === 'ISSUED BY') {
-        fieldKey = 'ISSUED BY'; // frontend key ile aynı (değişiklik yok)
+        fieldKey = 'ISSUED BY'; 
       }
       if (fieldKey === 'RESPONSIBLE TECHNICIAN') {
-        fieldKey = 'RESPONSIBLE TECHNICIAN'; // frontend key ile aynı (değişiklik yok)
+        fieldKey = 'RESPONSIBLE TECHNICIAN'; 
       }
       
       const value = formData[fieldKey] || '';
@@ -159,13 +153,12 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
         return true;
       }
       
-      // Diğer alanlar için boş olmayan değerleri dahil et
       return value.toString().trim() !== '';
     });
 
     // Eğer hiç dolu alan yoksa, minimum bir alan göster
     if (tableFields.length === 0) {
-      tableFields.push('ARTICLE CODE:'); // En azından bir alan göster
+      tableFields.push('ARTICLE CODE:');
     }
 
     // Tablo çerçevesi - dinamik yükseklik
@@ -195,7 +188,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
         });
       }
 
-      // Dikey çizgi (label ve value arasında)
+      // Dikey çizgi
       page.drawLine({
         start: { x: 220, y: rowY },
         end: { x: 220, y: rowY - 25 },
@@ -214,21 +207,21 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
         color: rgb(0, 0, 0),
       });
 
-      // Value metni (form verilerinden gelecek)
+      // Value metni 
       if (formData) {
         let fieldKey = field.replace(':', '').trim();
         
         // WEAVE TYPE için özel mapping
         if (fieldKey === 'WEAVE TYPE') {
-          fieldKey = 'WEAW TYPE'; // frontend'den gelen key format
+          fieldKey = 'WEAW TYPE'; 
         }
         
-        // Yeni alanlar için mapping (gerekirse)
+        // Yeni alanlar için mapping 
         if (fieldKey === 'ISSUED BY') {
-          fieldKey = 'ISSUED BY'; // frontend key ile aynı
+          fieldKey = 'ISSUED BY'; 
         }
         if (fieldKey === 'RESPONSIBLE TECHNICIAN') {
-          fieldKey = 'RESPONSIBLE TECHNICIAN'; // frontend key ile aynı
+          fieldKey = 'RESPONSIBLE TECHNICIAN';
         }
         
         const value = formData[fieldKey] || '';
@@ -243,7 +236,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
           }
         }
         if (fieldKey === 'WIDTH / CUTABLE WIDTH' && displayValue.trim() !== '') {
-          // WIDTH için sonuna CM ekle (eğer zaten yoksa)
+          // WIDTH için sonuna CM ekle 
           if (!displayValue.toLowerCase().includes('cm')) {
             const cmUnit = this.languageService.getText('cm', this.language);
             displayValue = displayValue + ' ' + cmUnit;
@@ -352,7 +345,7 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     const selectedCareInstructions = careInstructions.map(id => ({
       id: id,
       imagePath: careInstructionsMapping[id]
-    })).filter(item => item.imagePath); // Sadece geçerli mapping'leri al
+    })).filter(item => item.imagePath);
 
 
     // Maksimum 8 ikon sınırı
@@ -362,12 +355,11 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     if (selectedCareInstructions.length > maxIcons) {
     }
 
-    // Her bir yıkama talimatı görselini yükle ve çiz
     let startX = 55;
     let currentX = startX;
     let currentY = y - 30;
-    const iconWidth = 65; // İkon genişliği (daha geniş)
-    const iconHeight = 70; // İkon yüksekliği (kare)
+    const iconWidth = 65; 
+    const iconHeight = 70; // İkon yüksekliği 
     const iconSpacing = 65; // İkonlar arası boşluk
     const maxIconsPerRow = 8; // Satır başına maksimum ikon sayısı
     let iconsInCurrentRow = 0;
@@ -490,7 +482,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
     return y;
   }
 
-  // TechnicalSheet için özel footer - sabit değerler yerine formData kullan
   drawFooter(page, pageWidth, formData = {}, signatureImage = null, stampImage = null) {
     let y = 130;
     
@@ -534,7 +525,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       rotate: { type: 'degrees', angle: 180 },
     });
 
-    // Sol alt - Frontend'den gelen veriler - ITALIC
     const issuedBy = formData['ISSUED BY'] || '';
     const responsibleTechnician = formData['RESPONSIBLE TECHNICIAN'] || '';
     
@@ -570,7 +560,6 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
       color: rgb(0, 0, 0),
     });
 
-    // Draw signature image if available (left side)
     if (signatureImage) {
       page.drawImage(signatureImage, {
         x: 55,
