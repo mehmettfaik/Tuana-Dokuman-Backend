@@ -42,10 +42,8 @@ class WashingIconsService {
         
         // Cache'e kaydet
         this.loadedIcon = iconImage;
-        //console.log(`Washing icons image loaded from: ${iconPath}`);
         return iconImage;
       } else {
-        //console.log('Washing icons image not found');
         return null;
       }
     } catch (error) {
@@ -65,7 +63,6 @@ class WashingIconsService {
       const iconPath = path.join(this.iconsPath, iconFileName);
       
       if (!fs.existsSync(iconPath)) {
-        //console.log(`Washing icon not found: ${iconFileName}`);
         return null;
       }
 
@@ -84,18 +81,14 @@ class WashingIconsService {
 
       if (isPNG) {
         iconImage = await pdfDoc.embedPng(iconBytes);
-        //console.log(`Loading as PNG: ${iconFileName}`);
       } else if (isJPEG) {
         iconImage = await pdfDoc.embedJpg(iconBytes);
-        //console.log(`Loading as JPEG: ${iconFileName}`);
       } else {
-        //console.log(`Unknown image format for: ${iconFileName}`);
         return null;
       }
       
       // Cache'e kaydet
       this.loadedIcons[iconFileName] = iconImage;
-      //console.log(`Specific washing icon loaded: ${iconFileName}`);
       return iconImage;
     } catch (error) {
       console.error(`Error loading specific washing icon ${iconFileName}:`, error.message);

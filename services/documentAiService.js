@@ -118,7 +118,7 @@ class DocumentAiService {
       }
       
       const rawProducts = parseResult.data;
-      console.log(`📋 Parsed with ${parseResult.format} parser (${parseResult.confidence.toFixed(1)}% confidence)`);
+      console.log(`Parsed with ${parseResult.format} parser (${parseResult.confidence.toFixed(1)}% confidence)`);
       
       // Apply field mapping using fieldMappings.js logic
       const mappedProducts = mapOcrFieldsToStandard(rawProducts, companyName);
@@ -241,12 +241,12 @@ class DocumentAiService {
    * Ana parsing fonksiyonu - OCR text'ini parse eder ve raw data çıkarır
    */
   parseDocumentDataLegacy(text) {
-    console.log('📋 Using legacy parsing as fallback...');
+    console.log('Using legacy parsing as fallback...');
     
     try {
       // Format tespiti
       const detectedFormat = this.detectFormatLegacy(text);
-      console.log(`🔍 Detected format (legacy): ${detectedFormat}`);
+      console.log(`Detected format (legacy): ${detectedFormat}`);
       
       switch (detectedFormat) {
         case 'AKBASLAR_FORMAT':
@@ -254,7 +254,7 @@ class DocumentAiService {
         case 'ADA_FORMAT':
           return this.parseAdaFormatLegacy(text);
         default:
-          console.log('⚠️ Unknown format, using general parsing');
+          console.log('Unknown format, using general parsing');
           return this.parseGeneralFormatLegacy(text);
       }
 
@@ -332,7 +332,7 @@ class DocumentAiService {
    * Kept for compatibility with existing code
    */
   parseDocumentData(text) {
-    console.log('⚠️ WARNING: Using deprecated parseDocumentData method. Please use ParserFactory instead.');
+    console.log('WARNING: Using deprecated parseDocumentData method. Please use ParserFactory instead.');
     return this.parseDocumentDataLegacy(text);
   }
 

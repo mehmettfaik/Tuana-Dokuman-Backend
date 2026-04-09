@@ -41,7 +41,7 @@ class BaseParser {
       rows.push(match);
     }
     
-    console.log(`📊 Found ${rows.length} table rows with pattern`);
+    console.log(`Found ${rows.length} table rows with pattern`);
     return rows;
   }
 
@@ -62,7 +62,7 @@ class BaseParser {
     const value = match ? match[1].trim() : '';
     
     if (value) {
-      console.log(`📋 Found ${fieldName}: "${value}"`);
+      console.log(`Found ${fieldName}: "${value}"`);
     }
     
     return value;
@@ -140,16 +140,16 @@ class BaseParser {
    */
   log(message, level = 'info') {
     const prefix = `[${this.companyName}]`;
-    
+
     switch (level) {
       case 'warn':
-        console.log(`⚠️ ${prefix} ${message}`);
+        console.log(`${prefix} ${message}`);
         break;
       case 'error':
-        console.error(`❌ ${prefix} ${message}`);
+        console.error(`${prefix} ${message}`);
         break;
       default:
-        console.log(`📋 ${prefix} ${message}`);
+        console.log(`${prefix} ${message}`);
     }
   }
 }

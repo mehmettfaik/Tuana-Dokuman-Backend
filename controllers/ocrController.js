@@ -32,7 +32,7 @@ const uploadConfig = multer({
 });
 
 // Support multiple field names for flexibility
-const upload = uploadConfig.any(); // Accept any field name
+const upload = uploadConfig.any(); 
 
 const documentAiService = new DocumentAiService();
 const formatConverterService = new FormatConverterService();
@@ -107,7 +107,6 @@ const processDocument = async (req, res) => {
         });
       }
 
-      // Check for uploaded files (multer.any() puts files in req.files array)
       const uploadedFile = req.files && req.files.length > 0 ? req.files[0] : null;
       
       if (!uploadedFile) {
@@ -128,15 +127,12 @@ const processDocument = async (req, res) => {
         const filePath = uploadedFile.path;
         const documentBuffer = fs.readFileSync(filePath);
         
-        console.log(`📄 Processing ${uploadedFile.mimetype} document...`);
-        console.log(`📏 File size: ${documentBuffer.length} bytes`);
+        console.log(`Processing ${uploadedFile.mimetype} document...`);
+        console.log(`File size: ${documentBuffer.length} bytes`);
         
-        // Document AI can handle PDFs and standard images directly
-        // No conversion needed - send directly to Google Document AI
         const finalBuffer = documentBuffer;
         const finalMimeType = uploadedFile.mimetype;
         
-        // Company name detection - frontend'den gelebilir veya dosya adından çıkarılabilir
         let companyName = 'DEFAULT';
         if (req.body && req.body.company) {
           companyName = req.body.company.toUpperCase();
@@ -154,7 +150,7 @@ const processDocument = async (req, res) => {
           }
         }
         
-        console.log(`🏢 Detected company: ${companyName}`);
+        console.log(`Detected company: ${companyName}`);
         
         const result = await documentAiService.processDocument(
           finalBuffer, 
@@ -170,14 +166,14 @@ const processDocument = async (req, res) => {
           }
 
           if (result.success) {
-            console.log('✅ OCR processing successful');
-            console.log('📄 RAW OCR TEXT FROM CONTROLLER:');
+            console.log(' OCR processing successful');
+            console.log(' RAW OCR TEXT FROM CONTROLLER:');
             console.log('=====================================');
             console.log(result.extractedText);
             console.log('=====================================');
-            console.log('📊 PARSED DATA:');
+            console.log(' PARSED DATA:');
             console.log(JSON.stringify(result.packingListData, null, 2));
-            console.log('📊 RAW PRODUCTS DATA:');
+            console.log(' RAW PRODUCTS DATA:');
             console.log(JSON.stringify(result.rawData, null, 2));
             console.log('=====================================');
             
@@ -188,10 +184,10 @@ const processDocument = async (req, res) => {
                 extractedText: result.extractedText,
                 entities: result.entities,
                 packingListData: result.packingListData,
-                rawOcrText: result.extractedText, // Ham OCR metni frontend için
-                rawData: result.rawData, // Ham parsing verileri
-                validation: result.validation, // Validasyon bilgileri
-                companyName: companyName, // Tespit edilen company name
+                rawOcrText: result.extractedText, 
+                rawData: result.rawData, 
+                validation: result.validation, 
+                companyName: companyName, 
                 originalFilename: uploadedFile.originalname,
                 fileSize: uploadedFile.size,
                 mimeType: uploadedFile.mimetype,
@@ -228,7 +224,6 @@ const processDocument = async (req, res) => {
         }        } catch (processingError) {
           console.error('Document processing error:', processingError);
           
-          // Clean up uploaded file
           try {
             fs.unlinkSync(uploadedFile.path);
           } catch (cleanupError) {
@@ -353,7 +348,6 @@ const extractTextOnly = async (req, res) => {
           let finalBuffer = documentBuffer;
           let finalMimeType = uploadedFile.mimetype;
           
-          // Convert if needed
           if (uploadedFile.mimetype === 'application/pdf' || 
               !['image/jpeg', 'image/png'].includes(uploadedFile.mimetype)) {
             
@@ -373,7 +367,6 @@ const extractTextOnly = async (req, res) => {
             }
           }
           
-          // Company name detection for text extraction
           let companyName = 'DEFAULT';
           if (req.body && req.body.company) {
             companyName = req.body.company.toUpperCase();
@@ -398,7 +391,6 @@ const extractTextOnly = async (req, res) => {
             companyName
           );
 
-          // Clean up
           fs.unlinkSync(filePath);
 
           res.json({
@@ -434,13 +426,13 @@ const getFormatRecommendations = async (req, res) => {
       message: 'OCR Format Recommendations',
       bestFormats: ['Tüm formatlar artık destekleniyor!'],
       supportedFormats: [
-        { format: 'PDF', reliability: '99%', recommendation: '✅ Tam destek (preprocessing ile)' },
-        { format: 'JPG', reliability: '99%', recommendation: '✅ Tam destek' },
-        { format: 'PNG', reliability: '99%', recommendation: '✅ Tam destek' },
-        { format: 'TIFF', reliability: '99%', recommendation: '✅ Tam destek' },
-        { format: 'GIF', reliability: '98%', recommendation: '✅ Tam destek' },
-        { format: 'WebP', reliability: '98%', recommendation: '✅ Tam destek' },
-        { format: 'BMP', reliability: '98%', recommendation: '✅ Tam destek' }
+        { format: 'PDF', reliability: '99%', recommendation: ' Tam destek (preprocessing ile)' },
+        { format: 'JPG', reliability: '99%', recommendation: ' Tam destek' },
+        { format: 'PNG', reliability: '99%', recommendation: ' Tam destek' },
+        { format: 'TIFF', reliability: '99%', recommendation: ' Tam destek' },
+        { format: 'GIF', reliability: '98%', recommendation: ' Tam destek' },
+        { format: 'WebP', reliability: '98%', recommendation: ' Tam destek' },
+        { format: 'BMP', reliability: '98%', recommendation: ' Tam destek' }
       ],
       preprocessing: {
         'PDF': [

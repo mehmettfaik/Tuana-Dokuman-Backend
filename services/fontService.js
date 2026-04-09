@@ -26,14 +26,11 @@ class FontService {
         
         // Cache'e kaydet
         this.loadedFonts[cacheKey] = customFont;
-        //console.log(`✅ Custom font loaded successfully: ${fontFileName}`);
         return customFont;
       }
-      
-      //console.log(`❌ Custom font file not found: ${fontFileName}`);
+
       return null;
     } catch (error) {
-      //console.log(`❌ Error loading custom font ${fontFileName}:`, error.message);
       return null;
     }
   }
@@ -56,14 +53,11 @@ class FontService {
         
         // Cache'e kaydet
         this.loadedFonts['helvetica-neue-ultralight'] = customFont;
-        //console.log('Helvetica Neue UltraLight font loaded successfully from:', fontPath);
         return customFont;
       }
-      
-      //console.log('Helvetica Neue UltraLight font file not found');
+
       return null;
     } catch (error) {
-      //console.log('Error loading Helvetica Neue UltraLight font:', error.message);
       return null;
     }
   }
@@ -86,14 +80,11 @@ class FontService {
         
         // Cache'e kaydet
         this.loadedFonts['helvetica-neue-ultralight-italic'] = customFont;
-        //console.log('Helvetica Neue UltraLight Italic font loaded successfully from:', fontPath);
         return customFont;
       }
-      
-      //console.log('Helvetica Neue UltraLight Italic font file not found');
+
       return null;
     } catch (error) {
-      //console.log('Error loading Helvetica Neue UltraLight Italic font:', error.message);
       return null;
     }
   }
@@ -116,14 +107,11 @@ class FontService {
         
         // Cache'e kaydet
         this.loadedFonts['helvetica-neue-light-italic'] = customFont;
-        //console.log('Helvetica Neue Light Italic font loaded successfully from:', fontPath);
         return customFont;
       }
-      
-      //console.log('Helvetica Neue Light Italic font file not found');
+
       return null;
     } catch (error) {
-      //console.log('Error loading Helvetica Neue Light Italic font:', error.message);
       return null;
     }
   }
@@ -143,20 +131,14 @@ class FontService {
 
   // Helvetica Neue fontlarının durumunu logla
   async logFontStatus(pdfDoc) {
-    //console.log('=== Font Status ===');
     const availability = this.checkFontAvailability();
-    //console.log('Font availability:', availability);
-    
+
     try {
       const ultraLight = await this.loadHelveticaNeueUltraLight(pdfDoc);
       const ultraLightItalic = await this.loadHelveticaNeueUltraLightItalic(pdfDoc);
-      
-      //console.log('UltraLight loaded:', !!ultraLight);
-      //console.log('UltraLight Italic loaded:', !!ultraLightItalic);
     } catch (error) {
-      //console.log('Font loading test failed:', error.message);
+      // Silently fail
     }
-    //console.log('==================');
   }
 }
 

@@ -143,11 +143,11 @@ class FormatConverterService {
 
       // If only one page, return as-is
       if (imageBuffers.length === 1) {
-        console.log('📄 Single page PDF, no combination needed');
+        console.log('Single page PDF, no combination needed');
         return imageBuffers[0];
       }
 
-      console.log(`🔗 Combining ${imageBuffers.length} pages into single image...`);
+      console.log(`Combining ${imageBuffers.length} pages into single image...`);
       
       // Get metadata for all images to calculate total height
       const imageMetadata = [];
@@ -159,10 +159,10 @@ class FormatConverterService {
         imageMetadata.push(metadata);
         totalHeight += metadata.height;
         maxWidth = Math.max(maxWidth, metadata.width);
-        console.log(`📏 Page ${i + 1}: ${metadata.width}x${metadata.height}`);
+        console.log(`Page ${i + 1}: ${metadata.width}x${metadata.height}`);
       }
 
-      console.log(`📐 Combined dimensions will be: ${maxWidth}x${totalHeight}`);
+      console.log(`Combined dimensions will be: ${maxWidth}x${totalHeight}`);
 
       // Create a new image with combined height
       let currentY = 0;
@@ -190,7 +190,7 @@ class FormatConverterService {
         });
 
         currentY += metadata.height;
-        console.log(`📍 Page ${i + 1} positioned at Y: ${currentY - metadata.height}`);
+        console.log(`Page ${i + 1} positioned at Y: ${currentY - metadata.height}`);
       }
 
       // Create the combined image
@@ -206,13 +206,13 @@ class FormatConverterService {
       .jpeg({ quality: 95 })
       .toBuffer();
 
-      console.log(`✅ Successfully combined ${imageBuffers.length} pages. Final size: ${combinedBuffer.length} bytes`);
+      console.log(`Successfully combined ${imageBuffers.length} pages. Final size: ${combinedBuffer.length} bytes`);
       return combinedBuffer;
 
     } catch (error) {
-      console.error('❌ Error combining images:', error);
+      console.error('Error combining images:', error);
       // Fallback: return the first page if combination fails
-      console.log('⚠️ Falling back to first page only due to combination error');
+      console.log('Falling back to first page only due to combination error');
       return imageBuffers[0];
     }
   }

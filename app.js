@@ -11,7 +11,7 @@ const app = express();
 try {
   initializeFirebase();
 } catch (error) {
-  console.error('❌ Firebase initialization failed:', error.message);
+  console.error('Firebase initialization failed:', error.message);
   // Firebase olmadan da çalışabilir, sadece recipients API'si çalışmaz
 }
 
@@ -240,8 +240,8 @@ process.on('SIGINT', () => {
 // Start server
 const PORT = process.env.PORT || 3001;
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📋 PDF API available at http://localhost:${PORT}/api/pdf`);
+  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`PDF API available at http://localhost:${PORT}/api/pdf`);
 });
 
 // Handle server errors

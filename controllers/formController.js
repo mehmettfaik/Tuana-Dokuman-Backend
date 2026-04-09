@@ -3,7 +3,7 @@ const { getFirestore } = require('../config/firebase');
 // In-memory cache for forms
 let formsCache = null;
 let formsCacheTimestamp = null;
-const formsCacheTTL = 5 * 60 * 1000; // 5 dakika cache süresi
+const formsCacheTTL = 5 * 60 * 1000; 
 
 // Cache helper functions
 const invalidateFormsCache = () => {
@@ -17,19 +17,17 @@ const isFormsCacheValid = () => {
   return (Date.now() - formsCacheTimestamp) < formsCacheTTL;
 };
 
-// POST /api/forms - Yeni form kaydı oluştur
 const createForm = async (req, res) => {
   try {
     const db = getFirestore();
     
-    console.log('📋 Form kaydetme isteği:', JSON.stringify(req.body, null, 2).substring(0, 500));
+    console.log('Form kaydetme isteği:', JSON.stringify(req.body, null, 2).substring(0, 500));
     
-    // Support goods sent either as top-level `goods` or nested in `formData.goods`
     const { formData: rawFormData, goods: topGoods, formType, totals, rolls: topRolls, rows: topRows } = req.body;
     const formData = rawFormData || {};
     const goods = topGoods || formData.goods || [];
     const rolls = topRolls || formData.rolls || [];
-    const rows = topRows || formData.rows || []; // Çeki listesi için rows desteği
+    const rows = topRows || formData.rows || []; 
     
 
     // Validation
@@ -41,19 +39,14 @@ const createForm = async (req, res) => {
       });
     }
 
-    // Yeni form objesi oluştur
-    // Ensure formData does not carry duplicate goods property (we'll normalize)
     const normalizedFormData = { ...formData };
     if (!normalizedFormData.goods && goods.length > 0) {
-      // keep a copy in formData for frontends that expect nested goods
       normalizedFormData.goods = goods;
     }
     if (!normalizedFormData.rolls && rolls.length > 0) {
-      // keep a copy in formData for frontends that expect nested rolls
       normalizedFormData.rolls = rolls;
     }
     if (!normalizedFormData.rows && rows.length > 0) {
-      // keep a copy in formData for frontends that expect nested rows (çeki listesi)
       normalizedFormData.rows = rows;
     }
 
@@ -62,15 +55,13 @@ const createForm = async (req, res) => {
       formData: normalizedFormData,
       goods: goods,
       rolls: rolls,
-      rows: rows, // Çeki listesi için rows
+      rows: rows, 
       totals: totals || null,
       createdAt: new Date().toISOString()
     };
 
-    // Firestore'a kaydet
     const docRef = await db.collection('forms').add(newForm);
     
-    // Cache'i invalidate et
     invalidateFormsCache();
 
     // Response - ID ile birlikte tüm veriyi döndür
@@ -99,9 +90,7 @@ const getAllForms = async (req, res) => {
     // Query parametreleri
     const { formType, forceRefresh } = req.query;
 
-    // Cache varsa ve geçerliyse, cache'den dön
     if (!forceRefresh && isFormsCacheValid()) {
-      console.log('📦 Returning forms from cache');
       let forms = [...formsCache];
       
       // formType filter varsa client-side filtering yap
@@ -112,7 +101,7 @@ const getAllForms = async (req, res) => {
       return res.json(forms);
     }
 
-    // Sadece createdAt'e göre sırala (index gerektirmez)
+    // Sadece createdAt'e göre sırala
     let query = db.collection('forms').orderBy('createdAt', 'desc');
 
     const snapshot = await query.get();
@@ -126,7 +115,6 @@ const getAllForms = async (req, res) => {
     let forms = [];
     snapshot.forEach(doc => {
       const data = doc.data() || {};
-      // Normalize goods: support top-level goods or nested formData.goods
       const goods = data.goods || (data.formData && data.formData.goods) || [];
       const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
       const rows = data.rows || (data.formData && data.formData.rows) || []; // Çeki listesi için rows
@@ -141,7 +129,7 @@ const getAllForms = async (req, res) => {
         formData,
         goods,
         rolls,
-        rows, // Çeki listesi için rows
+        rows,
         totals: data.totals || null,
         createdAt: data.createdAt || null,
         updatedAt: data.updatedAt || null
@@ -151,14 +139,12 @@ const getAllForms = async (req, res) => {
     // Cache'e kaydet
     formsCache = forms;
     formsCacheTimestamp = Date.now();
-    console.log(`📦 Forms cached: ${forms.length} items`);
+    console.log(`Forms cached: ${forms.length} items`);
 
-    // formType filter varsa client-side filtering yap
     if (formType) {
       forms = forms.filter(form => form.formType === formType);
     }
 
-    // Direkt array döndür
     res.json(forms);
 
   } catch (error) {
@@ -215,7 +201,7 @@ const getFormById = async (req, res) => {
       formData,
       goods,
       rolls,
-      rows, // Çeki listesi için rows
+      rows, 
       totals: data.totals || null,
       createdAt: data.createdAt || null,
       updatedAt: data.updatedAt || null
@@ -247,7 +233,6 @@ const deleteForm = async (req, res) => {
       });
     }
 
-    // Önce form'un var olup olmadığını kontrol et
     const docRef = db.collection('forms').doc(formId);
     const doc = await docRef.get();
 
@@ -259,10 +244,8 @@ const deleteForm = async (req, res) => {
       });
     }
 
-    // Form'u sil
     await docRef.delete();
     
-    // Cache'i invalidate et
     invalidateFormsCache();
 
     console.log(` Deleted form ${formId} from Firestore`);
@@ -283,7 +266,6 @@ const deleteForm = async (req, res) => {
   }
 };
 
-// Bulk delete - Bonus feature
 const bulkDeleteForms = async (req, res) => {
   try {
     const db = getFirestore();
@@ -307,7 +289,6 @@ const bulkDeleteForms = async (req, res) => {
 
     await batch.commit();
     
-    // Cache'i invalidate et
     invalidateFormsCache();
 
     console.log(` Bulk deleted ${deletedIds.length} forms from Firestore`);
@@ -329,12 +310,9 @@ const bulkDeleteForms = async (req, res) => {
   }
 };
 
-// Statistics endpoint - Bonus feature (cache kullanır)
 const getFormsStats = async (req, res) => {
   try {
-    // Cache varsa ve geçerliyse, cache'den istatistik hesapla
     if (isFormsCacheValid()) {
-      console.log('📦 Calculating stats from cache');
       const allForms = formsCache;
       
       const stats = {
@@ -396,7 +374,6 @@ const getFormsStats = async (req, res) => {
       stats.byDocumentType[docType] = (stats.byDocumentType[docType] || 0) + 1;
     });
 
-    // Get recent forms (last 10)
     stats.recent = allForms
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 10)

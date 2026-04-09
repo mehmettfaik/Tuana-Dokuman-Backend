@@ -217,7 +217,7 @@ exports.downloadPdf = async (req, res) => {
 };
 
 // ============================================================================
-// LEGACY ENDPOINTS (Backward compatibility)
+// LEGACY ENDPOINTS - Authentication Required
 // ============================================================================
 
 exports.generatePDF = async (req, res) => {
@@ -448,7 +448,7 @@ exports.generateProformaInvoice = async (req, res) => {
     // PDF oluşturma
     const pdfDoc = await PDFDocument.create();
     
-    // Fontkit'i register et (custom fontlar için gerekli)
+    // Fontkit'i register et
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
@@ -520,7 +520,7 @@ exports.generateTechnicalSheet = async (req, res) => {
     // PDF oluşturma
     const pdfDoc = await PDFDocument.create();
     
-    // Fontkit'i register et (custom fontlar için gerekli)
+    // Fontkit'i register et 
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme
@@ -671,7 +671,7 @@ exports.generatePackingList = async (req, res) => {
       });
     }
 
-    // INVOICE NUMBER kontrolü - zorunlu alan
+    // INVOICE NUMBER kontrolü
     if (!formData['INVOICE NUMBER']) {
       return res.status(400).json({ 
         error: 'INVOICE NUMBER is required',
@@ -682,7 +682,7 @@ exports.generatePackingList = async (req, res) => {
     // PDF oluşturma
     const pdfDoc = await PDFDocument.create();
     
-    // Fontkit'i register et (custom fontlar için gerekli)
+    // Fontkit'i register et 
     pdfDoc.registerFontkit(fontkit);
     
     // Logo yükleme

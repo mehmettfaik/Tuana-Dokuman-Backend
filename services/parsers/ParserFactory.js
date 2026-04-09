@@ -28,7 +28,7 @@ class ParserFactory {
    * @returns {Object} - { format, parser, confidence }
    */
   detectFormatAndGetParser(text) {
-    console.log('🔍 Detecting document format...');
+    console.log('Detecting document format...');
     
     const formatScores = {};
     
@@ -50,7 +50,7 @@ class ParserFactory {
         totalKeywords: keywords.length
       };
       
-      console.log(`📊 ${formatName}: ${score}/${keywords.length} keywords matched (${percentage.toFixed(1)}%)`);
+      console.log(`${formatName}: ${score}/${keywords.length} keywords matched (${percentage.toFixed(1)}%)`);
     }
     
     // Find the format with highest percentage match (minimum 30% match required)
@@ -58,7 +58,7 @@ class ParserFactory {
       .map(([name, data]) => ({ name, ...data }))
       .sort((a, b) => b.percentage - a.percentage);
 
-    console.log('🎯 Format detection results:');
+    console.log('Format detection results:');
     formats.forEach(format => {
       console.log(`  ${format.name}: ${format.percentage.toFixed(1)}% (${format.score}/${format.totalKeywords})`);
     });
@@ -80,7 +80,7 @@ class ParserFactory {
     // If still no match, try the highest scoring format even if below 15%
     if (formats.length > 0 && formats[0].percentage > 5) {
       const bestFormat = formats[0];
-      console.log(`🔄 Using best available format: ${bestFormat.name} (${bestFormat.percentage.toFixed(1)}% confidence - low threshold)`);
+      console.log(`Using best available format: ${bestFormat.name} (${bestFormat.percentage.toFixed(1)}% confidence - low threshold)`);
       return {
         format: bestFormat.name,
         parser: bestFormat.parser,
@@ -89,7 +89,7 @@ class ParserFactory {
       };
     }
     
-    console.log('⚠️ No format detected with sufficient confidence, using general parsing');
+    console.log('No format detected with sufficient confidence, using general parsing');
     return {
       format: 'UNKNOWN',
       parser: null,
@@ -119,22 +119,22 @@ class ParserFactory {
       }
 
       // Parse document using detected parser
-      console.log(`📋 Parsing document with ${detection.format} parser...`);
+      console.log(`Parsing document with ${detection.format} parser...`);
       let parsedData = detection.parser.parse(text);
 
       // Enhanced fallback: If primary parser returns no products, try alternative parsers
       if (!parsedData || parsedData.length === 0) {
-        console.log('⚠️ Primary parser found no products, trying alternative parsers...');
+        console.log('Primary parser found no products, trying alternative parsers...');
         
         // Try all parsers except the one already tried
         const allFormats = Object.keys(this.parsers);
         for (const formatName of allFormats) {
           if (formatName !== detection.format) {
-            console.log(`🔄 Trying ${formatName} parser as fallback...`);
+            console.log(`Trying ${formatName} parser as fallback...`);
             try {
               const alternativeData = this.parsers[formatName].parse(text);
               if (alternativeData && alternativeData.length > 0) {
-                console.log(`✅ ${formatName} parser found ${alternativeData.length} products!`);
+                console.log(`${formatName} parser found ${alternativeData.length} products!`);
                 return {
                   success: true,
                   data: alternativeData,
@@ -146,12 +146,12 @@ class ParserFactory {
                 };
               }
             } catch (altError) {
-              console.log(`❌ ${formatName} parser failed: ${altError.message}`);
+              console.log(`${formatName} parser failed: ${altError.message}`);
             }
           }
         }
         
-        console.log('❌ All parsers failed to find products');
+        console.log('All parsers failed to find products');
       }
 
       return {
@@ -164,7 +164,7 @@ class ParserFactory {
       };
 
     } catch (error) {
-      console.error('❌ ParserFactory parsing error:', error);
+      console.error('ParserFactory parsing error:', error);
       return {
         success: false,
         data: [],
@@ -209,7 +209,7 @@ class ParserFactory {
   removeParser(formatName) {
     if (this.parsers[formatName.toUpperCase()]) {
       delete this.parsers[formatName.toUpperCase()];
-      console.log(`🗑️ Removed parser: ${formatName}`);
+      console.log(`Removed parser: ${formatName}`);
     }
   }
 

@@ -27,14 +27,11 @@ class LogoService {
         } else {
           logoImage = await pdfDoc.embedPng(logoBytes);
         }
-        //console.log('Logo successfully loaded from:', logoPath);
         return logoImage;
       } else {
-        //console.log('Logo file not found. Looking for logo.png or logo.jpg in backend folder');
         return null;
       }
     } catch (logoError) {
-      //console.log('Logo loading error:', logoError.message);
       return null;
     }
   }

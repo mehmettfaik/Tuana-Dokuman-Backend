@@ -13,7 +13,7 @@ class RecipientService {
   invalidateCache() {
     this.cache = null;
     this.cacheTimestamp = null;
-    console.log('📦 Recipients cache invalidated');
+    console.log('Recipients cache invalidated');
   }
 
   // Cache geçerli mi kontrol et
@@ -26,7 +26,7 @@ class RecipientService {
     try {
       // Cache varsa ve geçerliyse, cache'den dön
       if (!forceRefresh && this.isCacheValid()) {
-        console.log('📦 Returning recipients from cache');
+        console.log('Returning recipients from cache');
         return this.cache;
       }
 
@@ -54,7 +54,7 @@ class RecipientService {
       // Cache'e kaydet
       this.cache = recipients;
       this.cacheTimestamp = Date.now();
-      console.log(`📦 Recipients cached: ${recipients.length} items`);
+      console.log(`Recipients cached: ${recipients.length} items`);
 
       return recipients;
     } catch (error) {

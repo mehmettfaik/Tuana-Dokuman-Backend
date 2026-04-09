@@ -22,7 +22,6 @@ const excelsDir = path.join(__dirname, '../temp/excels');
 
 /**
  * POST /api/excel/create-from-photos
- * Fotoğraflardan Excel oluşturur
  */
 const createExcelFromPhotos = async (req, res) => {
   try {
@@ -65,7 +64,6 @@ const createExcelFromPhotos = async (req, res) => {
         }
                 
         // Google Document AI ile SADECE TEXT EXTRACTION
-        // documentAiService değil, direkt Document AI client kullanacağız
         const { DocumentProcessorServiceClient } = require('@google-cloud/documentai');
         
         // Document AI credentials
@@ -91,21 +89,18 @@ const createExcelFromPhotos = async (req, res) => {
           name,
           rawDocument: {
             content: fileBuffer,
-            mimeType: mimeType, // Normalized mimetype
+            mimeType: mimeType,
           },
         };
 
         const [result] = await client.processDocument(request);
         const { document } = result;
 
-        // Ham OCR text'i al (document.text)
         const ocrText = document.text || '';        
-        // Debug: İlk 500 karakter göster
         if (ocrText.length > 0) {
         }
 
         if (ocrText.length > 0) {
-          // İlk önce standart parsing dene
           let parsed = excelOcrParser.parseOcrText(ocrText, file.originalname);
 
 
@@ -135,7 +130,7 @@ const createExcelFromPhotos = async (req, res) => {
           }
 
         } else {
-          console.warn('⚠️ OCR text boş');
+          console.warn('OCR text boş');
           totalFailed++;
         }
 
@@ -154,7 +149,7 @@ const createExcelFromPhotos = async (req, res) => {
       }
     }
 
-    console.log(`\n📊 İşlem Özeti:`);
+    console.log(`\n İşlem Özeti:`);
     console.log(`   Toplam: ${files.length}`);
     console.log(`   Başarılı: ${totalProcessed}`);
     console.log(`   Başarısız: ${totalFailed}`);
@@ -315,7 +310,7 @@ const listExcelFiles = async (req, res) => {
           downloadUrl: `/api/excel/download/${file}`
         };
       })
-      .sort((a, b) => b.created - a.created); // En yeni en üstte
+      .sort((a, b) => b.created - a.created); 
 
     res.json({
       success: true,

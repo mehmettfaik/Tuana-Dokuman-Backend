@@ -87,10 +87,10 @@ const handleUpload = async (req, res) => {
         let conversionUsed = false;
         
         // Convert problematic formats to JPEG for better OCR compatibility
-        if (req.file.mimetype === 'application/pdf' || 
+        if (req.file.mimetype === 'application/pdf' ||
             !['image/jpeg', 'image/png'].includes(req.file.mimetype)) {
-          
-          console.log('🔄 Converting to optimized format for better OCR...');
+
+          console.log('Converting to optimized format for better OCR...');
           
           try {
             const conversionResult = await formatConverterService.convertToOptimizedImage(
@@ -102,9 +102,9 @@ const handleUpload = async (req, res) => {
               finalBuffer = conversionResult.buffer;
               finalMimeType = 'image/jpeg';
               conversionUsed = true;
-              console.log('✅ Format conversion successful');
+              console.log('Format conversion successful');
             } else {
-              console.log('⚠️ Format conversion failed, using original file');
+              console.log('Format conversion failed, using original file');
             }
           } catch (conversionError) {
             console.error('Format conversion error:', conversionError);
@@ -113,7 +113,6 @@ const handleUpload = async (req, res) => {
         }
         
         // Process with Document AI
-        // console.log(`🤖 Processing with Document AI for company: ${company}...`);
         const ocrResult = await documentAiService.processDocument(finalBuffer, finalMimeType, company);
 
         // Clean up uploaded file
@@ -136,7 +135,7 @@ const handleUpload = async (req, res) => {
         const mappedProducts = ocrResult.packingListData?.goods || [];
         const validation = ocrResult.validation || { isValid: false, confidence: 0 };
         
-        console.log(`📦 OCR extracted and mapped ${mappedProducts.length} products`);
+        console.log(`OCR extracted and mapped ${mappedProducts.length} products`);
 
         if (mappedProducts.length === 0) {
           return res.status(422).json({
@@ -152,7 +151,7 @@ const handleUpload = async (req, res) => {
           });
         }
 
-        console.log(`✅ Company validation: ${validation.confidence * 100}% confidence`);
+        console.log(`Company validation: ${validation.confidence * 100}% confidence`);
 
         // Successful response
         const response = {
@@ -173,7 +172,7 @@ const handleUpload = async (req, res) => {
           }
         };
 
-        console.log(`✅ Upload processing completed successfully for ${company}`);
+        console.log(`Upload processing completed successfully for ${company}`);
         res.json(response);
 
       } catch (processingError) {

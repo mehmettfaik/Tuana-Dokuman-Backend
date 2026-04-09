@@ -16,7 +16,7 @@ class RecipientController {
         count: recipients.length
       });
     } catch (error) {
-      console.error('❌ Error getting all recipients:', error);
+      console.error('Error getting all recipients:', error);
       
       // Firebase yapılandırma hatası için özel mesaj
       if (error.message.includes('Firebase is not initialized')) {
@@ -87,7 +87,7 @@ class RecipientController {
         filters: filters
       });
     } catch (error) {
-      console.error('❌ Error searching recipients:', error);
+      console.error('Error searching recipients:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -104,7 +104,7 @@ class RecipientController {
       // Veri doğrulama
       const validation = validateRecipient(recipientData, false);
       if (!validation.isValid) {
-        console.log('❌ Validation failed:', validation.errors);
+        console.log('Validation failed:', validation.errors);
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
@@ -117,15 +117,15 @@ class RecipientController {
 
       // Aynı şirket adı var mı kontrol et
       const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
-      console.log('🔍 Duplicate check - Searching for:', cleanData.companyName);
-      console.log('🔍 Found existing recipients:', existingRecipients.length);
+      console.log('Duplicate check - Searching for:', cleanData.companyName);
+      console.log('Found existing recipients:', existingRecipients.length);
       
       const duplicateCheck = existingRecipients.find(r => 
         r.companyName.toLowerCase() === cleanData.companyName.toLowerCase()
       );
       
       if (duplicateCheck) {
-        console.log('❌ Duplicate found:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
+        console.log('Duplicate found:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
         return res.status(409).json({
           success: false,
           error: 'Company with this name already exists',
@@ -136,10 +136,10 @@ class RecipientController {
         });
       }
       
-      console.log('✅ No duplicates found, proceeding with creation');
+      console.log('No duplicates found, proceeding with creation');
 
       const recipient = await this.recipientService.createRecipient(cleanData);
-      console.log('📝 Add recipient result:', recipient);
+      console.log('Add recipient result:', recipient);
       
       res.status(201).json({
         success: true,
@@ -147,7 +147,7 @@ class RecipientController {
         message: 'Recipient added successfully'
       });
     } catch (error) {
-      console.error('❌ Error adding recipient:', error);
+      console.error('Error adding recipient:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -174,7 +174,7 @@ class RecipientController {
       // Veri doğrulama (güncelleme için)
       const validation = validateRecipient(recipientData, true);
       if (!validation.isValid) {
-        console.log('❌ Validation failed:', validation.errors);
+        console.log('Validation failed:', validation.errors);
         return res.status(400).json({
           success: false,
           error: 'Validation failed',
@@ -187,16 +187,16 @@ class RecipientController {
 
       // Eğer şirket adı değiştiriliyorsa, aynı isimde başka şirket var mı kontrol et
       if (cleanData.companyName && cleanData.companyName !== existingRecipient.companyName) {
-        console.log('🔍 Company name changed from:', existingRecipient.companyName, 'to:', cleanData.companyName);
+        console.log('Company name changed from:', existingRecipient.companyName, 'to:', cleanData.companyName);
         const existingRecipients = await this.recipientService.searchRecipients(cleanData.companyName);
-        console.log('🔍 Found existing recipients with similar name:', existingRecipients.length);
+        console.log('Found existing recipients with similar name:', existingRecipients.length);
         
         const duplicateCheck = existingRecipients.find(r => 
           r.companyName.toLowerCase() === cleanData.companyName.toLowerCase() && r.id !== id
         );
         
         if (duplicateCheck) {
-          console.log('❌ Duplicate found during update:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
+          console.log('Duplicate found during update:', duplicateCheck.companyName, 'ID:', duplicateCheck.id);
           return res.status(409).json({
             success: false,
             error: 'Another company with this name already exists',
@@ -207,11 +207,11 @@ class RecipientController {
           });
         }
         
-        console.log('✅ No duplicates found during update, proceeding');
+        console.log('No duplicates found during update, proceeding');
       }
 
       const recipient = await this.recipientService.updateRecipient(id, cleanData);
-      console.log('✅ Update recipient result:', recipient);
+      console.log('Update recipient result:', recipient);
       
       res.json({
         success: true,
@@ -219,7 +219,7 @@ class RecipientController {
         message: 'Recipient updated successfully'
       });
     } catch (error) {
-      console.error('❌ Error updating recipient:', error);
+      console.error('Error updating recipient:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -245,7 +245,7 @@ class RecipientController {
       const success = await this.recipientService.deleteRecipient(id);
       
       if (success) {
-        console.log('✅ Recipient deleted successfully:', existingRecipient.companyName);
+        console.log('Recipient deleted successfully:', existingRecipient.companyName);
         res.json({
           success: true,
           message: 'Recipient deleted successfully',
@@ -261,7 +261,7 @@ class RecipientController {
         });
       }
     } catch (error) {
-      console.error('❌ Error deleting recipient:', error);
+      console.error('Error deleting recipient:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -304,7 +304,7 @@ class RecipientController {
       const successCount = results.filter(r => r.success).length;
       const failCount = results.filter(r => !r.success).length;
 
-      console.log(`✅ Bulk delete completed: ${successCount} success, ${failCount} failed`);
+      console.log(`Bulk delete completed: ${successCount} success, ${failCount} failed`);
 
       res.json({
         success: true,
@@ -317,7 +317,7 @@ class RecipientController {
         }
       });
     } catch (error) {
-      console.error('❌ Error in bulk delete:', error);
+      console.error('Error in bulk delete:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
@@ -364,7 +364,7 @@ class RecipientController {
       const successCount = results.filter(r => r.success).length;
       const failCount = results.filter(r => !r.success).length;
 
-      console.log(`✅ Bulk update completed: ${successCount} success, ${failCount} failed`);
+      console.log(`Bulk update completed: ${successCount} success, ${failCount} failed`);
 
       res.json({
         success: true,
@@ -377,7 +377,7 @@ class RecipientController {
         }
       });
     } catch (error) {
-      console.error('❌ Error in bulk update:', error);
+      console.error('Error in bulk update:', error);
       res.status(500).json({
         success: false,
         error: 'Internal server error',
