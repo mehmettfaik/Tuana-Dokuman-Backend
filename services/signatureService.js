@@ -3,8 +3,17 @@ const path = require('path');
 
 class SignatureService {
   constructor() {
-    this.signaturePath = path.join(__dirname, '../assets/signature/imza.png');
-    this.stampPath = path.join(__dirname, '../assets/signature/kase.png');
+    // Önce optimize edilmiş dosyaları dene, yoksa orijinalleri kullan
+    const optimizedSignaturePath = path.join(__dirname, '../assets/optimized/signature/imza.png');
+    const optimizedStampPath = path.join(__dirname, '../assets/optimized/signature/kase.png');
+    
+    this.signaturePath = fs.existsSync(optimizedSignaturePath) 
+      ? optimizedSignaturePath 
+      : path.join(__dirname, '../assets/signature/imza.png');
+    
+    this.stampPath = fs.existsSync(optimizedStampPath) 
+      ? optimizedStampPath 
+      : path.join(__dirname, '../assets/signature/kase.png');
   }
 
   /**

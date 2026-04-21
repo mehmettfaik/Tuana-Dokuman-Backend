@@ -4,10 +4,15 @@ const path = require('path');
 class LogoService {
   static async loadLogo(pdfDoc) {
     try {
-      // PNG logo dene
-      let logoPath = path.join(__dirname, '..', 'logo.png');
+      // Önce optimize edilmiş logoyu dene
+      let logoPath = path.join(__dirname, '../assets/optimized/logo.png');
       let logoBytes = null;
       let isJpg = false;
+      
+      // Optimized logo yoksa orijinali kullan
+      if (!fs.existsSync(logoPath)) {
+        logoPath = path.join(__dirname, '..', 'logo.png');
+      }
       
       if (fs.existsSync(logoPath)) {
         logoBytes = fs.readFileSync(logoPath);

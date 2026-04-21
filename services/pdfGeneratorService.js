@@ -201,11 +201,13 @@ class PdfGeneratorService {
       }
 
       // PDF içeriğini oluştur
-      // PDF içeriğini oluştur
       await template.generate(formData);
       
-      // PDF'i serialize et
-      const pdfBytes = await pdfDoc.save();
+      // PDF'i serialize et (sıkıştırma parametreleri ile)
+      const pdfBytes = await pdfDoc.save({
+        useObjectStreams: false, // Object streams overhead'ini kaldır
+        addDefaultPage: false,
+      });
       
       // Dosyayı kaydet
       const fileName = `${pdfFileName}_${jobId}.pdf`;
