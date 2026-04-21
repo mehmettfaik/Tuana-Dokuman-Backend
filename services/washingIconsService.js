@@ -3,11 +3,7 @@ const path = require('path');
 
 class WashingIconsService {
   constructor() {
-    // Önce optimize edilmiş klasörü dene, yoksa orijinali kullan
-    const optimizedPath = path.join(__dirname, '../assets/optimized/washing-icons');
-    this.iconsPath = fs.existsSync(optimizedPath) 
-      ? optimizedPath 
-      : path.join(__dirname, '../assets/washing-icons');
+    this.iconsPath = path.join(__dirname, '../assets/washing-icons');
     this.loadedIcon = null;
     this.loadedIcons = {}; // Bireysel ikonlar için cache
   }
