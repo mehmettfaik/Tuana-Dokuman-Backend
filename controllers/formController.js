@@ -99,7 +99,7 @@ const getAllForms = async (req, res) => {
       }
       
       return res.json(forms);
-    }
+    } 
 
     // Sadece createdAt'e göre sırala
     let query = db.collection('forms').orderBy('createdAt', 'desc');

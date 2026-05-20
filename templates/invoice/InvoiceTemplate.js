@@ -1157,32 +1157,83 @@ SWIFT: TEBUTRIS 032`
     
     // Notes içeriği - frontend'den gelen Notlar alanını kullan
     if (formData['Notlar'] && formData['Notlar'].trim()) {
-      // Notları çok satırlı olarak ekle
+      // Notları çok satırlı ve kelime kaydırmalı (word-wrap) olarak ekle
       const notLines = formData['Notlar'].split('\n');
+      const maxWidth = pageWidth - 110; // Sağdan ve soldan 55 civarı boşluk
+
       notLines.forEach((line, index) => {
         if (line.trim()) {
-          this.drawSafeText(page, line.trim(), {
-            x: 55,
-            y: noteY,
-            size: 8,
-            font: this.font,
-            color: rgb(0, 0, 0),
-          });
-          noteY -= 12;
+          const words = line.trim().split(' ');
+          let currentLine = '';
+          
+          for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+            const textWidth = this.font.widthOfTextAtSize(testLine, 8);
+            
+            if (textWidth > maxWidth && currentLine) {
+              this.drawSafeText(page, currentLine, {
+                x: 55,
+                y: noteY,
+                size: 8,
+                font: this.font,
+                color: rgb(0, 0, 0),
+              });
+              currentLine = words[i];
+              noteY -= 12;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          
+          if (currentLine) {
+            this.drawSafeText(page, currentLine, {
+              x: 55,
+              y: noteY,
+              size: 8,
+              font: this.font,
+              color: rgb(0, 0, 0),
+            });
+            noteY -= 12;
+          }
         }
       });
     } else if (formData.notes && Array.isArray(formData.notes)) {
       // Fallback: eski array formatını da destekle
       formData.notes.forEach(note => {
         if (note && note.trim()) {
-          this.drawSafeText(page, note, {
-            x: 55,
-            y: noteY,
-            size: 8,
-            font: this.font,
-            color: rgb(0, 0, 0),
-          });
-          noteY -= 12;
+          const words = note.trim().split(' ');
+          let currentLine = '';
+          const maxWidth = pageWidth - 110;
+
+          for (let i = 0; i < words.length; i++) {
+            const testLine = currentLine + (currentLine ? ' ' : '') + words[i];
+            const textWidth = this.font.widthOfTextAtSize(testLine, 8);
+            
+            if (textWidth > maxWidth && currentLine) {
+              this.drawSafeText(page, currentLine, {
+                x: 55,
+                y: noteY,
+                size: 8,
+                font: this.font,
+                color: rgb(0, 0, 0),
+              });
+              currentLine = words[i];
+              noteY -= 12;
+            } else {
+              currentLine = testLine;
+            }
+          }
+          
+          if (currentLine) {
+            this.drawSafeText(page, currentLine, {
+              x: 55,
+              y: noteY,
+              size: 8,
+              font: this.font,
+              color: rgb(0, 0, 0),
+            });
+            noteY -= 12;
+          }
         }
       });
     }
