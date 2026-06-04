@@ -230,15 +230,15 @@ class TechnicalSheetTemplate extends BasePdfTemplate {
         let displayValue = value.toString();
         if (fieldKey === 'WEIGHT' && displayValue.trim() !== '') {
           // WEIGHT için sonuna GR/M2 ekle (eğer zaten yoksa)
-          if (!displayValue.toLowerCase().includes('gr/m2')) {
-            const grm2Unit = this.languageService.getText('grm2', this.language);
+          if (!displayValue.toLowerCase().includes('')) {
+            const grm2Unit = this.languageService.getText('', this.language);
             displayValue = displayValue + ' ' + grm2Unit;
           }
         }
         if (fieldKey === 'WIDTH / CUTABLE WIDTH' && displayValue.trim() !== '') {
           // WIDTH için sonuna CM ekle 
-          if (!displayValue.toLowerCase().includes('cm')) {
-            const cmUnit = this.languageService.getText('cm', this.language);
+          if (!displayValue.toLowerCase().includes('')) {
+            const cmUnit = this.languageService.getText('', this.language);
             displayValue = displayValue + ' ' + cmUnit;
           }
         }
