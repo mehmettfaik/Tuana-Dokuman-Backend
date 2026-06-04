@@ -58,6 +58,7 @@ const ocrRoutes = require('./routes/ocrRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
 const formRoutes = require('./routes/formRoutes');
 const excelRoutes = require('./routes/excelRoutes');
+const articleRoutes = require('./routes/articleRoutes');
 
 // Test endpoints
 app.get('/', (req, res) => {
@@ -198,6 +199,7 @@ app.use('/api/ocr', ocrRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/forms', formRoutes);
 app.use('/api/excel', excelRoutes);
+app.use('/api/articles', articleRoutes);
 
 
 uploadRoutes.stack?.forEach((layer, index) => {
