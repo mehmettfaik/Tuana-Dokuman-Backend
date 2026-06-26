@@ -491,8 +491,8 @@ class InvoiceTemplate extends BasePdfTemplate {
     let pageIndex = 0;
     
     while (processedItems < goods.length) {
-      // İlk sayfa için 7 ürün, diğer sayfalar için 27 ürün
-      const itemsPerPage = pageIndex === 0 ? 7 : 27;
+      // İlk sayfa için 6 ürün, diğer sayfalar için 27 ürün
+      const itemsPerPage = pageIndex === 0 ? 6 : 27;
       const startIndex = processedItems;
       const endIndex = Math.min(startIndex + itemsPerPage, goods.length);
       const pageGoods = goods.slice(startIndex, endIndex);
