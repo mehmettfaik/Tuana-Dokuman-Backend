@@ -3,6 +3,28 @@ const LanguageService = require('./languageService');
 const fs = require('fs');
 const path = require('path');
 
+const parseNumber = (value) => {
+  if (value === null || value === undefined) return 0;
+  const trimmed = String(value).trim();
+  if (trimmed === '') return 0;
+  
+  let cleaned = trimmed;
+  if (trimmed.includes('.') && trimmed.includes(',')) {
+    cleaned = trimmed.replace(/\./g, '').replace(',', '.');
+  } 
+  else if (trimmed.includes(',')) {
+    const commaCount = (trimmed.match(/,/g) || []).length;
+    if (commaCount > 1) {
+      cleaned = trimmed.replace(/,/g, '');
+    } else {
+      cleaned = trimmed.replace(',', '.');
+    }
+  }
+  
+  const num = parseFloat(cleaned);
+  return isNaN(num) ? 0 : num;
+};
+
 /**
  * Excel Export Service
  */
@@ -273,7 +295,7 @@ class ExcelExportService {
       weightCell.alignment = { horizontal: 'left', vertical: 'middle' };
       
       // Quantity
-      const quantity = parseFloat((good['QUANTITY (METERS)'] || '0').replace(',', '.'));
+      const quantity = parseNumber(good['QUANTITY (METERS)']);
       const quantityCell = dataRow.getCell(3);
       quantityCell.value = quantity;
       quantityCell.numFmt = '#,##0.00';
@@ -282,7 +304,7 @@ class ExcelExportService {
       totalQuantity += quantity;
       
       // Price
-      const price = parseFloat((good['PRICE'] || '0').replace(',', '.'));
+      const price = parseNumber(good['PRICE']);
       const priceCell = dataRow.getCell(4);
       priceCell.value = price;
       priceCell.numFmt = '#,##0.00';
@@ -290,7 +312,7 @@ class ExcelExportService {
       priceCell.alignment = { horizontal: 'left', vertical: 'middle' };
       
       // Amount + Currency
-      const amount = parseFloat((good['AMOUNT'] || '0').replace(',', '.'));
+      const amount = parseNumber(good['AMOUNT']);
       const currency = good['CURRENCY'] || 'EUR';
       const amountCell = dataRow.getCell(5);
       amountCell.value = `${amount.toFixed(2)} ${currency}`;
@@ -366,7 +388,7 @@ class ExcelExportService {
     
     let discountedAmount = totalAmount;
     const discountEnabled = formData['Discount Enabled'];
-    const discountOrani = parseFloat(formData['Discount'] || 0);
+    const discountOrani = parseNumber(formData['Discount']);
     
     if (discountEnabled && discountOrani > 0) {
       const discountRow = worksheet.getRow(currentRow);
@@ -401,7 +423,7 @@ class ExcelExportService {
     // ============================================================================
     
     const kdvEnabled = formData['KDV Ekle Enabled'];
-    const kdvOrani = parseFloat(formData['KDV'] || 0);
+    const kdvOrani = parseNumber(formData['KDV']);
     
     if (kdvEnabled && kdvOrani > 0) {
       const kdvRow = worksheet.getRow(currentRow);
@@ -1076,7 +1098,7 @@ SWIFT: TEBUTRIS 032`
       fabricCell.alignment = { horizontal: 'left', vertical: 'middle' };
       
       // Quantity (Meters)
-      const quantity = parseFloat((item['QUANTITY (METERS)'] || '0').replace(',', '.'));
+      const quantity = parseNumber(item['QUANTITY (METERS)']);
       const quantityCell = dataRow.getCell(3);
       quantityCell.value = quantity;
       quantityCell.numFmt = '#,##0.00';
@@ -1097,7 +1119,7 @@ SWIFT: TEBUTRIS 032`
       lotCell.alignment = { horizontal: 'left', vertical: 'middle' };
       
       // Gross Weight
-      const grossWeight = parseFloat((item['GROSS WEIGHT(KG)'] || '0').replace(',', '.'));
+      const grossWeight = parseNumber(item['GROSS WEIGHT(KG)']);
       const grossWeightCell = dataRow.getCell(6);
       grossWeightCell.value = grossWeight;
       grossWeightCell.numFmt = '#,##0.00';
@@ -1106,7 +1128,7 @@ SWIFT: TEBUTRIS 032`
       totalGrossWeight += grossWeight;
       
       // Net Weight
-      const netWeight = parseFloat((item['NET WEIGHT (KG)'] || '0').replace(',', '.'));
+      const netWeight = parseNumber(item['NET WEIGHT (KG)']);
       const netWeightCell = dataRow.getCell(7);
       netWeightCell.value = netWeight;
       netWeightCell.numFmt = '#,##0.00';
