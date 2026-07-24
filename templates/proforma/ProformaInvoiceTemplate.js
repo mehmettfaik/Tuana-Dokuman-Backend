@@ -579,7 +579,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
           if (textWidth > 195 && currentLine) {
             lineCount++;
             currentLine = word;
-            if (lineCount >= 2) break;
           } else {
             currentLine = testLine;
           }
@@ -951,13 +950,6 @@ class ProformaInvoiceTemplate extends BasePdfTemplate {
         currentY -= lineHeight;
         lineCount++;
         
-        // Maksimum 2 satır ile sınırla
-        if (lineCount >= 2) {
-          if (i < words.length - 1) {
-            currentLine += '...';
-          }
-          break;
-        }
       } else {
         currentLine = testLine;
       }
