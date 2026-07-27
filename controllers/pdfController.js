@@ -16,6 +16,7 @@ const DebitNoteTemplate = require('../templates/debit-note/DebitNoteTemplate');
 const OrderConfirmationTemplate = require('../templates/order-confirmation/OrderConfirmationTemplate');
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
+const PriceListTemplate = require('../templates/price-list/PriceListTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
@@ -293,6 +294,9 @@ exports.generatePDF = async (req, res) => {
     } else if (documentType === 'price-offer') {
       template = new PriceOfferTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_FIYAT_TEKLIFI' : 'TUANA_PRICE_OFFER';
+    } else if (documentType === 'price-list') {
+      template = new PriceListTemplate(pdfDoc, logoImage, validatedLanguage);
+      pdfFileName = validatedLanguage === 'tr' ? 'TUANA_FIYAT_LISTESI' : 'TUANA_PRICE_LIST';
     } else if (documentType === 'hangers-shipment') {
       template = new HangersShipmentTemplate(pdfDoc, logoImage, validatedLanguage);
       pdfFileName = validatedLanguage === 'tr' ? 'TUANA_ASKILI_SEVKIYAT' : 'TUANA_HANGERS_SHIPMENT';
@@ -330,6 +334,8 @@ exports.generatePDF = async (req, res) => {
       await template.createSiparis(formData, validatedLanguage);
     } else if (documentType === 'price-offer') {
       await template.createPriceOffer(formData, validatedLanguage);
+    } else if (documentType === 'price-list') {
+      await template.createPriceList(formData, validatedLanguage);
     } else if (documentType === 'hangers-shipment') {
       await template.generate(formData, validatedLanguage);
     } else if (documentType === 'quality-control') {
@@ -1385,6 +1391,74 @@ const generatePriceOffer = async (req, res) => {
 };
 
 exports.generatePriceOffer = generatePriceOffer;
+
+// ============================================================================
+// PRICE LIST PDF GENERATION
+// ============================================================================
+
+const generatePriceList = async (req, res) => {
+  try {
+    const { formData, language } = req.body;
+
+    if (!formData) {
+      return res.status(400).json({
+        error: 'formData is required',
+        message: 'Please provide form data'
+      });
+    }
+
+    // PRICE LIST NUMBER kontrolü
+    const priceListNumber = formData['PRICE LIST NUMBER'] || formData['priceListNumber'] || '';
+    if (!priceListNumber || priceListNumber.trim() === '') {
+      return res.status(400).json({
+        error: 'Validation failed',
+        message: 'PRICE LIST NUMBER is required' 
+      });
+    }
+
+    // PDF oluşturma
+    const pdfDoc = await PDFDocument.create();
+    pdfDoc.registerFontkit(fontkit);
+    
+    const LogoService = require('../services/logoService');
+    const logoImage = await LogoService.loadLogo(pdfDoc);
+
+    // Price List template'i oluştur
+    const template = new PriceListTemplate(pdfDoc, logoImage, language);
+    await template.initialize();
+
+    // Price List PDF'ini oluştur
+    await template.createPriceList(formData, language);
+
+    // PDF'i byte array olarak al
+    const pdfBytes = await pdfDoc.save();
+
+    let fileName;
+    if (language === 'tr') {
+      fileName = `fiyat-listesi-${priceListNumber}.pdf`;
+    } else {
+      fileName = `price-list-${priceListNumber}.pdf`;
+    }
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Length', pdfBytes.length);
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.send(Buffer.from(pdfBytes));
+
+  } catch (error) {
+    console.error('Price List PDF generation error:', error);
+    res.status(500).json({
+      error: 'PDF generation failed',
+      message: 'Price List PDF generation failed', 
+      details: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
+
+exports.generatePriceList = generatePriceList;
 
 // ============================================================================
 // PRODUCT LABEL PDF GENERATION

@@ -14,6 +14,7 @@ const DebitNoteTemplate = require('../templates/debit-note/DebitNoteTemplate');
 const OrderConfirmationTemplate = require('../templates/order-confirmation/OrderConfirmationTemplate');
 const SiparisTemplate = require('../templates/siparis/SiparisTemplate');
 const PriceOfferTemplate = require('../templates/price-offer/PriceOfferTemplate');
+const PriceListTemplate = require('../templates/price-list/PriceListTemplate');
 const ProductLabelTemplate = require('../templates/product-label/ProductLabelTemplate');
 const HangersShipmentTemplate = require('../templates/hangers-shipment/HangersShipmentTemplate');
 const QualityControlTemplate = require('../templates/quality-control/QualityControlTemplate');
@@ -143,6 +144,14 @@ class PdfGeneratorService {
             pdfFileName = 'TUANA_FIYAT_TEKLIFI';
           } else {
             pdfFileName = 'TUANA_PRICE_OFFER';
+          }
+          break;
+        case 'price-list':
+          template = new PriceListTemplate(pdfDoc, logoImage, validatedLanguage);
+          if (validatedLanguage === 'tr') {
+            pdfFileName = 'TUANA_FIYAT_LISTESI';
+          } else {
+            pdfFileName = 'TUANA_PRICE_LIST';
           }
           break;
         case 'product-label':

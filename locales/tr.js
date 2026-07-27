@@ -35,6 +35,16 @@ module.exports = {
   certifiable: 'SERTİFİKA',
   validityOfPriceOffer: 'FİYAT TEKLİFİNİN GEÇERLİLİĞİ: DÜZENLEME TARİHİNDEN İTİBAREN 60 GÜN',
   
+  // Price List specific
+  priceList: 'FİYAT LİSTESİ',
+  priceListNumber: 'FİYAT LİSTESİ NUMARASI',
+  priceListDate: 'TARİH',
+  validityText: 'AŞAĞIDAKİ FİYATLARIN GEÇERLİLİK SÜRESİ',
+  validityFromIssueDate: 'DÜZENLEME TARİHİNDEN İTİBAREN.',
+  article: 'ARTİKEL',
+  standardBulkMoq: 'STANDART TOPLU MOQ:',
+  personalizedSamplingMoq: 'KİŞİSEL NUMUNE MOQ:',
+  
   // Invoice specific
   invoice: 'FATURA',
   invoiceNumber: 'FATURA NUMARASI',

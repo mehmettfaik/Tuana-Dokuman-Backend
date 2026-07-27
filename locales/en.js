@@ -33,6 +33,16 @@ module.exports = {
   certifiable: 'CERTIFIABLE',
   validityOfPriceOffer: 'VALIDITY OF THE PRICE OFFER: 60 DAYS FROM THE ISSUE DATE',
   
+  // Price List specific
+  priceList: 'PRICE LIST',
+  priceListNumber: 'PRICE LIST NUMBER',
+  priceListDate: 'DATE',
+  validityText: 'THE VALIDITY OF THE FOLLOWING PRICES IS',
+  validityFromIssueDate: 'FROM THE ISSUE DATE.',
+  article: 'ARTICLE',
+  standardBulkMoq: 'STANDARD BULK MOQ:',
+  personalizedSamplingMoq: 'PERSONALIZED SAMPLING MOQ:',
+  
   // Invoice specific
   invoice: 'INVOICE',
   invoiceNumber: 'INVOICE NUMBER',

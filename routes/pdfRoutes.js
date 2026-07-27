@@ -147,6 +147,9 @@ router.post('/generate-siparis', pdfController.generateSiparis);
 // Price Offer PDF oluşturma
 router.post('/generate-price-offer', pdfController.generatePriceOffer);
 
+// Price List PDF oluşturma
+router.post('/generate-price-list', pdfController.generatePriceList);
+
 // Product Label PDF oluşturma
 router.post('/generate-product-label', pdfController.generateProductLabel);
 
