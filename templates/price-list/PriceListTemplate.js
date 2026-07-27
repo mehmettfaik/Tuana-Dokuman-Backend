@@ -713,14 +713,40 @@ class PriceListTemplate extends BasePdfTemplate {
 
     let footerY = y;
     paymentShippingDetails.forEach(info => {
-      page.drawText(info, {
-        x: 55,
-        y: footerY,
-        size: 8,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      footerY -= 12;
+      if (typeof info === 'string') {
+        const heightUsed = this.drawWrappedAddress(page, info, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 150,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      } else {
+        const labelStr = info.label;
+        page.drawText(labelStr, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        
+        const labelWidth = this.font.widthOfTextAtSize(labelStr + ' ', 8);
+        
+        const heightUsed = this.drawWrappedAddress(page, info.value, {
+          x: 55 + labelWidth,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 155 - labelWidth,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      }
     });
 
     // Signature ve Stamp bölümleri
@@ -808,8 +834,16 @@ class PriceListTemplate extends BasePdfTemplate {
     // PAYMENT TERMS
     const paymentTermsValue = formData.paymentTerms || formData['Payment Terms'] || '';
     if (paymentTermsValue.trim()) {
-      const label = this.language === 'tr' ? 'ODEME KOSULLARI:' : 'PAYMENT TERMS:';
-      fields.push(`${label} ${paymentTermsValue.trim()}`);
+      let translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue, this.language);
+      if (translatedPaymentTerms === paymentTermsValue) {
+         translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue.trim().toUpperCase(), this.language);
+      }
+      if (translatedPaymentTerms === paymentTermsValue.trim().toUpperCase()) {
+         translatedPaymentTerms = paymentTermsValue.toUpperCase();
+      }
+
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
     }
 
     // TRANSPORT TYPE

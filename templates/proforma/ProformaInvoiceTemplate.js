@@ -1260,14 +1260,40 @@ SWIFT: TEBUTRIS 032`
 
     let footerY = y;
     footerInfo.forEach(info => {
-      page.drawText(info, {
-        x: 55,
-        y: footerY,
-        size: 8,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      footerY -= 12;
+      if (typeof info === 'string') {
+        const heightUsed = this.drawWrappedAddress(page, info, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 150,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      } else {
+        const labelStr = info.label;
+        page.drawText(labelStr, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        
+        const labelWidth = this.font.widthOfTextAtSize(labelStr + ' ', 8);
+        
+        const heightUsed = this.drawWrappedAddress(page, info.value, {
+          x: 55 + labelWidth,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 155 - labelWidth,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      }
     });
 
     // Signature ve Stamp bölümleri
@@ -1352,51 +1378,59 @@ SWIFT: TEBUTRIS 032`
     // PAYMENT TERMS
     const paymentTermsValue = formData['Payment Terms'] || formData.paymentTerms || '';
     if (paymentTermsValue.trim()) {
-      const translatedPaymentTerms = this.languageService.getText('paymentTermsValues', this.language)?.[paymentTermsValue] || paymentTermsValue;
+      let translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue, this.language);
+      
+      if (translatedPaymentTerms === paymentTermsValue) {
+         translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue.trim().toUpperCase(), this.language);
+      }
+      if (translatedPaymentTerms === paymentTermsValue.trim().toUpperCase()) {
+         translatedPaymentTerms = paymentTermsValue.toUpperCase();
+      }
+
       const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
-      fields.push(`${paymentTermsLabel}: ${translatedPaymentTerms}`);
+      fields.push({ label: `${paymentTermsLabel}:`, value: translatedPaymentTerms });
     }
 
     // TRANSPORT TYPE
     const transportTypeValue = formData['Transport Type'] || formData.transportType || '';
     if (transportTypeValue.trim()) {
       const transportTypeLabel = this.languageService.getText('transportType', this.language);
-      fields.push(`${transportTypeLabel}: ${transportTypeValue}`);
+      fields.push({ label: `${transportTypeLabel}:`, value: transportTypeValue });
     }
 
     // COUNTRY OF ORIGIN
     const countryOfOriginValue = formData['Country of Origin'] || formData.countryOfOrigin || '';
     if (countryOfOriginValue.trim()) {
       const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
-      fields.push(`${countryOfOriginLabel}: ${countryOfOriginValue}`);
+      fields.push({ label: `${countryOfOriginLabel}:`, value: countryOfOriginValue });
     }
 
     // GROSS WEIGHT
     const grossWeightValue = formData['Gross Weight'] || formData.grossWeight || '';
     if (grossWeightValue.trim()) {
       const grossWeightLabel = this.languageService.getText('grossWeight', this.language);
-      fields.push(`${grossWeightLabel}: ${grossWeightValue}`);
+      fields.push({ label: `${grossWeightLabel}:`, value: grossWeightValue });
     }
 
     // NET WEIGHT
     const netWeightValue = formData['Net Weight'] || formData.netWeight || '';
     if (netWeightValue.trim()) {
       const netWeightLabel = this.languageService.getText('netWeight', this.language);
-      fields.push(`${netWeightLabel}: ${netWeightValue}`);
+      fields.push({ label: `${netWeightLabel}:`, value: netWeightValue });
     }
 
     // ROLLS
     const rollsValue = formData['Rolls'] || formData.rolls || '';
     if (rollsValue.trim()) {
       const rollsLabel = this.languageService.getText('rolls', this.language);
-      fields.push(`${rollsLabel}: ${rollsValue}`);
+      fields.push({ label: `${rollsLabel}:`, value: rollsValue });
     }
 
     // LEAD TIME
     const leadTimeValue = formData['Lead Time'] || formData.leadTime || '';
     if (leadTimeValue.trim()) {
       const leadTimeLabel = this.languageService.getText('leadTime', this.language);
-      fields.push(`${leadTimeLabel}: ${leadTimeValue}`);
+      fields.push({ label: `${leadTimeLabel}:`, value: leadTimeValue });
     }
 
     return fields;

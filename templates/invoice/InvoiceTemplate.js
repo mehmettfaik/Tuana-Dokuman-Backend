@@ -1301,14 +1301,40 @@ SWIFT: TEBUTRIS 032`
     
     let footerY = y;
     paymentShippingDetails.forEach(info => {
-      page.drawText(info, {
-        x: 55,
-        y: footerY,
-        size: 8,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      footerY -= 12;
+      if (typeof info === 'string') {
+        const heightUsed = this.drawWrappedAddress(page, info, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 150,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      } else {
+        const labelStr = info.label;
+        page.drawText(labelStr, {
+          x: 55,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        
+        const labelWidth = this.font.widthOfTextAtSize(labelStr + ' ', 8);
+        
+        const heightUsed = this.drawWrappedAddress(page, info.value, {
+          x: 55 + labelWidth,
+          y: footerY,
+          size: 8,
+          font: this.font,
+          color: rgb(0, 0, 0),
+          maxWidth: 155 - labelWidth,
+          lineHeight: 12
+        });
+        footerY -= heightUsed;
+      }
     });
 
     // Signature ve Stamp bölümleri
@@ -1395,50 +1421,59 @@ SWIFT: TEBUTRIS 032`
     // PAYMENT TERMS - Multiple field name support
     const paymentTermsValue = formData.paymentTerms || formData['Payment Terms'] || '';
     if (paymentTermsValue.trim()) {
-      const label = this.language === 'tr' ? 'ÖDEME KOŞULLARI:' : 'PAYMENT TERMS:';
-      fields.push(`${label} ${paymentTermsValue.trim()}`);
+      let translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue, this.language);
+      
+      if (translatedPaymentTerms === paymentTermsValue) {
+         translatedPaymentTerms = this.languageService.getPaymentTermsTranslation(paymentTermsValue.trim().toUpperCase(), this.language);
+      }
+      if (translatedPaymentTerms === paymentTermsValue.trim().toUpperCase()) {
+         translatedPaymentTerms = paymentTermsValue.toUpperCase();
+      }
+
+      const paymentTermsLabel = this.languageService.getText('paymentTerms', this.language);
+      fields.push({ label: `${paymentTermsLabel}:`, value: translatedPaymentTerms });
     }
 
     // TRANSPORT TYPE - Multiple field name support
     const transportTypeValue = formData.transportType || formData['Transport Type'] || '';
     if (transportTypeValue.trim()) {
-      const label = this.language === 'tr' ? 'TAŞIMA TİPİ:' : 'TRANSPORT TYPE:';
-      fields.push(`${label} ${transportTypeValue.trim()}`);
+      const transportTypeLabel = this.languageService.getText('transportType', this.language);
+      fields.push({ label: `${transportTypeLabel}:`, value: transportTypeValue });
     }
 
     // COUNTRY OF ORIGIN - Multiple field name support
     const countryOfOriginValue = formData.countryOfOrigin || formData['Country of Origin'] || '';
     if (countryOfOriginValue.trim()) {
-      const label = this.language === 'tr' ? 'MENŞE ÜLKESİ:' : 'COUNTRY OF ORIGIN:';
-      fields.push(`${label} ${countryOfOriginValue.trim()}`);
+      const countryOfOriginLabel = this.languageService.getText('countryOfOrigin', this.language);
+      fields.push({ label: `${countryOfOriginLabel}:`, value: countryOfOriginValue });
     }
 
     // GROSS WEIGHT - Multiple field name support
     const grossWeightValue = formData.grossWeight || formData['Gross Weight'] || '';
     if (grossWeightValue.trim()) {
-      const label = this.language === 'tr' ? 'BRÜT AĞIRLIK:' : 'GROSS WEIGHT:';
-      fields.push(`${label} ${grossWeightValue.trim()}`);
+      const grossWeightLabel = this.languageService.getText('grossWeight', this.language);
+      fields.push({ label: `${grossWeightLabel}:`, value: grossWeightValue });
     }
 
     // NET WEIGHT - Multiple field name support
     const netWeightValue = formData.netWeight || formData['Net Weight'] || '';
     if (netWeightValue.trim()) {
-      const label = this.language === 'tr' ? 'NET AĞIRLIK:' : 'NET WEIGHT:';
-      fields.push(`${label} ${netWeightValue.trim()}`);
+      const netWeightLabel = this.languageService.getText('netWeight', this.language);
+      fields.push({ label: `${netWeightLabel}:`, value: netWeightValue });
     }
 
     // ROLLS - Multiple field name support
     const rollsValue = formData.rolls || formData['Rolls'] || '';
     if (rollsValue.trim()) {
-      const label = this.language === 'tr' ? 'TOP SAYISI:' : 'ROLLS:';
-      fields.push(`${label} ${rollsValue.trim()}`);
+      const rollsLabel = this.languageService.getText('rolls', this.language);
+      fields.push({ label: `${rollsLabel}:`, value: rollsValue });
     }
 
     // LEAD TIME - Multiple field name support
     const leadTimeValue = formData.leadTime || formData['Lead Time'] || '';
     if (leadTimeValue.trim()) {
-      const label = this.language === 'tr' ? 'TESLİM SÜRESİ:' : 'LEAD TIME:';
-      fields.push(`${label} ${leadTimeValue.trim()}`);
+      const leadTimeLabel = this.languageService.getText('leadTime', this.language);
+      fields.push({ label: `${leadTimeLabel}:`, value: leadTimeValue });
     }
 
     return fields;
