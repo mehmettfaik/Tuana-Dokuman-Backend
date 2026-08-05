@@ -557,7 +557,7 @@ class PriceListTemplate extends BasePdfTemplate {
     priceTiers.forEach((tier) => {
       const tierLabel = tier.range || '';
       this.drawSafeText(page, tierLabel, {
-        x: pageWidth - 200,
+        x: pageWidth - 170,
         y: rightY,
         size: 7,
         font: this.font,
@@ -569,7 +569,7 @@ class PriceListTemplate extends BasePdfTemplate {
       const currency = article['CURRENCY'] || article.currency || 'EUR';
       const currencySymbol = currency === 'USD' ? '$' : currency === 'TRY' ? 'TL' : '€';
       this.drawSafeText(page, `${tierPrice}${currencySymbol}`, {
-        x: pageWidth - 125,
+        x: pageWidth - 105,
         y: rightY,
         size: 7,
         font: this.font,
