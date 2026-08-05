@@ -1,34 +1,40 @@
 const fs = require('fs');
 const path = require('path');
 
+// Global cache for font bytes (Buffer)
+const fontBufferCache = {};
+
 class FontService {
   constructor() {
     this.fontsPath = path.join(__dirname, '../assets/fonts');
-    this.loadedFonts = {};
+  }
+
+  // Helper to read and cache buffer
+  _getFontBuffer(fontFileName, relativePath = '') {
+    const cacheKey = `custom-${fontFileName}`;
+    if (fontBufferCache[cacheKey]) {
+      return fontBufferCache[cacheKey];
+    }
+    
+    const fontPath = relativePath 
+      ? path.join(this.fontsPath, relativePath)
+      : path.join(this.fontsPath, fontFileName);
+      
+    if (fs.existsSync(fontPath)) {
+      const fontBytes = fs.readFileSync(fontPath);
+      fontBufferCache[cacheKey] = fontBytes;
+      return fontBytes;
+    }
+    return null;
   }
 
   // Özel font dosyası yükle (TTF/OTF)
   async loadCustomFont(pdfDoc, fontFileName) {
     try {
-      // Cache'den kontrol et
-      const cacheKey = `custom-${fontFileName}`;
-      if (this.loadedFonts[cacheKey]) {
-        return this.loadedFonts[cacheKey];
+      const fontBytes = this._getFontBuffer(fontFileName);
+      if (fontBytes) {
+        return await pdfDoc.embedFont(fontBytes);
       }
-
-      // Font dosyasının yolunu oluştur
-      const fontPath = path.join(this.fontsPath, fontFileName);
-      
-      // Dosya var mı kontrol et
-      if (fs.existsSync(fontPath)) {
-        const fontBytes = fs.readFileSync(fontPath);
-        const customFont = await pdfDoc.embedFont(fontBytes);
-        
-        // Cache'e kaydet
-        this.loadedFonts[cacheKey] = customFont;
-        return customFont;
-      }
-
       return null;
     } catch (error) {
       return null;
@@ -38,24 +44,10 @@ class FontService {
   // Helvetica Neue UltraLight (Açık) font dosyasını yükle
   async loadHelveticaNeueUltraLight(pdfDoc) {
     try {
-      // Cache'den kontrol et
-      if (this.loadedFonts['helvetica-neue-ultralight']) {
-        return this.loadedFonts['helvetica-neue-ultralight'];
+      const fontBytes = this._getFontBuffer('HelveticaNeueUltraLight.otf', 'helvetica-neue-5/HelveticaNeueUltraLight.otf');
+      if (fontBytes) {
+        return await pdfDoc.embedFont(fontBytes);
       }
-
-      // Önce kendi fonts klasörümüzden dene
-      const fontPath = path.join(this.fontsPath, 'helvetica-neue-5/HelveticaNeueUltraLight.otf');
-      
-      // TTF dosyası varsa onu kullan
-      if (fs.existsSync(fontPath)) {
-        const fontBytes = fs.readFileSync(fontPath);
-        const customFont = await pdfDoc.embedFont(fontBytes);
-        
-        // Cache'e kaydet
-        this.loadedFonts['helvetica-neue-ultralight'] = customFont;
-        return customFont;
-      }
-
       return null;
     } catch (error) {
       return null;
@@ -65,24 +57,10 @@ class FontService {
   // Helvetica Neue UltraLight Italic (Açık İtalik) font dosyasını yükle
   async loadHelveticaNeueUltraLightItalic(pdfDoc) {
     try {
-      // Cache'den kontrol et
-      if (this.loadedFonts['helvetica-neue-ultralight-italic']) {
-        return this.loadedFonts['helvetica-neue-ultralight-italic'];
+      const fontBytes = this._getFontBuffer('HelveticaNeueUltraLightItalic.otf', 'helvetica-neue-5/HelveticaNeueUltraLightItalic.otf');
+      if (fontBytes) {
+        return await pdfDoc.embedFont(fontBytes);
       }
-
-      // Önce kendi fonts klasörümüzden dene
-      const fontPath = path.join(this.fontsPath, 'helvetica-neue-5/HelveticaNeueUltraLightItalic.otf');
-      
-      // TTF dosyası varsa onu kullan
-      if (fs.existsSync(fontPath)) {
-        const fontBytes = fs.readFileSync(fontPath);
-        const customFont = await pdfDoc.embedFont(fontBytes);
-        
-        // Cache'e kaydet
-        this.loadedFonts['helvetica-neue-ultralight-italic'] = customFont;
-        return customFont;
-      }
-
       return null;
     } catch (error) {
       return null;
@@ -92,24 +70,10 @@ class FontService {
   // Helvetica Neue Light Italic font dosyasını yükle
   async loadHelveticaNeueLightItalic(pdfDoc) {
     try {
-      // Cache'den kontrol et
-      if (this.loadedFonts['helvetica-neue-light-italic']) {
-        return this.loadedFonts['helvetica-neue-light-italic'];
+      const fontBytes = this._getFontBuffer('HelveticaNeueLightItalic.otf', 'helvetica-neue-5/HelveticaNeueLightItalic.otf');
+      if (fontBytes) {
+        return await pdfDoc.embedFont(fontBytes);
       }
-
-      // Önce kendi fonts klasörümüzden dene
-      const fontPath = path.join(this.fontsPath, 'helvetica-neue-5/HelveticaNeueLightItalic.otf');
-      
-      // OTF dosyası varsa onu kullan
-      if (fs.existsSync(fontPath)) {
-        const fontBytes = fs.readFileSync(fontPath);
-        const customFont = await pdfDoc.embedFont(fontBytes);
-        
-        // Cache'e kaydet
-        this.loadedFonts['helvetica-neue-light-italic'] = customFont;
-        return customFont;
-      }
-
       return null;
     } catch (error) {
       return null;
@@ -131,11 +95,9 @@ class FontService {
 
   // Helvetica Neue fontlarının durumunu logla
   async logFontStatus(pdfDoc) {
-    const availability = this.checkFontAvailability();
-
     try {
-      const ultraLight = await this.loadHelveticaNeueUltraLight(pdfDoc);
-      const ultraLightItalic = await this.loadHelveticaNeueUltraLightItalic(pdfDoc);
+      await this.loadHelveticaNeueUltraLight(pdfDoc);
+      await this.loadHelveticaNeueUltraLightItalic(pdfDoc);
     } catch (error) {
       // Silently fail
     }

@@ -1,41 +1,29 @@
 const express = require('express');
 const router = express.Router();
-const pdfController = require('../controllers/pdfController');
 const { authMiddleware } = require('../middleware/auth');
+
+const JobController = require('../controllers/pdf/JobController');
+const LegacyController = require('../controllers/pdf/LegacyController');
+const InvoiceController = require('../controllers/pdf/InvoiceController');
+const PackingListController = require('../controllers/pdf/PackingListController');
+const TechnicalController = require('../controllers/pdf/TechnicalController');
+const CommercialController = require('../controllers/pdf/CommercialController');
+const LabelController = require('../controllers/pdf/LabelController');
+const UtilityController = require('../controllers/pdf/UtilityController');
 
 // Test endpoint (public - authentication gerektirmez)
 router.get('/', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'PDF API is working',
     endpoints: [
-      // New Queue-based endpoints
-      { path: '/api/pdf/start', method: 'POST', description: 'Start PDF generation (returns jobId)' },
+      {
+        path: '/api/pdf/start',
+        method: 'POST',
+        description: 'Start PDF generation (returns jobId)',
+      },
       { path: '/api/pdf/status/:id', method: 'GET', description: 'Check PDF generation status' },
       { path: '/api/pdf/download/:id', method: 'GET', description: 'Download generated PDF' },
-      
-      // Legacy endpoints (for backward compatibility)
-      { path: '/api/pdf/generate', method: 'POST', description: 'Generate PDF (legacy)' },
-      { path: '/api/pdf/generate-proforma', method: 'POST', description: 'Generate Proforma Invoice PDF (legacy)' },
-      { path: '/api/pdf/generate-proforma-excel', method: 'POST', description: 'Generate Proforma Invoice Excel' },
-      { path: '/api/pdf/generate-invoice', method: 'POST', description: 'Generate Invoice PDF (legacy)' },
-      { path: '/api/pdf/generate-invoice-excel', method: 'POST', description: 'Generate Invoice Excel' },
-      { path: '/api/pdf/generate-packing-list', method: 'POST', description: 'Generate Packing List PDF (legacy)' },
-      { path: '/api/pdf/generate-packing-list-excel', method: 'POST', description: 'Generate Packing List Excel' },
-      { path: '/api/pdf/generate-technical', method: 'POST', description: 'Generate Technical Sheet PDF (legacy)' },
-      { path: '/api/pdf/generate-credit-note', method: 'POST', description: 'Generate Credit Note PDF (legacy)' },
-      { path: '/api/pdf/generate-debit-note', method: 'POST', description: 'Generate Debit Note PDF (legacy)' },
-      { path: '/api/pdf/generate-order-confirmation', method: 'POST', description: 'Generate Order Confirmation PDF (legacy)' },
-      { path: '/api/pdf/generate-siparis', method: 'POST', description: 'Generate Sipariş PDF (legacy)' },
-      { path: '/api/pdf/generate-product-label', method: 'POST', description: 'Generate Product Label PDF (legacy)' },
-      { path: '/api/pdf/hangers-shipment', method: 'POST', description: 'Generate Hangers Shipment PDF' },
-      { path: '/api/pdf/quality-control', method: 'POST', description: 'Generate Quality Control Report PDF' },
-      { path: '/api/pdf/ceki-listesi', method: 'POST', description: 'Generate Çeki Listesi PDF' },
-      { path: '/api/pdf/ceki-listesi-labels', method: 'POST', description: 'Generate Çeki Listesi Labels PDF' },
-      
-      // Utility endpoints
-      { path: '/api/pdf/washing-icons', method: 'GET', description: 'Get available washing icons' },
-      { path: '/api/pdf/fonts', method: 'GET', description: 'Check font status' }
-    ]
+    ],
   });
 });
 
@@ -47,13 +35,13 @@ router.get('/', (req, res) => {
 router.use(authMiddleware);
 
 // Start PDF generation
-router.post('/start', pdfController.startPdfGeneration);
+router.post('/start', JobController.startPdfGeneration);
 
 // Check job status
-router.get('/status/:id', pdfController.checkJobStatus);
+router.get('/status/:id', JobController.checkJobStatus);
 
 // Download PDF
-router.get('/download/:id', pdfController.downloadPdf);
+router.get('/download/:id', JobController.downloadPdf);
 
 // Debug endpoint - List all jobs
 router.get('/jobs', (req, res) => {
@@ -61,15 +49,15 @@ router.get('/jobs', (req, res) => {
   const jobs = jobManager.getAllJobs();
   res.json({
     totalJobs: jobs.length,
-    jobs: jobs.map(job => ({
+    jobs: jobs.map((job) => ({
       id: job.id,
       status: job.status,
       docType: job.docType,
       createdAt: job.createdAt,
       updatedAt: job.updatedAt,
       downloadUrl: job.downloadUrl,
-      error: job.error
-    }))
+      error: job.error,
+    })),
   });
 });
 
@@ -83,13 +71,13 @@ router.get('/health', (req, res) => {
       uptime: process.uptime(),
       memory: process.memoryUsage(),
       totalJobs: jobManager.getAllJobs().length,
-      environment: process.env.NODE_ENV || 'development'
+      environment: process.env.NODE_ENV || 'development',
     });
   } catch (error) {
     res.status(500).json({
       status: 'unhealthy',
       error: error.message,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
   }
 });
@@ -98,80 +86,40 @@ router.get('/health', (req, res) => {
 // LEGACY ENDPOINTS (for backward compatibility)
 // ============================================================================
 
-// PDF generate endpoints
-// router.get('/generate', (req, res) => {
-//   res.json({ 
-//     message: 'PDF Generate endpoint is working',
-//     usage: 'Send a POST request with docType and formData',
-//   });
-// });
+router.post('/generate', LegacyController.generatePDF);
+router.post('/generatePDF', LegacyController.generatePDF);
 
-router.post('/generate', pdfController.generatePDF);
+// Invoice Group
+router.post('/generate-proforma', InvoiceController.generateProformaInvoice);
+router.post('/generate-proforma-excel', InvoiceController.generateProformaExcel);
+router.post('/generate-invoice', InvoiceController.generateInvoice);
+router.post('/generate-invoice-excel', InvoiceController.generateInvoiceExcel);
 
-// Legacy endpoint for old frontend compatibility
-router.post('/generatePDF', pdfController.generatePDF);
+// Packing List Group
+router.post('/generate-packing-list', PackingListController.generatePackingList);
+router.post('/generate-packing-list-excel', PackingListController.generatePackingListExcel);
+router.post('/generate-packing-list-ocr', PackingListController.generatePackingListWithOcr);
+router.post('/ceki-listesi', PackingListController.generateCekiListesi);
+router.post('/ceki-listesi-labels', PackingListController.generateCekiListesiLabels);
 
-// Proforma Invoice specific endpoint
-router.post('/generate-proforma', pdfController.generateProformaInvoice);
+// Technical Group
+router.post('/generate-technical', TechnicalController.generateTechnicalSheet);
+router.post('/quality-control', TechnicalController.generateQualityControl);
 
-// Proforma Invoice Excel export endpoint
-router.post('/generate-proforma-excel', pdfController.generateProformaExcel);
+// Commercial Group
+router.post('/generate-credit-note', CommercialController.generateCreditNote);
+router.post('/generate-debit-note', CommercialController.generateDebitNote);
+router.post('/generate-order-confirmation', CommercialController.generateOrderConfirmation);
+router.post('/generate-siparis', CommercialController.generateSiparis);
+router.post('/generate-price-offer', CommercialController.generatePriceOffer);
+router.post('/generate-price-list', CommercialController.generatePriceList);
 
-// Invoice specific endpoint
-router.post('/generate-invoice', pdfController.generateInvoice);
+// Label Group
+router.post('/generate-product-label', LabelController.generateProductLabel);
+router.post('/hangers-shipment', LabelController.generateHangersShipment);
 
-// Invoice Excel export endpoint
-router.post('/generate-invoice-excel', pdfController.generateInvoiceExcel);
-
-// Packing List specific endpoint
-router.post('/generate-packing-list', pdfController.generatePackingList);
-
-// Packing List Excel export endpoint
-router.post('/generate-packing-list-excel', pdfController.generatePackingListExcel);
-
-// Technical Sheet specific endpoint  
-router.post('/generate-technical', pdfController.generateTechnicalSheet);
-
-// Credit Note specific endpoint
-router.post('/generate-credit-note', pdfController.generateCreditNote);
-
-// Debit Note specific endpoint
-router.post('/generate-debit-note', pdfController.generateDebitNote);
-
-// Order Confirmation specific endpoint
-router.post('/generate-order-confirmation', pdfController.generateOrderConfirmation);
-
-// Sipariş PDF oluşturma
-router.post('/generate-siparis', pdfController.generateSiparis);
-
-// Price Offer PDF oluşturma
-router.post('/generate-price-offer', pdfController.generatePriceOffer);
-
-// Price List PDF oluşturma
-router.post('/generate-price-list', pdfController.generatePriceList);
-
-// Product Label PDF oluşturma
-router.post('/generate-product-label', pdfController.generateProductLabel);
-
-// Hangers Shipment PDF oluşturma
-router.post('/hangers-shipment', pdfController.generateHangersShipment);
-
-// Quality Control PDF oluşturma
-router.post('/quality-control', pdfController.generateQualityControl);
-
-// Çeki Listesi PDF oluşturma
-router.post('/ceki-listesi', pdfController.generateCekiListesi);
-
-// Çeki Listesi Etiketleri PDF oluşturma
-router.post('/ceki-listesi-labels', pdfController.generateCekiListesiLabels);
-
-// OCR-based Packing List PDF oluşturma
-router.post('/generate-packing-list-ocr', pdfController.generatePackingListWithOcr);
-
-// Washing icons endpoint
-router.get('/washing-icons', pdfController.getWashingIcons);
-
-// Font status endpoint
-router.get('/fonts', pdfController.getFontStatus);
+// Utility Group
+router.get('/washing-icons', UtilityController.getWashingIcons);
+router.get('/fonts', UtilityController.getFontStatus);
 
 module.exports = router;

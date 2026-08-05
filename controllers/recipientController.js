@@ -36,6 +36,29 @@ class RecipientController {
     }
   }
 
+  // Sayfalamalı recipients getir
+  async getPaginatedRecipients(req, res) {
+    try {
+      const limit = parseInt(req.query.limit) || 50;
+      const cursor = req.query.cursor || null;
+      
+      const result = await this.recipientService.getPaginatedRecipients(limit, cursor);
+      res.json({
+        success: true,
+        data: result.data,
+        nextCursor: result.nextCursor,
+        hasMore: result.hasMore,
+        count: result.data.length
+      });
+    } catch (error) {
+      console.error('Error getting paginated recipients:', error);
+      res.status(500).json({
+        success: false,
+        error: { message: 'Internal server error', code: 'INTERNAL_ERROR' }
+      });
+    }
+  }
+
   // ID'ye göre recipient getir
   async getRecipientById(req, res) {
     try {

@@ -3,7 +3,23 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
+const logger = require('./utils/logger');
 const { initializeFirebase } = require('./config/firebase');
+
+// Override global console methods to use Winston logger
+const util = require('util');
+const safeFormat = (...args) => {
+  try {
+    return util.format.apply(null, args);
+  } catch (e) {
+    return '[Unformattable Log Object]';
+  }
+};
+console.log = function() { logger.info(safeFormat(...arguments)); };
+console.error = function() { logger.error(safeFormat(...arguments)); };
+console.warn = function() { logger.warn(safeFormat(...arguments)); };
 
 const app = express();
 
@@ -11,31 +27,51 @@ const app = express();
 try {
   initializeFirebase();
 } catch (error) {
-  console.error('Firebase initialization failed:', error.message);
+  logger.error('Firebase initialization failed: ' + error.message);
   // Firebase olmadan da çalışabilir, sadece recipients API'si çalışmaz
 }
 
-// CORS middleware - EN ÜSTTE OLMALI
+// Security middleware
+app.use(helmet());
+
+// CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS 
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'https://tuana-dokuman.vercel.app'];
+
 app.use(cors({
-  origin: '*', 
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      logger.warn(`CORS blocked origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With'],
   exposedHeaders: ['Content-Type', 'Content-Length'],
-  credentials: false,
-  preflightContinue: false,
+  credentials: true,
   optionsSuccessStatus: 200
 }));
 
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: { message: 'Too many requests from this IP, please try again after 15 minutes', code: 'RATE_LIMIT_EXCEEDED' } }
+});
+
+// Apply rate limiter to all routes except health check
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
-  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, Content-Length, X-Requested-With, Accept');
-  res.header('Access-Control-Expose-Headers', 'Content-Type, Content-Length');
-  
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(200);
+  if (req.path === '/api/health') {
+    return next();
   }
-  next();
+  return apiLimiter(req, res, next);
 });
 
 // Body parser middleware
@@ -60,6 +96,10 @@ const formRoutes = require('./routes/formRoutes');
 const excelRoutes = require('./routes/excelRoutes');
 const articleRoutes = require('./routes/articleRoutes');
 const announcementRoutes = require('./routes/announcementRoutes');
+
+// API Documentation (Swagger)
+const { swaggerUi, specs } = require('./utils/swagger');
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Test endpoints
 app.get('/', (req, res) => {
@@ -210,43 +250,59 @@ uploadRoutes.stack?.forEach((layer, index) => {
 // 404 handler
 app.use('*', (req, res) => {
   res.status(404).json({ 
-    error: 'Route not found',
-    path: req.originalUrl,
-    method: req.method,
-    timestamp: new Date().toISOString()
+    success: false,
+    error: {
+      message: 'Route not found',
+      code: 'NOT_FOUND',
+      path: req.originalUrl,
+      method: req.method
+    }
   });
 });
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error('Server error:', err);
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      success: false,
+      error: { message: 'CORS Error: Origin not allowed', code: 'CORS_ERROR' }
+    });
+  }
+  
+  logger.error('Server error: ' + err.message, { stack: err.stack });
   res.status(500).json({ 
-    error: 'Internal server error',
-    message: err.message,
-    stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
-    timestamp: new Date().toISOString()
+    success: false,
+    error: {
+      message: 'Internal server error',
+      code: 'INTERNAL_ERROR',
+      details: process.env.NODE_ENV === 'development' ? err.message : undefined
+    }
   });
 });
 
 // Graceful shutdown handling
 process.on('SIGTERM', () => {
-  console.log('SIGTERM received, shutting down gracefully');
+  logger.info('SIGTERM received, shutting down gracefully');
   process.exit(0);
 });
 
 process.on('SIGINT', () => {
-  console.log('SIGINT received, shutting down gracefully');
+  logger.info('SIGINT received, shutting down gracefully');
   process.exit(0);
 });
 
 // Start server
-const PORT = process.env.PORT || 3001;
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`PDF API available at http://localhost:${PORT}/api/pdf`);
-});
+if (require.main === module) {
+  const PORT = process.env.PORT || 3001;
+  const server = app.listen(PORT, '0.0.0.0', () => {
+    logger.info(`Server running on http://localhost:${PORT}`);
+    logger.info(`PDF API available at http://localhost:${PORT}/api/pdf`);
+  });
 
-// Handle server errors
-server.on('error', (error) => {
-  console.error('Server error:', error);
-});
+  // Handle server errors
+  server.on('error', (error) => {
+    logger.error('Server error: ' + error.message);
+  });
+}
+
+module.exports = app;

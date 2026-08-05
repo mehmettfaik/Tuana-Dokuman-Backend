@@ -1,19 +1,33 @@
 const fs = require('fs');
 const path = require('path');
 
+// Global cache for signature and stamp buffers
+let cachedSignatureBytes = null;
+let cachedStampBytes = null;
+let pathsInitialized = false;
+let globalSignaturePath = '';
+let globalStampPath = '';
+
 class SignatureService {
   constructor() {
-    // Önce optimize edilmiş dosyaları dene, yoksa orijinalleri kullan
-    const optimizedSignaturePath = path.join(__dirname, '../assets/optimized/signature/imza.png');
-    const optimizedStampPath = path.join(__dirname, '../assets/optimized/signature/kase.png');
+    if (!pathsInitialized) {
+      // Önce optimize edilmiş dosyaları dene, yoksa orijinalleri kullan
+      const optimizedSignaturePath = path.join(__dirname, '../assets/optimized/signature/imza.png');
+      const optimizedStampPath = path.join(__dirname, '../assets/optimized/signature/kase.png');
+      
+      globalSignaturePath = fs.existsSync(optimizedSignaturePath) 
+        ? optimizedSignaturePath 
+        : path.join(__dirname, '../assets/signature/imza.png');
+      
+      globalStampPath = fs.existsSync(optimizedStampPath) 
+        ? optimizedStampPath 
+        : path.join(__dirname, '../assets/signature/kase.png');
+        
+      pathsInitialized = true;
+    }
     
-    this.signaturePath = fs.existsSync(optimizedSignaturePath) 
-      ? optimizedSignaturePath 
-      : path.join(__dirname, '../assets/signature/imza.png');
-    
-    this.stampPath = fs.existsSync(optimizedStampPath) 
-      ? optimizedStampPath 
-      : path.join(__dirname, '../assets/signature/kase.png');
+    this.signaturePath = globalSignaturePath;
+    this.stampPath = globalStampPath;
   }
 
   /**
@@ -23,12 +37,15 @@ class SignatureService {
    */
   async loadSignature(pdfDoc) {
     try {
-      if (fs.existsSync(this.signaturePath)) {
-        const signatureBytes = fs.readFileSync(this.signaturePath);
-        return await pdfDoc.embedPng(signatureBytes);
+      if (!cachedSignatureBytes) {
+        if (fs.existsSync(this.signaturePath)) {
+          cachedSignatureBytes = fs.readFileSync(this.signaturePath);
+        } else {
+          console.log('Signature image not found at:', this.signaturePath);
+          return null;
+        }
       }
-      console.log('Signature image not found at:', this.signaturePath);
-      return null;
+      return await pdfDoc.embedPng(cachedSignatureBytes);
     } catch (error) {
       console.error('Error loading signature:', error);
       return null;
@@ -42,12 +59,15 @@ class SignatureService {
    */
   async loadStamp(pdfDoc) {
     try {
-      if (fs.existsSync(this.stampPath)) {
-        const stampBytes = fs.readFileSync(this.stampPath);
-        return await pdfDoc.embedPng(stampBytes);
+      if (!cachedStampBytes) {
+        if (fs.existsSync(this.stampPath)) {
+          cachedStampBytes = fs.readFileSync(this.stampPath);
+        } else {
+          console.log('Stamp image not found at:', this.stampPath);
+          return null;
+        }
       }
-      console.log('Stamp image not found at:', this.stampPath);
-      return null;
+      return await pdfDoc.embedPng(cachedStampBytes);
     } catch (error) {
       console.error('Error loading stamp:', error);
       return null;

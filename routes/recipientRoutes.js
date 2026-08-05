@@ -8,10 +8,45 @@ const recipientController = new RecipientController();
 // Tüm recipient route'larını authentication ile koru
 router.use(authMiddleware);
 
-// Tüm recipients'ları getir
-// GET /api/recipients
+/**
+ * @swagger
+ * /api/recipients:
+ *   get:
+ *     summary: Get all recipients
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: A list of recipients
+ */
 router.get('/', (req, res) => {
   recipientController.getAllRecipients(req, res);
+});
+
+/**
+ * @swagger
+ * /api/recipients/paginated:
+ *   get:
+ *     summary: Get paginated recipients
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *         description: Number of items to return
+ *       - in: query
+ *         name: cursor
+ *         schema:
+ *           type: string
+ *         description: The ID to start after
+ *     responses:
+ *       200:
+ *         description: A paginated list of recipients
+ */
+router.get('/paginated', (req, res) => {
+  recipientController.getPaginatedRecipients(req, res);
 });
 
 // Şirket adına göre arama (autocomplete)
