@@ -15,7 +15,7 @@ const options = {
         description: 'Development server',
       },
       {
-        url: 'http://ylwv5brm9qg471tkvmrjnlb0.152.53.179.32.sslip.io',
+        url: 'https://tuana-dokuman-backend.onrender.com',
         description: 'Production server',
       }
     ],
@@ -33,7 +33,7 @@ const options = {
     }]
   },
   // Look for swagger JSDoc in routes and controllers
-  apis: ['./routes/*.js', './controllers/*.js'],
+  apis: ['./routes/*.js', './controllers/*.js'], 
 };
 
 const specs = swaggerJsdoc(options);
