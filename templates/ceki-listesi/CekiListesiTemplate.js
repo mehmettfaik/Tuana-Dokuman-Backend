@@ -44,6 +44,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     let rows = rawData.rows || baseData.rows || [];
     let metreler = [];
     let lotlar = [];
+    let uretimNolar = [];
     let brutKgValues = [];
     let netKgValues = [];
     
@@ -51,6 +52,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
       rows.forEach(row => {
         metreler.push(row.metre || row.meter || row.METRE || '');
         lotlar.push(row.lot || row.LOT || '');
+        uretimNolar.push(row.uretimNo || row.URETIM_NO || '');
         brutKgValues.push(row.brutKg || row.BRUT_KG || '');
         netKgValues.push(row.netKg || row.NET_KG || '');
       });
@@ -59,6 +61,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
     if (metreler.length === 0) {
       metreler = baseData.metreler || baseData['METRELER'] || baseData.meters || [];
       lotlar = baseData.lotlar || baseData['LOTLAR'] || baseData.lots || [];
+      uretimNolar = baseData.uretimNolar || baseData['ÜRETİM_NOLAR'] || baseData.uretimNolar || [];
     }
     
     // String ise array'e çevir
@@ -67,6 +70,9 @@ class CekiListesiTemplate extends BasePdfTemplate {
     }
     if (typeof lotlar === 'string') {
       lotlar = lotlar.split(',').map(l => l.trim());
+    }
+    if (typeof uretimNolar === 'string') {
+      uretimNolar = uretimNolar.split(',').map(l => l.trim());
     }
     
     return {
@@ -86,10 +92,13 @@ class CekiListesiTemplate extends BasePdfTemplate {
       // Tablo verileri
       metreler: metreler,
       lotlar: lotlar,
+      uretimNolar: uretimNolar,
       brutKgValues: brutKgValues,
       netKgValues: netKgValues,
       
       // Görünürlük ayarları
+      showLot: baseData.showLot !== undefined ? baseData.showLot : true,
+      showUretimNo: baseData.showUretimNo !== undefined ? baseData.showUretimNo : false,
       showBrutKg: baseData.showBrutKg !== undefined ? baseData.showBrutKg : false,
       showNetKg: baseData.showNetKg !== undefined ? baseData.showNetKg : false
     };
@@ -380,19 +389,26 @@ class CekiListesiTemplate extends BasePdfTemplate {
   drawTopTables(page, pageWidth, y, productData, startIndex = 0, endIndex = 48) {
     let metreler = productData.metreler || [];
     let lotlar = productData.lotlar || [];
+    let uretimNolar = productData.uretimNolar || [];
     let brutKgValues = productData.brutKgValues || [];
     let netKgValues = productData.netKgValues || [];
+    const showLot = productData.showLot !== undefined ? productData.showLot : true;
+    const showUretimNo = productData.showUretimNo || false;
+    console.log("DEBUG: showUretimNo:", showUretimNo, "productData:", productData.showUretimNo);
+
     const showBrutKg = productData.showBrutKg || false;
     const showNetKg = productData.showNetKg || false;
     
     if (!Array.isArray(metreler)) metreler = [];
     if (!Array.isArray(lotlar)) lotlar = [];
+    if (!Array.isArray(uretimNolar)) uretimNolar = [];
     if (!Array.isArray(brutKgValues)) brutKgValues = [];
     if (!Array.isArray(netKgValues)) netKgValues = [];
 
     // Bu sayfa için gösterilecek ürün aralığını belirle
     const pageMetreler = metreler.slice(startIndex, endIndex);
     const pageLotlar = lotlar.slice(startIndex, endIndex);
+    const pageUretimNolar = uretimNolar.slice(startIndex, endIndex);
     const pageBrutKg = brutKgValues.slice(startIndex, endIndex);
     const pageNetKg = netKgValues.slice(startIndex, endIndex);
 
@@ -403,6 +419,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
         topNo: startIndex + i + 1,
         metre: pageMetreler[i] || '',
         lot: pageLotlar[i] || '',
+        uretimNo: pageUretimNolar[i] || '',
         brutKg: pageBrutKg[i] || '',
         netKg: pageNetKg[i] || ''
       });
@@ -415,6 +432,7 @@ class CekiListesiTemplate extends BasePdfTemplate {
         topNo: startIndex + i + 1,
         metre: pageMetreler[i] || '',
         lot: pageLotlar[i] || '',
+        uretimNo: pageUretimNolar[i] || '',
         brutKg: pageBrutKg[i] || '',
         netKg: pageNetKg[i] || ''
       });
@@ -427,65 +445,34 @@ class CekiListesiTemplate extends BasePdfTemplate {
     const availableWidth = pageWidth - leftMargin - rightMargin - tablePadding;
     const singleTableWidth = availableWidth / 2;
     
-    let colWidths = {};
-    
-    // showBrutKg veya showNetKg aktifse sütun genişliklerini ayarla
-    if (showBrutKg || showNetKg) {
-      if (showBrutKg && showNetKg) {
-        // 5 sütun - toplam genişliği singleTableWidth'e sığdır
-        const totalCols = 5;
-        const baseWidth = Math.floor(singleTableWidth / totalCols);
-        colWidths = { 
-          topNo: baseWidth, 
-          metre: baseWidth, 
-          lot: baseWidth, 
-          brutKg: baseWidth, 
-          netKg: baseWidth 
-        };
-      } else if (showBrutKg) {
-        // 4 sütun
-        const totalCols = 4;
-        const baseWidth = Math.floor(singleTableWidth / totalCols);
-        colWidths = { 
-          topNo: baseWidth, 
-          metre: baseWidth, 
-          lot: baseWidth, 
-          brutKg: baseWidth 
-        };
-      } else {
-        // 4 sütun (showNetKg)
-        const totalCols = 4;
-        const baseWidth = Math.floor(singleTableWidth / totalCols);
-        colWidths = { 
-          topNo: baseWidth, 
-          metre: baseWidth, 
-          lot: baseWidth, 
-          netKg: baseWidth 
-        };
-      }
-    } else {
-      // 3 sütun - varsayılan durum (TOP NO, METRE, LOT)
-      const totalCols = 3;
-      const baseWidth = Math.floor(singleTableWidth / totalCols);
-      colWidths = { 
-        topNo: baseWidth, 
-        metre: baseWidth, 
-        lot: baseWidth 
-      };
-    }
+    let totalCols = 2; // topNo and metre are always there
+    if (showLot) totalCols++;
+    if (showUretimNo) totalCols++;
+    if (showBrutKg) totalCols++;
+    if (showNetKg) totalCols++;
+
+    const baseWidth = Math.floor(singleTableWidth / totalCols);
+    let colWidths = {
+      topNo: baseWidth,
+      metre: baseWidth
+    };
+    if (showLot) colWidths.lot = baseWidth;
+    if (showUretimNo) colWidths.uretimNo = baseWidth;
+    if (showBrutKg) colWidths.brutKg = baseWidth;
+    if (showNetKg) colWidths.netKg = baseWidth;
     
     const rowHeight = 14;
     const headerHeight = 16;
 
     // Sol tablo
     const leftTableX = leftMargin;
-    this.drawSingleTable(page, leftTableX, y, leftData, colWidths, rowHeight, headerHeight, showBrutKg, showNetKg);
+    this.drawSingleTable(page, leftTableX, y, leftData, colWidths, rowHeight, headerHeight, showLot, showUretimNo, showBrutKg, showNetKg);
 
     const leftTableWidth = Object.values(colWidths).reduce((sum, width) => {
       return sum + width;
     }, 0);
     const rightTableX = leftTableX + leftTableWidth + tablePadding;
-    this.drawSingleTable(page, rightTableX, y, rightData, colWidths, rowHeight, headerHeight, showBrutKg, showNetKg);
+    this.drawSingleTable(page, rightTableX, y, rightData, colWidths, rowHeight, headerHeight, showLot, showUretimNo, showBrutKg, showNetKg);
 
     // Tablo yüksekliğini hesapla
     const tableHeight = headerHeight + (24 * rowHeight);
@@ -493,8 +480,10 @@ class CekiListesiTemplate extends BasePdfTemplate {
     return y - tableHeight;
   }
 
-  drawSingleTable(page, startX, startY, data, colWidths, rowHeight, headerHeight, showBrutKg = false, showNetKg = false) {
-    let totalWidth = colWidths.topNo + colWidths.metre + colWidths.lot;
+  drawSingleTable(page, startX, startY, data, colWidths, rowHeight, headerHeight, showLot = true, showUretimNo = false, showBrutKg = false, showNetKg = false) {
+    let totalWidth = colWidths.topNo + colWidths.metre;
+    if (showLot) totalWidth += colWidths.lot || 0;
+    if (showUretimNo) totalWidth += colWidths.uretimNo || 0;
     if (showBrutKg) totalWidth += colWidths.brutKg || 0;
     if (showNetKg) totalWidth += colWidths.netKg || 0;
     
@@ -578,22 +567,42 @@ class CekiListesiTemplate extends BasePdfTemplate {
     });
     headerX += colWidths.metre;
 
-    // Dikey çizgi 2 
-    page.drawLine({
-      start: { x: headerX, y: startY },
-      end: { x: headerX, y: tableBottom },
-      thickness: lineThickness,
-      color: rgb(0, 0, 0),
-    });
+    if (showLot) {
+      // Dikey çizgi 2 
+      page.drawLine({
+        start: { x: headerX, y: startY },
+        end: { x: headerX, y: tableBottom },
+        thickness: lineThickness,
+        color: rgb(0, 0, 0),
+      });
 
-    this.drawSafeText(page, this.languageService.getText('lot', this.language), {
-      x: headerX + 3,
-      y: startY - 11,
-      size: 7,
-      font: this.font,
-      color: rgb(0, 0, 0),
-    });
-    headerX += colWidths.lot;
+      this.drawSafeText(page, this.languageService.getText('lot', this.language), {
+        x: headerX + 3,
+        y: startY - 11,
+        size: 7,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      headerX += colWidths.lot;
+    }
+
+    if (showUretimNo) {
+      page.drawLine({
+        start: { x: headerX, y: startY },
+        end: { x: headerX, y: tableBottom },
+        thickness: lineThickness,
+        color: rgb(0, 0, 0),
+      });
+
+      this.drawSafeText(page, this.languageService.getText('uretimNo', this.language), {
+        x: headerX + 3,
+        y: startY - 11,
+        size: 7,
+        font: this.font,
+        color: rgb(0, 0, 0),
+      });
+      headerX += colWidths.uretimNo;
+    }
 
     // BRUT KG sütunu
     if (showBrutKg) {
@@ -675,16 +684,32 @@ class CekiListesiTemplate extends BasePdfTemplate {
       cellX += colWidths.metre;
 
       // Lot
-      const lotStr = row.lot !== undefined && row.lot !== null && row.lot !== '' 
-        ? String(row.lot) : '';
-      this.drawSafeText(page, lotStr, {
-        x: cellX + 3,
-        y: currentY - 10,
-        size: 7,
-        font: this.font,
-        color: rgb(0, 0, 0),
-      });
-      cellX += colWidths.lot;
+      if (showLot) {
+        const lotStr = row.lot !== undefined && row.lot !== null && row.lot !== '' 
+          ? String(row.lot) : '';
+        this.drawSafeText(page, lotStr, {
+          x: cellX + 3,
+          y: currentY - 10,
+          size: 7,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        cellX += colWidths.lot;
+      }
+
+      // Üretim No
+      if (showUretimNo) {
+        const uretimNoStr = row.uretimNo !== undefined && row.uretimNo !== null && row.uretimNo !== '' 
+          ? String(row.uretimNo) : '';
+        this.drawSafeText(page, uretimNoStr, {
+          x: cellX + 3,
+          y: currentY - 10,
+          size: 7,
+          font: this.font,
+          color: rgb(0, 0, 0),
+        });
+        cellX += colWidths.uretimNo;
+      }
 
       // BRUT KG
       if (showBrutKg) {

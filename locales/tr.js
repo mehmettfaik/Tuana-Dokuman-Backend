@@ -259,6 +259,7 @@ priceOfferNotes: [
   topNumarasi: 'TOP NO',
   metre: 'METRE',
   lot: 'LOT',
+  uretimNo: 'ÜRETİM NO',
   brutKg: 'BRUT KG',
   netKg: 'NET KG',
   genelToplam: 'GENEL TOPLAM',
