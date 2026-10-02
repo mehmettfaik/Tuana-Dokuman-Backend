@@ -97,7 +97,8 @@ const getAllForms = async (req, res) => {
       // Bu durumda fallback olarak tüm belgeleri değil, sadece son 500 belgeyi çekip JavaScript'te filtreleriz.
       // (Index oluşturulduğunda otomatik olarak ilk blok çalışmaya başlar)
       if (err.message && err.message.includes('index')) {
-        console.warn('⚠️ Firebase Index eksik! Fallback sorgusu kullanılıyor. Lütfen terminaldeki Firebase logunda yer alan linkten indexi oluşturun.');
+        console.warn('⚠️ Firebase Index eksik! Fallback sorgusu kullanılıyor.');
+        console.warn('LÜTFEN ŞU LİNKE TIKLAYARAK İNDEXİ OLUŞTURUN:', err.message);
         fallbackUsed = true;
         snapshot = await db.collection('forms').orderBy('createdAt', 'desc').limit(500).get();
       } else {
