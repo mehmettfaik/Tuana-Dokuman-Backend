@@ -1,20 +1,8 @@
 const { getFirestore } = require('../config/firebase');
 
-// In-memory cache for forms
-let formsCache = null;
-let formsCacheTimestamp = null;
-const formsCacheTTL = 5 * 60 * 1000; 
-
-// Cache helper functions
+// In-memory cache for forms is deprecated as we now use optimized queries
 const invalidateFormsCache = () => {
-  formsCache = null;
-  formsCacheTimestamp = null;
-  console.log('📦 Forms cache invalidated');
-};
-
-const isFormsCacheValid = () => {
-  if (!formsCache || !formsCacheTimestamp) return false;
-  return (Date.now() - formsCacheTimestamp) < formsCacheTTL;
+  // Deprecated, no-op
 };
 
 const createForm = async (req, res) => {
@@ -88,37 +76,53 @@ const getAllForms = async (req, res) => {
     const db = getFirestore();
     
     // Query parametreleri
-    const { formType, forceRefresh } = req.query;
+    const { formType } = req.query;
 
-    if (!forceRefresh && isFormsCacheValid()) {
-      let forms = [...formsCache];
+    let snapshot;
+    let fallbackUsed = false;
+    
+    // 1. Önce optimize edilmiş sorguyu deniyoruz (Sadece istenen formTipini çek, limit koy)
+    try {
+      let query = db.collection('forms');
       
-      // formType filter varsa client-side filtering yap
       if (formType) {
-        forms = forms.filter(form => form.formType === formType);
+        query = query.where('formType', '==', formType);
       }
       
-      return res.json(forms);
-    } 
+      // En son eklenenleri getir ve maksimum 100 belge ile sınırla (Okuma maliyetini çok ciddi düşürür)
+      query = query.orderBy('createdAt', 'desc').limit(100);
+      snapshot = await query.get();
+    } catch (err) {
+      // Eğer Firebase'de composite index (where + orderBy) yoksa hata verir.
+      // Bu durumda fallback olarak tüm belgeleri değil, sadece son 500 belgeyi çekip JavaScript'te filtreleriz.
+      // (Index oluşturulduğunda otomatik olarak ilk blok çalışmaya başlar)
+      if (err.message && err.message.includes('index')) {
+        console.warn('⚠️ Firebase Index eksik! Fallback sorgusu kullanılıyor. Lütfen terminaldeki Firebase logunda yer alan linkten indexi oluşturun.');
+        fallbackUsed = true;
+        snapshot = await db.collection('forms').orderBy('createdAt', 'desc').limit(500).get();
+      } else {
+        throw err;
+      }
+    }
 
-    // Sadece createdAt'e göre sırala
-    let query = db.collection('forms').orderBy('createdAt', 'desc');
-
-    const snapshot = await query.get();
-
-    if (snapshot.empty) {
-      formsCache = [];
-      formsCacheTimestamp = Date.now();
+    if (!snapshot || snapshot.empty) {
       return res.json([]);
     }
 
     let forms = [];
     snapshot.forEach(doc => {
       const data = doc.data() || {};
+      
+      // Fallback kullanıldıysa ve formType istenmişse, uymayanları atla
+      if (fallbackUsed && formType && data.formType !== formType) {
+        return; // forEach içinde continue görevi görür
+      }
+
       const goods = data.goods || (data.formData && data.formData.goods) || [];
       const rolls = data.rolls || (data.formData && data.formData.rolls) || [];
-      const rows = data.rows || (data.formData && data.formData.rows) || []; // Çeki listesi için rows
+      const rows = data.rows || (data.formData && data.formData.rows) || []; 
       const formData = { ...(data.formData || {}) };
+      
       if (!formData.goods && goods.length > 0) formData.goods = goods;
       if (!formData.rolls && rolls.length > 0) formData.rolls = rolls;
       if (!formData.rows && rows.length > 0) formData.rows = rows;
@@ -136,13 +140,9 @@ const getAllForms = async (req, res) => {
       });
     });
 
-    // Cache'e kaydet
-    formsCache = forms;
-    formsCacheTimestamp = Date.now();
-    console.log(`Forms cached: ${forms.length} items`);
-
-    if (formType) {
-      forms = forms.filter(form => form.formType === formType);
+    // Fallback kullandıysak elimizdeki sonuçlar 100'ü geçmiş olabilir, 100 ile sınırlayalım
+    if (fallbackUsed && forms.length > 100) {
+      forms = forms.slice(0, 100);
     }
 
     res.json(forms);
@@ -312,39 +312,13 @@ const bulkDeleteForms = async (req, res) => {
 
 const getFormsStats = async (req, res) => {
   try {
-    if (isFormsCacheValid()) {
-      const allForms = formsCache;
-      
-      const stats = {
-        totalForms: allForms.length,
-        byDocumentType: {},
-        recent: []
-      };
-
-      allForms.forEach(form => {
-        const docType = form.documentType || form.formType || 'Unknown';
-        stats.byDocumentType[docType] = (stats.byDocumentType[docType] || 0) + 1;
-      });
-
-      stats.recent = allForms
-        .slice(0, 10)
-        .map(form => ({
-          id: form.id,
-          documentType: form.documentType || form.formType,
-          createdAt: form.createdAt
-        }));
-
-      return res.json({
-        success: true,
-        stats
-      });
-    }
-
     const db = getFirestore();
     
-    const snapshot = await db.collection('forms').get();
+    // Aggregation query to securely and cheaply count total documents (costs 1 read instead of N reads)
+    const countSnapshot = await db.collection('forms').count().get();
+    const totalForms = countSnapshot.data().count;
 
-    if (snapshot.empty) {
+    if (totalForms === 0) {
       return res.json({
         success: true,
         stats: {
@@ -355,35 +329,32 @@ const getFormsStats = async (req, res) => {
       });
     }
 
+    // Sadece son 100 dokümanı çekip type bazlı istatistik ve son eklenenleri oluşturuyoruz
+    const snapshot = await db.collection('forms').orderBy('createdAt', 'desc').limit(100).get();
+
     const stats = {
-      totalForms: snapshot.size,
-      byDocumentType: {},
+      totalForms: totalForms,
+      byDocumentType: {}, // Bu istatistik sadece son 100 form üzerinden yaklaşık (approximate) olacaktır.
       recent: []
     };
 
-    const allForms = [];
     snapshot.forEach(doc => {
       const data = doc.data();
-      allForms.push({
-        id: doc.id,
-        ...data
-      });
-
-      // Count by document type
-      const docType = data.documentType || 'Unknown';
+      
+      // Count by document type in the recent 100 items
+      const docType = data.documentType || data.formType || 'Unknown';
       stats.byDocumentType[docType] = (stats.byDocumentType[docType] || 0) + 1;
+      
+      if (stats.recent.length < 10) {
+        stats.recent.push({
+          id: doc.id,
+          documentType: docType,
+          createdAt: data.createdAt
+        });
+      }
     });
 
-    stats.recent = allForms
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 10)
-      .map(form => ({
-        id: form.id,
-        documentType: form.documentType,
-        createdAt: form.createdAt
-      }));
-
-    console.log(`Retrieved stats for ${stats.totalForms} forms`);
+    console.log(`Retrieved stats for ${stats.totalForms} total forms`);
 
     res.json({
       success: true,
